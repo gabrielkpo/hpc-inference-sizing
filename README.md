@@ -1,6 +1,7 @@
 # hpc-inference-sizing
 
 [![CI](https://github.com/gabrielkpo/hpc-inference-sizing/actions/workflows/ci.yml/badge.svg)](https://github.com/gabrielkpo/hpc-inference-sizing/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Size the GPU fleet that serves an open-weight LLM for a client, from **measurements on real
 multi-GPU hardware**: how many GPUs a latency target needs, and what latency a fixed GPU budget
@@ -101,7 +102,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 
 | Step | Content | State |
 |---|---|---|
-| 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | in review |
+| 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | done; protocol is a draft until the freeze |
 | 2 Memory model | Weights and MLA KV cache per GPU for each split, tested | planned |
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model | planned |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved | planned |
@@ -169,4 +170,9 @@ uv run ruff check . && uv run ruff format --check . && uv run pytest
 
 Every change goes through a pull request with a Conventional Commits title, after
 `/security-review` and `/code-review`; `main` is protected and merged by squash. CI runs ruff,
-pytest, a full-history gitleaks scan and a PR title check.
+pytest, a full-history gitleaks scan, CodeQL and a PR title check. Releases are cut by
+release-please (changelog and `vX.Y.Z` tags) from the Conventional Commits on `main`.
+
+## License
+
+[MIT](LICENSE). Model weights are Mistral AI's, under Apache 2.0; PIAF questions are under MIT.
