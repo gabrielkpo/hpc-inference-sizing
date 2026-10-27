@@ -1,0 +1,21 @@
+name: CodeQL
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 5 * * 1"  # weekly, Monday 05:00 UTC
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  analyze:
+    # Code scanning is unavailable on free private repos; it runs once the repo is public.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: python
+      - uses: github/codeql-action/analyze@v4
