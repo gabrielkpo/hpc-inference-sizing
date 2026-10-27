@@ -102,7 +102,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 
 | Step | Content | State |
 |---|---|---|
-| 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | in review |
+| 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | done; protocol is a draft until the freeze |
 | 2 Memory model | Weights and MLA KV cache per GPU for each split, tested | planned |
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model | planned |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved | planned |
