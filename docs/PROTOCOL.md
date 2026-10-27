@@ -46,14 +46,17 @@ seed, start and end timestamps.
 
 | Profile | Input tokens | Output tokens | Shared prefix |
 |---|---|---|---|
-| **RAG** (main) | 6,100: system prompt 1,000 + 5 retrieved passages of 1,000 + question 100 | 300 | the 1,000-token system prompt, identical for every request |
+| **RAG** (main) | 6,100: system prompt 1,000 + 5 passages of 1,000 + question 100 | 300 | the 1,000-token system prompt, identical for every request |
 | **Chat** (secondary) | 500 | 300 | none |
 
 - Lengths are exact, counted with the model's tokenizer. Output length is forced (`max_tokens` =
   `min_tokens` = 300, end-of-sequence ignored) so every request does the same work. *(to verify
   that the pinned vLLM version honours both for this model)*
-- Passages and questions are built from PIAF contexts (§9), so the text is real French prose and
-  not random tokens. Each request draws different passages: only the system prompt is shared.
+- Passages and questions come from PIAF (§9), so the text is real French prose and not random
+  tokens. PIAF contexts are Wikipedia paragraphs of a few hundred tokens, so a passage is built by
+  concatenating consecutive contexts of the same article until it passes 1,000 tokens, then
+  cutting it to exactly 1,000 tokens. Each request draws different passages: only the system
+  prompt is shared.
 - Seeds are fixed per run and recorded.
 
 ### 3.2 Arrivals and users
@@ -106,7 +109,8 @@ not debugged on paid time.
 
 ### 5.2 Serving parameters (levers)
 
-Tested on the two best units, RAG profile, T = 2 s, one lever at a time from the defaults:
+Tested on the best unit only, RAG profile, T = 2 s, one lever at a time from vLLM's defaults.
+A lever ladder starts two steps below that unit's baseline capacity, not at the bottom:
 
 | Lever | Values |
 |---|---|
@@ -122,8 +126,10 @@ The best combination is then measured once at T = 1 s and T = 3 s.
    vLLM reports.
 2. **Warm up** for 30 s at a low rate; the warm-up is not measured.
 3. **Load ladder**: steps of 3 min at λ = 0.25, 0.5, 1, 2, 4, … req/s *(proposed)*, stopped at
-   the first step that breaks the SLO.
-4. **Refine** with two bisection steps between the last passing and the first failing rate.
+   the first step that breaks the **loosest** target (T = 3 s). One ladder serves all three
+   targets: the capacity for each T is read from the same steps.
+4. **Refine** each target's capacity with two bisection steps between its last passing and first
+   failing rate.
 5. **Record** every request (send time, first-token time, token times, lengths, error) and the
    vLLM `/metrics` scraped every 5 s (queue length, KV-cache use, running and waiting requests).
 6. **Repeat** the final capacity point 3 times on the best unit of each profile; report the
@@ -163,8 +169,8 @@ Not tested, and written as a limit: units on separate machines, smarter routing,
 
 ## 9. Quality check
 
-- Dataset: **PIAF** (Etalab, French question answering, Licence Ouverte), 200 questions drawn
-  with a fixed seed *(proposed)*.
+- Dataset: **PIAF** (French question answering built by Etalab, `AgentPublic/piaf` on Hugging
+  Face, MIT licence, 3,835 questions), 200 questions drawn with a fixed seed *(proposed)*.
 - Prompt: the context passage and the question, answer in a few words; temperature 0.
 - Score: exact match and token-level F1 against the reference answers, same normalisation for
   both formats.
@@ -175,13 +181,16 @@ Not tested, and written as a limit: units on separate machines, smarter routing,
 | Run | GPUs | Content | Estimated cost |
 |---|---|---|---|
 | Test session | 2 | the model loads, one unit answers, one short ladder, results leave the machine, the instance is destroyed | ≈ 1 $ |
-| Main campaign | 2 | §5.1 on both profiles, §5.2, repeats | ≈ 6 to 7 h, ≈ 7 $ |
-| Scaling and quality | 4 | §8 and §9 | ≈ 1 to 2 h, ≈ 2 to 3 $ |
+| Main campaign | 2 | §5.1 on both profiles (6 ladders, ≈ 4.5 h), §5.2 (≈ 7 short ladders, ≈ 3 h), repeats (≈ 1.5 h) | ≈ 9 h, ≈ 10 $ |
+| Scaling and quality | 4 | §8 and §9 | ≈ 2 h, ≈ 4 $ |
 
 - **No rental** until the whole chain (SLURM jobs, load generator, client, sweep, save, resume)
   has run end to end locally.
-- **Hard budget: 20 €** in total. Prepaid credit only, no automatic top-up. Keys and card are
-  entered by the owner, never by a script or an agent.
+- **Hard budget: 20 €** in total; the plan above comes to ≈ 15 $. The campaign script prints the
+  amount spent after each block; if the projection passes the cap, repeats are dropped first,
+  then lever values, never the base ladders.
+- Prepaid credit only, no automatic top-up. Keys and card are entered by the owner, never by a
+  script or an agent.
 - Every campaign script has a **time limit** and **destroys** the instance when it ends or fails
   (destroy, not stop: a stopped instance keeps billing its disk).
 - **One host for the whole 2-GPU matrix**: numbers from different hosts are not compared.

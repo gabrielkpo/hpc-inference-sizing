@@ -22,7 +22,8 @@ hardware, which answers neither question a client actually asks:
 - a **defence ministry** with a fixed, isolated fleet: *with 8 GPUs, what latency do users get,
   and how many can work at once before it breaks?*
 
-Both clients are fictional, modelled on public cases of in-house LLM deployments. This project
+Both clients are fictional, modelled on public cases of in-house LLM deployments; their sizes
+are proposals until the protocol is frozen ([§3.2](docs/PROTOCOL.md#32-arrivals-and-users)). This project
 answers both from one measured quantity: the **capacity of a serving unit under a latency
 target**.
 
@@ -54,9 +55,9 @@ Campaign lifecycle: nothing is rented until the same jobs have run locally.
 flowchart LR
     L["Local dry run<br/>SLURM in Docker,<br/>small model on CPU"] --> F["Protocol freeze<br/>(pull request)"]
     F --> TS["Test session<br/>2 GPUs, 15 min"]
-    TS -->|model starts| CA["Campaign<br/>2 GPUs, ~7 h"]
+    TS -->|model starts| CA["Campaign<br/>2 GPUs, ~9 h"]
     TS -->|fails on Ampere| STOP["Stop, destroy,<br/>owner decides"]
-    CA --> X["Scaling + quality<br/>4 GPUs, ~1-2 h"]
+    CA --> X["Scaling + quality<br/>4 GPUs, ~2 h"]
     CA --> D["Instance destroyed,<br/>results pushed"]
     X --> D
 ```
@@ -108,7 +109,8 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 | 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | planned |
 | 7 Sizing and report | Sizing tool, price-of-latency curve, results in this README | planned |
 
-**Evaluation plan.** Six hypotheses with pass criteria written before any run
+**Evaluation plan.** Six hypotheses with pass criteria written before any run (thresholds
+proposed, frozen with the protocol)
 ([protocol §7](docs/PROTOCOL.md#7-hypotheses-and-pass-criteria)): the price of latency is
 non-linear (H1), the best way to split the model depends on the latency target (H2), tuning
 vLLM parameters adds at least 20 % capacity (H3), two units deliver at least 1.8 × one unit
@@ -141,8 +143,8 @@ GPU runs will read `VAST_API_KEY` and `HF_TOKEN` from the environment (see `.env
 
 ## Data and privacy
 
-No personal data. Prompts are built from **PIAF** (Etalab, Licence Ouverte), a public French
-question-answering dataset, downloaded at run time and not committed. Model weights are
+No personal data. Prompts are built from **PIAF** (built by Etalab, `AgentPublic/piaf`, MIT
+licence), a public French question-answering dataset, downloaded at run time and not committed. Model weights are
 downloaded on the rented node only. API keys live in the environment, never in the repository;
 gitleaks scans the full history on every pull request.
 
