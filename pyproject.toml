@@ -1,6 +1,6 @@
 [project]
 name = "hpc-inference-sizing"
-version = "0.1.0"
+version = "0.1.1"
 description = "Size LLM inference on GPUs for a client: GPU count for a latency target, latency on a fixed GPU budget."
 requires-python = ">=3.12"
 dependencies = []
