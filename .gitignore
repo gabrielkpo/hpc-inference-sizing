@@ -1,0 +1,13 @@
+# secrets (Vast.ai, Hugging Face keys live in the environment only)
+.env
+# model weights, downloads and scratch run output stay out of Git
+models/
+data/raw/
+runs/scratch/
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
