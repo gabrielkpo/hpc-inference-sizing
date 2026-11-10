@@ -103,7 +103,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 | Step | Content | State |
 |---|---|---|
 | 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | done; protocol is a draft until the freeze |
-| 2 Memory model | Weights and MLA KV cache per GPU for each split, tested | planned |
+| 2 Memory model | Weights and MLA KV cache per GPU for each split, tested; predictions in [`docs/MEMORY.md`](docs/MEMORY.md) | in review |
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model | planned |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved | planned |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed | planned |
@@ -129,6 +129,7 @@ git clone https://github.com/gabrielkpo/hpc-inference-sizing.git
 cd hpc-inference-sizing
 uv sync --group dev
 uv run pytest
+uv run hpc-sizing memory --gpu a40 --gpus 2 --split pp   # predicted KV-cache capacity
 ```
 
 GPU runs will read `VAST_API_KEY` and `HF_TOKEN` from the environment (see `.env.example`).
@@ -138,8 +139,11 @@ GPU runs will read `VAST_API_KEY` and `HF_TOKEN` from the environment (see `.env
 | Path | Content |
 |---|---|
 | `docs/PROTOCOL.md` | Question, workload, SLO, configurations, hypotheses, stop rules |
+| `docs/MEMORY.md` | Memory model, split rules and the pre-registered KV-cache predictions (H6) |
 | `docs/adr/` | Decision records: model and hardware, SLURM on one node |
-| `src/hpc_inference_sizing/` | Python package (memory model, bench and sizing tool to come) |
+| `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), `hpc-sizing` command; bench and sizing tool to come |
+| `src/hpc_inference_sizing/data/` | Measured component sizes of the checkpoints |
+| `scripts/measure_checkpoint.py` | Reads the safetensors headers of a Hugging Face checkpoint (no weights downloaded) |
 | `tests/` | pytest suite |
 
 ## Data and privacy
