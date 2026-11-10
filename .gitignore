@@ -11,3 +11,5 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .DS_Store
+# local VibeWise learning notes (personal, never published)
+.vibe-wise/
