@@ -113,6 +113,13 @@ def test_small_4_needs_two_a40_but_fits_one_h100():
     assert 1.8 < pp.cache_tokens / tp.cache_tokens < 2.2
 
 
+def test_cli_rejects_an_invalid_combination_with_a_usage_error(capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        main(["memory", "--gpu", "h100-pcie", "--gpus", "1"])  # default split tp
+    assert exit_info.value.code == 2
+    assert "single" in capsys.readouterr().err
+
+
 def test_cli_prints_a_plan(capsys):
     main(["memory", "--gpu", "a40", "--gpus", "2", "--split", "pp"])
     out = capsys.readouterr().out

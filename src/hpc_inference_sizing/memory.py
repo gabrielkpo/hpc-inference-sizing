@@ -130,29 +130,23 @@ def _weights_on_gpu(model: ModelSpec, split: str, n_gpus: int, i: int) -> dict[s
             w["lm_head"] = G.get("lm_head", 0)
             w["other"] = G.get("other", 0)
         return w
-    cut = {
-        "attention": L["attention"] // n_gpus,
-        "shared_expert": L["shared_expert"] // n_gpus,
-        "embedding": G.get("embedding", 0) // n_gpus,
-        "lm_head": G.get("lm_head", 0) // n_gpus,
+    if split not in ("tp", "ep", "dp_ep"):
+        raise ValueError(f"unknown split {split!r}; expected one of {SPLITS}")
+    # Attention, shared expert, embedding and output head: cut under tp/ep, copied under dp_ep.
+    divisor = 1 if split == "dp_ep" else n_gpus
+    dense = {
+        "attention": L["attention"] // divisor,
+        "shared_expert": L["shared_expert"] // divisor,
+        "embedding": G.get("embedding", 0) // divisor,
+        "lm_head": G.get("lm_head", 0) // divisor,
     }
-    copied = {
-        "attention": L["attention"],
-        "shared_expert": L["shared_expert"],
-        "embedding": G.get("embedding", 0),
-        "lm_head": G.get("lm_head", 0),
-    }
-    common = {
+    return {
+        **dense,
         "routed_experts": L["routed_experts"] // n_gpus,  # cut (tp) or spread (ep, dp_ep)
         "router": L["router"],  # small, copied
         "layer_norms": L["layer_norms"],  # small, copied
         **replicated,
     }
-    if split in ("tp", "ep"):
-        return {**cut, **common}
-    if split == "dp_ep":
-        return {**copied, **common}
-    raise ValueError(f"unknown split {split!r}; expected one of {SPLITS}")
 
 
 def _kv_layers_on_gpu(model: ModelSpec, split: str, n_gpus: int, i: int) -> int:
@@ -225,7 +219,7 @@ def format_plan(p: MemoryPlan) -> str:
         lines.append(f"  {c}".ljust(24) + cells)
     rows = [
         ("weights", lambda g: f"{g.weights_total / gb:.2f} GB"),
-        ("overhead (assumed)", lambda g: f"{g.overhead_bytes / gb:.2f} GB"),
+        ("overhead (assumed)", lambda g: f"{g.overhead_bytes / gb:.2f} GB"),  # 2 GiB = 2.15 GB
         ("budget (x util.)", lambda g: f"{g.budget_bytes / gb:.2f} GB"),
         ("free for KV cache", lambda g: f"{g.free_bytes / gb:.2f} GB"),
         ("KV per token", lambda g: f"{g.kv_bytes_per_token / 1e3:.1f} KB"),

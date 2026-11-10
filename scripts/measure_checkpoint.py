@@ -27,6 +27,8 @@ DTYPE_BYTES = {
     "U8": 1,
     "I8": 1,
     "I32": 4,
+    "F8_E8M0": 1,
+    "BOOL": 1,
 }
 
 # Mistral-format tensor names. Components repeated in every layer are the ones a pipeline split
@@ -72,16 +74,22 @@ def measure(repo: str) -> tuple[Counter, int]:
         for s in api["siblings"]
         if s["rfilename"].startswith("consolidated") and s["rfilename"].endswith(".safetensors")
     ]
+    if not files:
+        raise SystemExit(f"{repo}: no consolidated-*.safetensors (Mistral format) to measure")
     sizes: Counter = Counter()
     layers: set[int] = set()
     for f in files:
         for tensor, meta in read_header(f"{HF}/{repo}/resolve/main/{f}").items():
+            if meta["dtype"] not in DTYPE_BYTES:
+                raise SystemExit(f"{f}: tensor {tensor} has unsupported dtype {meta['dtype']}")
             n = DTYPE_BYTES[meta["dtype"]]
             for dim in meta["shape"]:
                 n *= dim
             sizes[classify(tensor)] += n
             if m := re.match(r"layers\.(\d+)\.", tensor):
                 layers.add(int(m.group(1)))
+    if not layers:
+        raise SystemExit(f"{repo}: no layers.N.* tensors found; not a Mistral-format checkpoint?")
     return sizes, len(layers)
 
 

@@ -18,19 +18,27 @@ def main(argv: list[str] | None = None) -> None:
     mem.add_argument("--split", choices=SPLITS, default="tp")
     mem.add_argument("--request-tokens", type=int, default=6_400, help="input + output tokens")
     mem.add_argument("--gpu-memory-utilization", type=float, default=0.90)
-    mem.add_argument("--overhead-gib", type=float, default=2.0, help="assumed per-GPU overhead")
+    mem.add_argument(
+        "--overhead-gib",
+        type=float,
+        default=2.0,
+        help="assumed per-GPU overhead in GiB (printed in GB: 2 GiB = 2.15 GB)",
+    )
 
     args = parser.parse_args(argv)
     if args.command == "memory":
-        result = plan(
-            load_model(args.model),
-            GPUS[args.gpu],
-            args.gpus,
-            args.split,
-            request_tokens=args.request_tokens,
-            gpu_memory_utilization=args.gpu_memory_utilization,
-            overhead_bytes=int(args.overhead_gib * GIB),
-        )
+        try:
+            result = plan(
+                load_model(args.model),
+                GPUS[args.gpu],
+                args.gpus,
+                args.split,
+                request_tokens=args.request_tokens,
+                gpu_memory_utilization=args.gpu_memory_utilization,
+                overhead_bytes=int(args.overhead_gib * GIB),
+            )
+        except ValueError as err:
+            mem.error(str(err))  # e.g. one GPU needs --split single
         print(format_plan(result))
 
 

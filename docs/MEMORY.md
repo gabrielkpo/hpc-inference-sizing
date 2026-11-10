@@ -27,7 +27,7 @@ flowchart LR
 | KV cache per token | 640 bytes per layer, 36 layers: 23.0 KB for the whole model | MLA caches one latent of 256 + 64 values per token and layer, in bf16 (`params.json`) |
 | GPU memory | A40 and L40S 46,068 MiB, RTX A6000 49,140 MiB, H100 PCIe 81,559 MiB | nvidia-smi totals; A40 and A6000 from Vast.ai listings, L40S and H100 to confirm on the first run |
 | Memory vLLM may use | 90 % | vLLM default `gpu_memory_utilization` |
-| Runtime overhead | 2 GiB per GPU | **Assumption** (activations, CUDA graphs, CUDA context); vLLM measures it at start-up |
+| Runtime overhead | 2 GiB (2.15 GB) per GPU | **Assumption** (activations, CUDA graphs, CUDA context); vLLM measures it at start-up |
 | Request size | 6,400 tokens (6,100 in, 300 out) | RAG profile, protocol §3.1 |
 
 ## The split rules
@@ -70,9 +70,16 @@ What these predictions say:
 
 ## How H6 is checked
 
-At start-up vLLM logs the KV-cache size it allocated, in tokens. For each configuration, the
-measured value is compared with the "unit cache" column; H6 passes if every configuration is within
-10 %. The 2 GiB overhead is the least certain input: the measured overhead is recorded next to each
+At start-up vLLM logs the KV-cache size it allocated, in tokens. The logged figure is read per
+split, then compared with the "unit cache" column; H6 passes if every configuration is within 10 %:
+
+| Split | Logged figure to use |
+|---|---|
+| `single`, `tp`, `ep` | the figure logged once for the unit (every GPU holds the same tokens) |
+| `pp` | the figure for the unit, which is limited by the fullest stage; if vLLM logs one figure per stage, the smallest one |
+| `dp_ep` | the **sum** of the figures logged by each data-parallel engine (each GPU caches its own requests) |
+
+How vLLM reports pipeline and data-parallel caches is to be confirmed on the first run. The 2 GiB overhead is the least certain input: the measured overhead is recorded next to each
 result so that a miss can be traced to its cause.
 
 ## Corrections
