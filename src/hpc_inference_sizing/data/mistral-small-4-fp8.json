@@ -1,0 +1,19 @@
+{
+  "name": "mistral-small-4-fp8",
+  "source": "https://huggingface.co/mistralai/Mistral-Small-4-119B-2603",
+  "n_layers": 36,
+  "kv_bytes_per_token_per_layer": 640,
+  "layered_bytes": {
+    "attention": 1009871568,
+    "routed_experts": 115964172288,
+    "shared_expert": 905970096,
+    "router": 37748736,
+    "layer_norms": 589824
+  },
+  "global_bytes": {
+    "embedding": 1073741824,
+    "lm_head": 1073741824,
+    "other": 8192,
+    "vision": 856944640
+  }
+}
