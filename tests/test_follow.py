@@ -334,3 +334,28 @@ def test_an_archive_escaping_the_results_folder_is_refused(tmp_path, fake_ssh):
     with pytest.raises(OSError, match="unpacking"):
         SshRemote("node", 22, "repo").pull(tmp_path / "copy" / "results")
     assert not (tmp_path / "copy" / "outside.txt").exists()
+
+
+def test_runs_of_later_phases_and_repeats_are_reported_too(tmp_path):
+    remote = ScriptedRemote(
+        [
+            (True, {"pp_seqs64-rag.json": run_file("pp_seqs64-rag", {"2.0": 0.625})}),
+            (True, {"repeat_pp-rag.json": {"steps": [{}, {}, {}]}, "plan-levers.json": {}}),
+            (False, {}),
+            (False, {}),
+        ]
+    )
+    events = tmp_path / "events.jsonl"
+    follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: remote,
+        events_path=events,
+        log=lambda _: None,
+        sleep=limited_sleep(20),
+    )
+    messages = [json.loads(line)["message"] for line in events.read_text().splitlines()]
+    assert "pp_seqs64-rag done (2 s: 0.625 req/s)" in messages
+    assert "repeat_pp-rag done (3 repeat steps)" in messages
+    assert not any("plan-levers" in m for m in messages)

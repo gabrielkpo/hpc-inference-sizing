@@ -107,6 +107,20 @@ class FollowResult:
     status: dict[str, list[str]] = field(default_factory=dict)
 
 
+def run_files(results_dir: Path) -> tuple[list[str], list[str]]:
+    """(finished, failed) run ids found in the results folder, every phase included."""
+    if not results_dir.is_dir():
+        return [], []
+    failed = sorted(p.name.removesuffix(".failed.json") for p in results_dir.glob("*.failed.json"))
+    done = sorted(
+        p.stem
+        for p in results_dir.glob("*.json")
+        if not p.name.endswith(".failed.json")
+        and not p.name.startswith(("plan-", "campaign-clock"))
+    )
+    return done, failed
+
+
 def plain(text: str, limit: int = 160) -> str:
     """Text from the node, made safe to log: printable characters only, one line, short."""
     return "".join(c if c.isprintable() else " " for c in text).strip()[-limit:]
@@ -115,7 +129,10 @@ def plain(text: str, limit: int = 160) -> str:
 def capacities(results_dir: Path, run_id: str) -> str | None:
     """'1 s: unreachable, 3 s: 0.5' from a run file, numbers only; None if not readable yet."""
     try:
-        caps = json.loads((results_dir / f"{run_id}.json").read_text())["sweep"]["capacity_rps"]
+        doc = json.loads((results_dir / f"{run_id}.json").read_text())
+        if "sweep" not in doc:  # a repeat run: fixed rates, no capacity search
+            return f"{len(doc['steps']):d} repeat steps"
+        caps = doc["sweep"]["capacity_rps"]
         parts = []
         for target, cap in caps.items():
             value = "unreachable" if cap is None else f"{float(cap):g} req/s"
@@ -153,8 +170,7 @@ def follow(
     def as_dict(st) -> dict[str, list[str]]:
         return {"done": st.done, "failed": st.failed, "pending": st.pending}
 
-    st = status(matrix)
-    seen.update(st.done + st.failed)  # runs already copied before this follow started
+    seen.update(sum(run_files(matrix.results_dir), []))  # copied before this follow started
     event("start", f"following instance {instance_id}, {len(seen)} runs already here")
     while True:
         try:
@@ -180,10 +196,11 @@ def follow(
             else:
                 seen_running = seen_running or running
                 st = status(matrix)
-                for run_id in st.done + st.failed:
+                done, failed = run_files(matrix.results_dir)
+                for run_id in done + failed:
                     if run_id in seen:
                         continue
-                    if run_id in st.done:
+                    if run_id in done:
                         caps = capacities(matrix.results_dir, run_id)
                         if caps is None:
                             continue  # copied mid-write: reported on a later look
@@ -191,10 +208,10 @@ def follow(
                     else:
                         event("run_failed", f"{run_id} failed (see {run_id}.failed.json)")
                     seen.add(run_id)
-                total = len(matrix.run_ids())
                 log(
-                    f"follow: {len(st.done) + len(st.failed)}/{total} runs copied "
-                    f"({len(st.failed)} failed), campaign {'running' if running else 'stopped'}"
+                    f"follow: {len(done) + len(failed)} runs copied ({len(failed)} failed; base "
+                    f"{len(st.done) + len(st.failed)}/{len(matrix.run_ids())}), "
+                    f"campaign {'running' if running else 'stopped'}"
                     f"; node: {last[-160:]}"
                 )
                 stopped_looks = 0 if running else stopped_looks + 1

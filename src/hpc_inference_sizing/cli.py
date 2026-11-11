@@ -133,6 +133,16 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
             args.price_per_hour,
             clock_file=matrix.results_dir / "campaign-clock.json",
         )
+        if args.chain:
+            from hpc_inference_sizing.chain import run_chain
+
+            phases = run_chain(matrix, limits, _parse_meta(args.meta, parser))
+            for name, st in phases.items():
+                print(
+                    f"{name}: done {len(st.done)}, failed {len(st.failed)}, "
+                    f"pending {len(st.pending)}"
+                )
+            return
         final = run_campaign(
             matrix,
             limits,
@@ -306,6 +316,9 @@ def main(argv: list[str] | None = None) -> None:
             p.add_argument("--budget-usd", type=float, help="stop starting runs past this spend")
             p.add_argument("--price-per-hour", type=float, default=0.0, help="instance USD/h")
             p.add_argument("--meta", action="append", default=[], help="KEY=VALUE run metadata")
+            p.add_argument(
+                "--chain", action="store_true", help="then levers, combination and repeats"
+            )
         if name == "follow":
             p.add_argument("--instance", type=int, required=True, help="Vast.ai instance id")
             p.add_argument("--every", type=float, default=300, help="seconds between looks")

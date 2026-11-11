@@ -140,10 +140,13 @@ The runbook of the test session, with what a day-long run needs on top. `$V` sta
 
    ```bash
    ssh -p PORT root@HOST 'cd hpc-inference-sizing && { nohup uv run hpc-sizing campaign run \
-     --matrix campaign/a40-x2.toml --max-hours 11.5 --budget-usd 16 --price-per-hour PRICE \
-     --meta gpu=2xA40 --meta host=HOST_ID > ../campaign.log 2>&1 < /dev/null & }'
+     --matrix campaign/a40-x2.toml --chain --max-hours 11.5 --budget-usd 15.5 \
+     --price-per-hour PRICE --meta gpu=2xA40 --meta host=HOST_ID \
+     > ../campaign.log 2>&1 < /dev/null & }'
    ```
 
+   `--chain` runs the base matrix, then the levers, the best combination and the repeats on the
+   same node ([`CAMPAIGN.md`](CAMPAIGN.md)).
 4. **Start the follow** on the laptop (detached, see [`CAMPAIGN.md`](CAMPAIGN.md)): it copies the
    results after every run, reports, and destroys the instance once the campaign has ended and
    everything is copied.
