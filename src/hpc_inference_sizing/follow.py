@@ -14,9 +14,11 @@ The guard (`vast guard`) still runs beside it: it owns the time and budget caps.
 
 from __future__ import annotations
 
+import io
 import json
 import shlex
 import subprocess
+import tarfile
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -78,11 +80,13 @@ class SshRemote:
         out = self._ssh(f"test -d {remote} && tar czf - -C {remote} .", capture_output=True)
         if out.returncode != 0:
             raise OSError(f"copy from the node failed: {out.stderr.decode()[-200:].strip()}")
-        unpack = subprocess.run(
-            ["tar", "xzf", "-", "-C", str(local_dir)], input=out.stdout, capture_output=True
-        )
-        if unpack.returncode != 0:
-            raise OSError(f"unpacking the results failed: {unpack.stderr.decode()[-200:]}")
+        # The host is a third party: the "data" filter refuses absolute paths, "..", links
+        # leaving the folder and special files.
+        try:
+            with tarfile.open(fileobj=io.BytesIO(out.stdout), mode="r:gz") as archive:
+                archive.extractall(local_dir, filter="data")
+        except (tarfile.TarError, OSError) as err:
+            raise OSError(f"unpacking the results failed: {err}") from err
 
     def campaign_running(self) -> bool:
         out = self._ssh(f"{RUNNING_CHECK} && echo running || echo stopped", capture_output=True)
@@ -93,7 +97,7 @@ class SshRemote:
 
     def last_log_line(self) -> str:
         out = self._ssh(f"tail -n 1 {shlex.quote(self.log_file)}", capture_output=True)
-        return out.stdout.decode(errors="replace").strip()
+        return plain(out.stdout.decode(errors="replace"))
 
 
 @dataclass
@@ -103,12 +107,22 @@ class FollowResult:
     status: dict[str, list[str]] = field(default_factory=dict)
 
 
-def capacities(results_dir: Path, run_id: str) -> str:
+def plain(text: str, limit: int = 160) -> str:
+    """Text from the node, made safe to log: printable characters only, one line, short."""
+    return "".join(c if c.isprintable() else " " for c in text).strip()[-limit:]
+
+
+def capacities(results_dir: Path, run_id: str) -> str | None:
+    """'1 s: unreachable, 3 s: 0.5' from a run file, numbers only; None if not readable yet."""
     try:
         caps = json.loads((results_dir / f"{run_id}.json").read_text())["sweep"]["capacity_rps"]
-    except (OSError, ValueError, KeyError):
-        return "capacity unreadable"
-    return ", ".join(f"{t} s: {c if c is not None else 'unreachable'}" for t, c in caps.items())
+        parts = []
+        for target, cap in caps.items():
+            value = "unreachable" if cap is None else f"{float(cap):g} req/s"
+            parts.append(f"{float(target):g} s: {value}")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return None
+    return ", ".join(parts)
 
 
 def follow(
@@ -158,7 +172,7 @@ def follow(
                 remote.pull(matrix.results_dir)  # after the check: a run that just ended is in
                 last = remote.last_log_line()
                 failures = 0
-            except (OSError, subprocess.SubprocessError, KeyError, ValueError) as err:
+            except Exception as err:  # noqa: BLE001 - detached: a surprise must not end it
                 failures += 1
                 log(f"follow: node unreachable ({err}); attempt {failures}")
                 if failures == 3:
@@ -167,13 +181,16 @@ def follow(
                 seen_running = seen_running or running
                 st = status(matrix)
                 for run_id in st.done + st.failed:
-                    if run_id not in seen:
-                        seen.add(run_id)
-                        if run_id in st.done:
-                            caps = capacities(matrix.results_dir, run_id)
-                            event("run_done", f"{run_id} done ({caps})")
-                        else:
-                            event("run_failed", f"{run_id} failed (see {run_id}.failed.json)")
+                    if run_id in seen:
+                        continue
+                    if run_id in st.done:
+                        caps = capacities(matrix.results_dir, run_id)
+                        if caps is None:
+                            continue  # copied mid-write: reported on a later look
+                        event("run_done", f"{run_id} done ({caps})")
+                    else:
+                        event("run_failed", f"{run_id} failed (see {run_id}.failed.json)")
+                    seen.add(run_id)
                 total = len(matrix.run_ids())
                 log(
                     f"follow: {len(st.done) + len(st.failed)}/{total} runs copied "
@@ -203,6 +220,9 @@ def follow(
 
 def remote_for_instance(remote_dir: str) -> Callable[[dict], Remote]:
     def make(info: dict) -> Remote:
-        return SshRemote(str(info["ssh_host"]), int(info["ssh_port"]), remote_dir)
+        host, port = info.get("ssh_host"), info.get("ssh_port")
+        if not host or not port:
+            raise ValueError("no ssh address yet (instance loading)")
+        return SshRemote(str(host), int(port), remote_dir)
 
     return make

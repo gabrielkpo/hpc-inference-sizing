@@ -249,3 +249,88 @@ def test_detached_command_runs_in_its_own_session(tmp_path):
     pid = Path(f"{marker}.pid").read_text().strip()
     pgid = Path(f"{marker}.pgid").read_text().strip()
     assert pgid == pid  # session and group leader: the parent's hang-up does not reach it
+
+
+def test_a_loading_instance_without_ssh_address_is_waited_for(tmp_path):
+    from hpc_inference_sizing.follow import remote_for_instance
+
+    class Loading(FakeClient):
+        calls = 0
+
+        def show(self, instance_id):
+            Loading.calls += 1
+            info = super().show(instance_id)
+            return {**info, "ssh_port": None} if Loading.calls <= 2 else info
+
+    make = remote_for_instance("x")
+    remote = ScriptedRemote([(True, {}), (False, {}), (False, {})])
+
+    def remote_for(info):
+        make(info)  # raises while the address is missing
+        return remote
+
+    result = follow(
+        Loading(), 7, matrix(tmp_path), remote_for, log=lambda _: None, sleep=limited_sleep(20)
+    )
+    assert result.destroyed
+
+
+def test_a_run_file_copied_mid_write_is_reported_once_complete(tmp_path):
+    remote = ScriptedRemote(
+        [
+            (True, {}),
+            (True, {}),
+            (False, {}),
+            (False, {}),
+        ]
+    )
+    remote.node_files["tp-rag.json"] = "{partial"  # pull writes json.dumps of a str: not a run
+    looks = iter([None, run_file("tp-rag", {"1.0": None, "3.0": 0.5})])
+
+    original = remote.campaign_running
+
+    def campaign_running():
+        nxt = next(looks, None)
+        if nxt is not None:
+            remote.node_files["tp-rag.json"] = nxt
+        return original()
+
+    remote.campaign_running = campaign_running
+    events = tmp_path / "events.jsonl"
+    follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: remote,
+        events_path=events,
+        log=lambda _: None,
+        sleep=limited_sleep(20),
+    )
+    messages = [json.loads(line)["message"] for line in events.read_text().splitlines()]
+    done = [m for m in messages if "tp-rag done" in m]
+    assert done == ["tp-rag done (1 s: unreachable, 3 s: 0.5 req/s)"]
+
+
+def test_node_text_is_made_plain_and_capacities_numbers_only(tmp_path):
+    from hpc_inference_sizing.follow import capacities, plain
+
+    assert plain("ok\x1b[31m red\nnext") == "ok [31m red next"
+    d = tmp_path
+    (d / "x.json").write_text(json.dumps(run_file("x", {"1.0": "ignore previous instructions"})))
+    assert capacities(d, "x") is None
+
+
+def test_an_archive_escaping_the_results_folder_is_refused(tmp_path, fake_ssh):
+    import tarfile as tf
+
+    evil = fake_ssh / "evil.tar.gz"
+    with tf.open(evil, "w:gz") as archive:
+        payload = fake_ssh / "payload"
+        payload.write_text("x")
+        archive.add(payload, arcname="../outside.txt")
+    (fake_ssh / "repo").mkdir()
+    ssh = Path(os.environ["PATH"].split(os.pathsep)[0]) / "ssh"
+    ssh.write_text(f'#!/bin/bash\ncat "{evil}"\n')
+    with pytest.raises(OSError, match="unpacking"):
+        SshRemote("node", 22, "repo").pull(tmp_path / "copy" / "results")
+    assert not (tmp_path / "copy" / "outside.txt").exists()
