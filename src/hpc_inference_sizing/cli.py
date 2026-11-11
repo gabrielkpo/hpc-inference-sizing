@@ -136,6 +136,9 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         if args.chain:
             from hpc_inference_sizing.chain import run_chain
 
+            if args.only or args.retry_failed:
+                parser.error("--chain runs every phase: drop --only and --retry-failed")
+
             phases = run_chain(matrix, limits, _parse_meta(args.meta, parser))
             for name, st in phases.items():
                 print(

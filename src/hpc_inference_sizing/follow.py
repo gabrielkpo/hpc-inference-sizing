@@ -111,9 +111,11 @@ def run_files(results_dir: Path) -> tuple[list[str], list[str]]:
     """(finished, failed) run ids found in the results folder, every phase included."""
     if not results_dir.is_dir():
         return [], []
-    failed = sorted(p.name.removesuffix(".failed.json") for p in results_dir.glob("*.failed.json"))
+    failed = sorted(
+        plain(p.name.removesuffix(".failed.json")) for p in results_dir.glob("*.failed.json")
+    )
     done = sorted(
-        p.stem
+        plain(p.stem)
         for p in results_dir.glob("*.json")
         if not p.name.endswith(".failed.json")
         and not p.name.startswith(("plan-", "campaign-clock"))
