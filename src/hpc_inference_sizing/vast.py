@@ -171,7 +171,7 @@ class VastClient:
         return bool(self._key)
 
     def _request(
-        self, method: str, path: str, *, auth: bool = True, json_body: bool = True, **kwargs
+        self, method: str, path: str, *, auth: bool = True, allow_empty: bool = False, **kwargs
     ) -> dict:
         headers = {}
         if self._key:
@@ -186,7 +186,7 @@ class VastClient:
         # an error, never an empty result: an empty instance list would end the guard.
         if resp.status_code >= 300:
             raise VastError(f"{method} {path}: HTTP {resp.status_code}: {resp.text[:200]}")
-        if not json_body:  # any 2xx is success (destroy)
+        if allow_empty and not resp.content.strip():  # e.g. 204 to a destroy
             return {}
         try:
             data = resp.json()
@@ -231,7 +231,9 @@ class VastClient:
         return self._request("GET", "/api/v1/instances/", params={"limit": 25}).get("instances", [])
 
     def destroy(self, instance_id: int) -> None:
-        self._request("DELETE", f"/api/v0/instances/{instance_id}/", json_body=False)
+        data = self._request("DELETE", f"/api/v0/instances/{instance_id}/", allow_empty=True)
+        if data.get("success") is False:  # a refusal can come with HTTP 200
+            raise VastError(f"destroy refused: {str(data)[:200]}")
 
     def balance(self) -> float:
         """Prepaid credit left (`credit`; the API's `balance` is the amount owed)."""

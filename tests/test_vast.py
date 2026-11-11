@@ -77,6 +77,9 @@ class FakeVast:
                 self.instance = None
                 if self.destroy_status == 204:
                     return httpx.Response(204)
+                if self.destroy_status == "refused":
+                    self.instance = {"actual_status": "running"}
+                    return httpx.Response(200, json={"success": False, "msg": "refused"})
                 if self.destroy_status != 200:
                     return httpx.Response(self.destroy_status, json={"error": "not found"})
                 return httpx.Response(200, json={"success": True})
@@ -354,3 +357,10 @@ def test_a_redirect_or_a_non_json_answer_is_an_error_not_an_empty_result(respons
         client.instances()
     # the guard cannot confirm the instance is gone, so it keeps guarding
     assert vast._listed(client, 777)
+
+
+def test_a_destroy_refused_with_http_200_is_a_failure():
+    fake = FakeVast(instance={"actual_status": "running"}, destroy_status="refused")
+    logs = []
+    assert not vast.destroy_with_retries(fake.client(), 777, log=logs.append, sleep=lambda _: None)
+    assert "DESTROY FAILED" in logs[-1]
