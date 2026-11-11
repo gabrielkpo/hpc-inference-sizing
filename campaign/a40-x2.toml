@@ -1,0 +1,37 @@
+# Main campaign, protocol §5.1 and §6: four 2-GPU units x two profiles on one 2 x A40 node.
+# Run: uv run hpc-sizing campaign run --matrix campaign/a40-x2.toml (or slurm/submit.sh).
+# Levers (§5.2) and repeats are separate matrices, written once the best unit is known.
+
+name = "a40-x2"
+results_dir = "results/a40-x2"
+model = "mistralai/Mistral-Small-4-119B-2603-NVFP4"
+profiles = ["rag", "chat"]
+targets_s = [1.0, 2.0, 3.0]
+step_duration_s = 180
+min_requests = 20
+start_rate = 0.25
+max_rate = 64
+bisect_steps = 2
+# Results leave the machine after every run (protocol §10). Set on the rented node, e.g.
+# sync_command = "rclone copy {results_dir} remote:hpc-inference-sizing/a40-x2"
+sync_command = ""
+
+[server]
+url = "http://127.0.0.1:8000"
+served_model = "small4"
+health_timeout_s = 2400  # weights download (70.8 GB) and load on the first run
+command = """vllm serve {model} --host 127.0.0.1 --port 8000 --served-model-name small4 \
+  --tokenizer-mode mistral --config-format mistral --load-format mistral \
+  --attention-backend TRITON_MLA --max-model-len 8192 {flags}"""
+
+[units.tp]
+flags = "--tensor-parallel-size 2"
+
+[units.ep]
+flags = "--tensor-parallel-size 2 --enable-expert-parallel"
+
+[units.pp]
+flags = "--pipeline-parallel-size 2"
+
+[units.dp_ep]
+flags = "--data-parallel-size 2 --enable-expert-parallel"

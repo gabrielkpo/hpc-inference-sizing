@@ -13,3 +13,4 @@ __pycache__/
 .DS_Store
 # local VibeWise learning notes (personal, never published)
 .vibe-wise/
+runs/slurm/

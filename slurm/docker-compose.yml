@@ -1,0 +1,35 @@
+# Local SLURM cluster: docker compose -f slurm/docker-compose.yml up -d --build
+# The repository is mounted at /work in every container; PIAF and the tokenizer come from the
+# host cache. Jobs reach a server running on the host (llama.cpp) at host.docker.internal.
+x-node: &node
+  build: .
+  image: hpc-sizing-slurm:local
+  volumes:
+    - ..:/work
+    - ${HOME}/.cache/hpc-inference-sizing:/cache
+  environment:
+    HPC_SIZING_CACHE: /cache
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
+# slurmd 24.11 starts each job step with clone(2) and namespace flags, which Docker's default
+# seccomp profile refuses without CAP_SYS_ADMIN ("fatal: clone: Operation not permitted").
+# Laptop-only cluster: the capability stays on the two compute containers.
+x-compute: &compute
+  <<: *node
+  command: ["slurmd"]
+  depends_on: [slurmctld]
+  cap_add: [SYS_ADMIN]
+  security_opt: ["seccomp=unconfined"]
+
+services:
+  slurmctld:
+    <<: *node
+    hostname: slurmctld
+    command: ["slurmctld"]
+  c1:
+    <<: *compute
+    hostname: c1
+  c2:
+    <<: *compute
+    hostname: c2
