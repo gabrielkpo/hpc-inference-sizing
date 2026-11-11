@@ -198,6 +198,7 @@ def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                 args.max_hours,
                 args.budget_usd,
                 price_hint=rental.dph_total,
+                count_instance_age=False,  # fresh rental: age 0, start_date not yet checked
             )
             print(f"guard ended: {result.reason}; destroyed: {result.destroyed}")
     except vast.VastError as err:

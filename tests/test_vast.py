@@ -290,3 +290,17 @@ def test_a_failed_creation_says_to_check_for_a_live_instance():
     with pytest.raises(VastError, match="504"):
         vast.rent(fake.client(), 1, RentSpec(), 1.5, confirm=True, log=logs.append)
     assert "vast list" in logs[-1]
+
+
+def test_a_fresh_rental_ignores_start_date():
+    # until start_date is checked on the test session, the rent path does not use it
+    fake = FakeVast(instance={"actual_status": "running", "dph_total": 1.3, "start_date": 1.0})
+    result = run_guard(fake, max_hours=0.5, count_instance_age=False)
+    assert result.elapsed_h == pytest.approx(0.5)
+
+
+def test_an_unexpected_error_in_the_guard_still_destroys():
+    fake = FakeVast(instance={"actual_status": "running", "dph_total": "not-a-number"})
+    result = run_guard(fake)
+    assert result.destroyed and "guard error" in result.reason
+    assert len(fake.calls("DELETE")) == 1

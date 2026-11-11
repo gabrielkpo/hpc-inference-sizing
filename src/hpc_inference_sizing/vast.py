@@ -279,6 +279,7 @@ def guard(
     poll_s: float = 60,
     dead_grace_s: float = 600,
     price_hint: float = 0.0,
+    count_instance_age: bool = True,
     log: Callable[[str], None] = print,
     clock: Callable[[], float] = time.monotonic,
     wall: Callable[[], float] = time.time,
@@ -287,9 +288,11 @@ def guard(
     """Watch the instance and destroy it at the deadline, the budget, on Ctrl-C or SIGTERM,
     or when it stays dead (exited, offline, unknown) for `dead_grace_s`.
 
-    Time counts from the instance's own start (`start_date`) when the API gives it, so a guard
-    restarted on a running instance does not grant it a new deadline; otherwise from the
-    guard's start. Spending uses the instance's price, or `price_hint` until it is read.
+    With `count_instance_age`, time counts from the instance's own start (`start_date`) when
+    the API gives it, so a guard restarted on a running instance does not grant it a new
+    deadline. `rent` turns it off for the guard of a fresh rental (age 0 by construction)
+    until the meaning of `start_date` is checked on the test session. Spending uses the
+    instance's price, or `price_hint` until it is read. Any unexpected error destroys too.
     """
     start = clock()
     price = price_hint
@@ -304,44 +307,48 @@ def guard(
     previous = {s: signal.signal(s, on_signal) for s in (signal.SIGINT, signal.SIGTERM)}
     reason = ""
     try:
-        while True:
-            elapsed = clock() - start + age_s
-            if stop["signal"]:
-                reason = f"{stop['signal']} received"
-                break
-            try:
-                info = client.show(instance_id)
-            except VastError as err:
-                log(f"guard: cannot read the instance ({err}); retrying")
-                info = None
-            if info is not None and not info and not _listed(client, instance_id):
-                reason = "instance no longer exists"
-                return GuardResult(reason, False, elapsed / 3600, elapsed / 3600 * price)
-            if info:
-                price = float(info.get("dph_total") or price)
-                if info.get("start_date"):
-                    age_s = max(age_s, wall() - float(info["start_date"]) - (clock() - start))
-                    elapsed = clock() - start + age_s
-                status = info.get("actual_status")
-                if status in DEAD_STATES:
-                    dead_since = dead_since if dead_since is not None else clock()
-                    if clock() - dead_since >= dead_grace_s:
-                        reason = f"instance {status} for {dead_grace_s:.0f} s"
-                        break
-                else:
-                    dead_since = None
-            spent = elapsed / 3600 * price
-            if elapsed >= max_hours * 3600:
-                reason = f"time limit ({max_hours} h)"
-                break
-            if spent >= budget_usd:
-                reason = f"budget ({spent:.2f} >= {budget_usd} USD)"
-                break
-            log(f"guard: {elapsed / 3600:.2f} h, {spent:.2f} USD, status {status}")
-            for _ in range(max(1, int(poll_s))):  # 1 s slices: Ctrl-C acts within a second
+        try:
+            while True:
+                elapsed = clock() - start + age_s
                 if stop["signal"]:
+                    reason = f"{stop['signal']} received"
                     break
-                sleep(min(1.0, poll_s))
+                try:
+                    info = client.show(instance_id)
+                except VastError as err:
+                    log(f"guard: cannot read the instance ({err}); retrying")
+                    info = None
+                if info is not None and not info and not _listed(client, instance_id):
+                    reason = "instance no longer exists"
+                    return GuardResult(reason, False, elapsed / 3600, elapsed / 3600 * price)
+                if info:
+                    price = float(info.get("dph_total") or price)
+                    if count_instance_age and info.get("start_date"):
+                        age_s = max(age_s, wall() - float(info["start_date"]) - (clock() - start))
+                        elapsed = clock() - start + age_s
+                    status = info.get("actual_status")
+                    if status in DEAD_STATES:
+                        dead_since = dead_since if dead_since is not None else clock()
+                        if clock() - dead_since >= dead_grace_s:
+                            reason = f"instance {status} for {dead_grace_s:.0f} s"
+                            break
+                    else:
+                        dead_since = None
+                spent = elapsed / 3600 * price
+                if elapsed >= max_hours * 3600:
+                    reason = f"time limit ({max_hours} h)"
+                    break
+                if spent >= budget_usd:
+                    reason = f"budget ({spent:.2f} >= {budget_usd} USD)"
+                    break
+                log(f"guard: {elapsed / 3600:.2f} h, {spent:.2f} USD, status {status}")
+                for _ in range(max(1, int(poll_s))):  # 1 s slices: Ctrl-C acts within a second
+                    if stop["signal"]:
+                        break
+                    sleep(min(1.0, poll_s))
+        except Exception as err:  # a bug or odd API data must not leave the instance running
+            reason = f"guard error: {type(err).__name__}: {err}"
+            log(reason)
         elapsed = clock() - start + age_s
         destroyed = destroy_with_retries(client, instance_id, log=log, sleep=sleep)
         return GuardResult(reason, destroyed, elapsed / 3600, elapsed / 3600 * price)
