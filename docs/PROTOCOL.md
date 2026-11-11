@@ -94,7 +94,8 @@ The **capacity** C(unit, profile, T) is the highest arrival rate whose step meet
 A target that no step meets, down to the lowest rate of the ladder, is **unreachable** for that
 unit and profile: C = 0, and the result says "unreachable on this hardware with this profile".
 Adding units does not make it reachable, since a unit's latency at low load does not depend on
-the number of units. The 1.5 s target was added at the freeze (amendment A3).
+the number of units. The sizing tool (§8) then reports "unreachable" instead of a GPU count. The
+1.5 s target was added at the freeze (amendment A3).
 
 ## 5. Configurations
 
@@ -173,7 +174,7 @@ Each hypothesis is confirmed or refuted by the numbers, and both outcomes are pu
 
 The sizing tool assumes independent units and perfect load spreading:
 
-> units = ⌈ λ_peak / C(unit, profile, T) ⌉, GPUs = units × GPUs per unit, cost = GPUs × price
+> units = ⌈ λ_peak / C(unit, profile, T) ⌉ (C = 0: unreachable, §4), GPUs = units × GPUs per unit, cost = GPUs × price
 > per GPU-hour × 730 h per month
 
 H4 tests this assumption on the only setup within budget: a 4-GPU node running **two TP2 units**
@@ -198,15 +199,16 @@ Not tested, and written as a limit: units on separate machines, smarter routing,
 |---|---|---|---|
 | Test session | 2 | the model loads, one unit answers, one short ladder, results leave the machine, the instance is destroyed | done on 2026-11-11: 1.22 $ |
 | Main campaign | 2 | §5.1 on both profiles (8 ladders, ≈ 6 h), §5.2 (≈ 7 short ladders, ≈ 3 h), repeats (≈ 1.5 h) | ≈ 10.5 h at 1.35 $/h, ≈ 14.2 $ |
-| Scaling and quality | 4 | §8 and §9 | ≈ 2 h at 3.00 $/h, ≈ 6 $ |
+| Scaling and quality | 4 | §8 and §9; disk ≥ 200 GB for both checkpoints (NVFP4 71 GB and FP8 121 GB) | ≈ 2 h at 3.00 $/h, ≈ 6 $ |
 | Bandwidth | | billed on top of the hourly price: weights (NVFP4 71 GB, FP8 121 GB), image | ≈ 0.8 $ |
 
 Prices are those seen on 2026-11-11 ([`VAST.md`](VAST.md)); the draft assumed 1.07 $/h. The
-estimate of 10.5 h predates the test session and is kept as the planning figure.
+estimate of 10.5 h predates the test session and is kept as the planning figure; the extra low
+step of each ladder (A3) adds about 50 min, about 1.1 $, for a total near 23 $.
 
 - **No rental** until the whole chain (SLURM jobs, load generator, client, sweep, save, resume)
   has run end to end locally.
-- **Hard budget: 20 €** in total; the plan above comes to ≈ 22 $, so the cap acts as a stop
+- **Hard budget: 20 €** in total; the plan above comes to ≈ 23 $, so the cap acts as a stop
   rule (amendment A4). The campaign script prints the amount spent after each block; if the
   projection passes the cap, repeats are dropped first, then lever values, never the base
   ladders. The guard does not count bandwidth: its `--budget-usd` keeps a margin for it.
@@ -244,7 +246,7 @@ before any campaign run.
 |---|---|---|
 | A1 | Freeze rule: "before the first run of the campaign" instead of "before the first paid GPU run" | The test session is paid and ran under the draft, as §10 intends |
 | A2 | `--gpu-memory-utilization 0.90` pinned in every server command (§5.1) | *After the test session.* vLLM 0.32 defaults to 0.92, while the memory model assumes 0.90; pinning the model's value keeps H6 a test of the predictions as published, instead of recomputing them after seeing the logs |
-| A3 | Target T = 1.5 s added (§4); unreachable targets defined (§4); H1 and the first half of H2 fall back to 1.5 s if 1 s is unreachable for every unit; the ladder starts at 0.125 req/s (§6) | *After the test session.* TP2 already had a TTFT p95 of 1.45 s at 0.25 req/s (12 requests), so 1 s may be unreachable. The 1 s target is kept; the extra target costs no run time, the extra low step about 3 min per ladder. The draft's 0.1 req/s start became 0.125 to keep the ladder's doubling |
-| A4 | Budget table at the prices seen on 2026-11-11, bandwidth added; the 20 € cap acts as a stop rule | *After the test session.* 2 × A40 cost 1.35 $/h, not 1.07; bandwidth is billed on top. The owner adds credit; the cut order of §10 is unchanged |
+| A3 | Target T = 1.5 s added (§4); unreachable targets defined (§4); H1 and the first half of H2 fall back to 1.5 s if 1 s is unreachable for every unit; the ladder starts at 0.125 req/s (§6) | *After the test session.* TP2 already had a TTFT p95 of 1.45 s at 0.25 req/s (12 requests), so 1 s may be unreachable. The 1 s target is kept; the extra target costs no run time, the extra low step about 3 min per ladder (about 50 min, 1.1 $ over the campaign). An unreachable target gives "unreachable" in the sizing tool, not a GPU count. The draft's 0.1 req/s start became 0.125 to keep the ladder's doubling |
+| A4 | Budget table at the prices seen on 2026-11-11, bandwidth added; the 20 € cap acts as a stop rule; the 4-GPU node needs ≥ 200 GB of disk | *After the test session.* 2 × A40 cost 1.35 $/h, not 1.07; bandwidth is billed on top. The owner adds credit; the cut order of §10 is unchanged |
 | A5 | The 2-GPU matrix runs in one session on one host | Enforces the one-host rule; splitting risks losing the host between sessions |
 | A6 | Values marked *(proposed)* in the draft are kept unchanged (§3.2, §5.2, §6 apart from A3, §7 apart from A3, §9); the output-length check of §3.1 is marked done | The test session gave no reason to change them |
