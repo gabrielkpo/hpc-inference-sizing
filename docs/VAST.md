@@ -18,14 +18,14 @@ write it.
 | A bug in the guard does not leave the instance running | Any unexpected error in the guard loop destroys the instance before the guard exits |
 | A failed destroy is loud | Five attempts, then `DESTROY FAILED ... destroy it by hand at https://cloud.vast.ai/instances/` |
 
-What is not proven until the test session (steps 1 and 4 below):
+Checked on the test session of 2026-11-11 ([`TEST-SESSION.md`](TEST-SESSION.md)):
 
-- that the per-instance key is allowed to destroy its own instance (Vast.ai documents `vastai
-  destroy instance $CONTAINER_ID` with it, not the REST call): checked first, on a cheap short
-  rental (below);
-- that an instance's `start_date` is its creation time: a guard restarted with `vast guard`
-  counts the instance's age from it, while the guard started by `vast rent` counts from zero
-  until this is checked (`vast show` on the test instance).
+- the per-instance key is allowed to destroy its own instance: a 1-GPU instance without a guard
+  destroyed itself about 16 minutes after it started, through the Python path of the script;
+- an instance's `start_date` is its creation time, so a guard restarted with `vast guard` counts
+  the right age (the guard started by `vast rent` still counts from zero);
+- the guard does not count bandwidth, which Vast.ai bills on top of the hourly price: 1.03 USD
+  counted against 1.22 USD billed for that session. Keep a margin in `--budget-usd`.
 
 ## Commands
 
@@ -46,6 +46,9 @@ uv run --env-file .env hpc-sizing vast destroy ID
 On a laptop, run the guard under `caffeinate -i` (macOS) so it does not sleep during the rental.
 
 ## Test session (protocol §10, ≈ 1 h 15, ≈ 2 USD)
+
+Done on 2026-11-11 (45 min on the 2 × A40, 1.22 USD in all): outcomes in
+[`TEST-SESSION.md`](TEST-SESSION.md). The runbook below is kept for a rerun.
 
 Owner, before (done on 2026-11-11): Vast.ai account, prepaid credit with automatic top-up off,
 API key in `.env`, SSH public key on the website. Each step below is run, its result reported to
@@ -82,12 +85,13 @@ caffeinate -i uv run --env-file .env hpc-sizing vast rent --offer ID --max-price
 with the ssh command from `$V show INSTANCE`:
 
 ```bash
-ssh -p PORT root@HOST 'curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh -o node-setup.sh && nohup bash node-setup.sh > node-setup.log 2>&1 < /dev/null &'
+ssh -p PORT root@HOST 'curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh -o node-setup.sh && { nohup bash node-setup.sh > node-setup.log 2>&1 < /dev/null & }'
 ssh -p PORT root@HOST 'tail -n 20 node-setup.log'   # again until "== ready"
 ```
 
 Long steps run under `nohup` with a log, so an ssh drop (laptop sleep, network) does not kill
-them halfway through paid time.
+them halfway through paid time. The braces matter: without them the shell backgrounds the whole
+`curl && nohup ...` list, which keeps the ssh session open until the setup ends.
 
 [`scripts/node-setup.sh`](../scripts/node-setup.sh) prints the GPUs, driver, PCIe generation and
 vLLM version, installs git and uv, clones the repository, installs the bench, fetches PIAF and
@@ -99,9 +103,9 @@ again: done steps are skipped.
 60 s at 0.25, 0.5, 1 and 2 req/s, the same server command as the campaign.
 
 ```bash
-ssh -p PORT root@HOST 'cd hpc-inference-sizing && nohup uv run hpc-sizing campaign run \
+ssh -p PORT root@HOST 'cd hpc-inference-sizing && { nohup uv run hpc-sizing campaign run \
   --matrix campaign/test-session.toml --max-hours 0.5 --meta gpu=2xA40 --meta host=HOST_ID \
-  > ../campaign.log 2>&1 < /dev/null &'
+  > ../campaign.log 2>&1 < /dev/null & }'
 ssh -p PORT root@HOST 'tail -n 30 campaign.log'   # again until the run is written
 scp -P PORT -r root@HOST:hpc-inference-sizing/runs/scratch/test-session runs/scratch/
 ```
@@ -120,7 +124,8 @@ owner's decision.
 | 2 × A40, verified, reliability ≥ 0.98 | 1.35 to 1.54 | five matching offers, all on hosts in Belgium |
 | 4 × A40, verified | 3.00 | one offer |
 
-The protocol budget (§10) assumed 1.07 USD/h for 2 × A40. At these prices the plan comes to about
+Bandwidth is billed on top of these prices (about 0.2 USD for the test session, mostly the 70 GB
+of weights). The protocol budget (§10) assumed 1.07 USD/h for 2 × A40. At these prices the plan comes to about
 1.35 (test) + 14.2 (2-GPU campaign) + 6.0 (4-GPU, 2 h) ≈ 21.5 USD, above the 16 USD of the plan
 and close to the 20 EUR cap. Whether to cut the plan (fewer repeats or levers, per §10) is decided
 at the protocol freeze.
