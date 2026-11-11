@@ -45,6 +45,9 @@ class FakeVast:
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         path = request.url.path
+        if path.startswith("/api/") and not path.endswith("/"):
+            # the live API moves paths without their trailing slash, with an HTML page
+            return httpx.Response(301, text="<html>301 Moved Permanently</html>")
         if path == "/api/v0/bundles/":
             q = json.loads(request.url.params["q"])
             offers = self.offers
@@ -65,11 +68,11 @@ class FakeVast:
                 self.instance = None
                 return httpx.Response(200, json={"success": True})
             return httpx.Response(200, json={"instances": self.instance})
-        if path == "/api/v1/instances":
+        if path == "/api/v1/instances/":
             listed = [{"id": 777}] if self.listed else []
             return httpx.Response(200, json={"instances": listed})
-        if path == "/api/v0/users/current":
-            return httpx.Response(200, json={"balance": 19.5})
+        if path == "/api/v0/users/current/":
+            return httpx.Response(200, json={"balance": 0, "credit": 19.5})
         return httpx.Response(404)
 
     def client(self, key=KEY):
@@ -304,3 +307,23 @@ def test_an_unexpected_error_in_the_guard_still_destroys():
     result = run_guard(fake)
     assert result.destroyed and "guard error" in result.reason
     assert len(fake.calls("DELETE")) == 1
+
+
+def test_the_instance_list_is_read_from_the_live_path():
+    assert FakeVast(listed=True).client().instances() == [{"id": 777}]
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(301, text="<html>301 Moved Permanently</html>"),
+        httpx.Response(200, text="<html>maintenance</html>"),
+        httpx.Response(200, json=[]),
+    ],
+)
+def test_a_redirect_or_a_non_json_answer_is_an_error_not_an_empty_result(response):
+    client = VastClient(api_key=KEY, transport=httpx.MockTransport(lambda _: response))
+    with pytest.raises(VastError):
+        client.instances()
+    # the guard cannot confirm the instance is gone, so it keeps guarding
+    assert vast._listed(client, 777)

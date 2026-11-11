@@ -180,12 +180,17 @@ class VastClient:
             resp = self._http.request(method, path, headers=headers, **kwargs)
         except httpx.HTTPError as err:
             raise VastError(f"{method} {path}: {type(err).__name__}") from err
-        if resp.status_code >= 400:
+        # A redirect (the API moves paths without their trailing slash) or a non-JSON answer is
+        # an error, never an empty result: an empty instance list would end the guard.
+        if resp.status_code >= 300:
             raise VastError(f"{method} {path}: HTTP {resp.status_code}: {resp.text[:200]}")
         try:
-            return resp.json()
+            data = resp.json()
         except ValueError:
-            return {}
+            raise VastError(f"{method} {path}: answer is not JSON") from None
+        if not isinstance(data, dict):
+            raise VastError(f"{method} {path}: unexpected answer {str(data)[:200]}")
+        return data
 
     # Search works without a key (public offers); the key, when set, is sent anyway.
     def search(self, query: OfferQuery) -> list[Offer]:
@@ -219,13 +224,17 @@ class VastClient:
         return self._request("GET", f"/api/v0/instances/{instance_id}/").get("instances") or {}
 
     def instances(self) -> list[dict]:
-        return self._request("GET", "/api/v1/instances", params={"limit": 25}).get("instances", [])
+        return self._request("GET", "/api/v1/instances/", params={"limit": 25}).get("instances", [])
 
     def destroy(self, instance_id: int) -> None:
         self._request("DELETE", f"/api/v0/instances/{instance_id}/")
 
     def balance(self) -> float:
-        return float(self._request("GET", "/api/v0/users/current").get("balance", 0.0))
+        """Prepaid credit left (`credit`; the API's `balance` is the amount owed)."""
+        data = self._request("GET", "/api/v0/users/current/")
+        if data.get("credit") is None:
+            raise VastError("account answer has no credit field")
+        return float(data["credit"])
 
 
 @dataclass(frozen=True)
