@@ -1,15 +1,27 @@
 import json
+import os
+import subprocess
 import time
 from pathlib import Path
 
 import pytest
 
-from hpc_inference_sizing.campaign import Limits, load_matrix, run_campaign, run_one, status
+from hpc_inference_sizing import campaign
+from hpc_inference_sizing.campaign import (
+    Limits,
+    load_matrix,
+    run_campaign,
+    run_one,
+    status,
+    stop_server,
+)
 
 REPO = Path(__file__).resolve().parent.parent
 
 
-def write_matrix(tmp_path, command="", url="http://127.0.0.1:9", health_timeout=0.5):
+def write_matrix(
+    tmp_path, command="", url="http://127.0.0.1:9", health_timeout=0.5, sync_command=""
+):
     (tmp_path / "campaign").mkdir()
     path = tmp_path / "campaign" / "m.toml"
     path.write_text(
@@ -17,6 +29,7 @@ def write_matrix(tmp_path, command="", url="http://127.0.0.1:9", health_timeout=
 name = "test"
 results_dir = "results/test"
 model = "toy"
+sync_command = "{sync_command}"
 profiles = ["rag", "chat"]
 targets_s = [1.0, 3.0]
 
@@ -107,3 +120,67 @@ def test_retry_failed_reruns_only_failed_runs(tmp_path):
         runner=lambda matrix, run_id, meta, log: ran.append(run_id),
     )
     assert ran == ["dp_ep-chat"]
+
+
+def test_the_campaign_clock_adds_up_across_processes(tmp_path):
+    # a SLURM array runs each run in its own process: the caps must hold for the whole array
+    clock = tmp_path / "campaign-clock.json"
+    first = Limits(max_hours=1.0, clock_file=clock, started_at=time.monotonic() - 3000)
+    assert first.reason_to_stop() is None
+    first.save()
+    second = Limits(max_hours=1.0, clock_file=clock, started_at=time.monotonic() - 700)
+    assert "time limit" in second.reason_to_stop()
+
+
+def test_run_campaign_saves_the_clock_after_each_run(tmp_path):
+    m = write_matrix(tmp_path)
+    clock = tmp_path / "clock.json"
+    run_campaign(m, Limits(clock_file=clock), {}, log=lambda _: None, runner=lambda *a: True)
+    assert json.loads(clock.read_text())["elapsed_s"] >= 0
+
+
+def test_a_budget_without_a_price_is_refused():
+    with pytest.raises(ValueError, match="price"):
+        Limits(budget_usd=15.0)
+
+
+def test_a_crash_during_the_sweep_is_recorded_and_does_not_raise(tmp_path, monkeypatch):
+    m = write_matrix(tmp_path)
+    monkeypatch.setattr(campaign, "wait_healthy", lambda *a: 0.0)
+
+    def broken_piaf():
+        raise RuntimeError("server went away")
+
+    monkeypatch.setattr("hpc_inference_sizing.bench.data.load_piaf", broken_piaf)
+    assert run_one(m, "tp-rag", {}, log=lambda _: None) is False
+    failure = json.loads((m.results_dir / "tp-rag.failed.json").read_text())
+    assert failure["stage"] == "sweep" and "server went away" in failure["error"]
+
+
+def test_results_leave_the_node_even_after_a_failed_run(tmp_path):
+    m = write_matrix(
+        tmp_path, command="false", health_timeout=30, sync_command="touch {results_dir}/synced"
+    )
+    run_one(m, "tp-rag", {}, log=lambda _: None)
+    assert (m.results_dir / "synced").exists()
+
+
+def test_stop_server_also_stops_the_workers(tmp_path):
+    pid_file = tmp_path / "worker.pid"
+    proc = subprocess.Popen(
+        ["sh", "-c", f"sleep 300 & echo $! > {pid_file}; wait"], start_new_session=True
+    )
+    for _ in range(50):
+        if pid_file.exists() and pid_file.read_text().strip():
+            break
+        time.sleep(0.1)
+    worker = int(pid_file.read_text())
+    stop_server(proc)
+    assert proc.returncode is not None
+    for _ in range(50):
+        try:
+            os.kill(worker, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(0.1)
+    pytest.fail("the worker outlived stop_server")

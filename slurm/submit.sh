@@ -7,5 +7,5 @@ MATRIX=${1:?usage: slurm/submit.sh MATRIX [campaign run args...]}
 shift
 N=$(uv run --no-dev -q hpc-sizing campaign list --matrix "$MATRIX" | wc -l | tr -d ' ')
 mkdir -p runs/slurm
-sbatch --parsable --array="0-$((N - 1))%1" \
-  --export=ALL,MATRIX="$MATRIX",CAMPAIGN_ARGS="$*" slurm/campaign.sbatch
+# Arguments go to the batch script as arguments, not through --export (which splits on commas).
+sbatch --parsable --array="0-$((N - 1))%1" slurm/campaign.sbatch "$MATRIX" "$@"

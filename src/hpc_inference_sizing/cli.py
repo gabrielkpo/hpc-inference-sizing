@@ -107,9 +107,15 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         print(f"pending ({len(st.pending)}): {' '.join(st.pending)}")
         return
     try:
+        limits = Limits(
+            args.max_hours,
+            args.budget_usd,
+            args.price_per_hour,
+            clock_file=matrix.results_dir / "campaign-clock.json",
+        )
         final = run_campaign(
             matrix,
-            Limits(args.max_hours, args.budget_usd, args.price_per_hour),
+            limits,
             _parse_meta(args.meta, parser),
             only=args.only or None,
             retry_failed=args.retry_failed,

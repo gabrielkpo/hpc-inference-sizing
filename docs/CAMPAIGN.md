@@ -39,10 +39,15 @@ uv run hpc-sizing campaign run    --matrix campaign/a40-x2.toml \
 
 - **Resume.** A run whose result file exists is skipped, so an interrupted campaign is restarted
   with the same command.
-- **Failure is a result.** A unit whose server does not become healthy is written to
-  `RUN.failed.json` with the reason and the server log path; `--retry-failed` runs it again.
-- **Stop rules.** Before each run, the campaign stops if `--max-hours` or `--budget-usd` (from
-  `--price-per-hour`) is reached, and prints the amount spent after each run.
+- **Failure is a result.** A unit whose server does not become healthy, or a run that crashes
+  during the sweep, is written to `RUN.failed.json` with the stage (`start` or `sweep`), the
+  error and the server log path, and the campaign goes on; `--retry-failed` runs it again.
+- **Stop rules.** Before each run, the campaign stops if `--max-hours` or `--budget-usd` is
+  reached, and prints the amount spent after each run. A budget needs `--price-per-hour`. The
+  campaign time is kept in `RESULTS_DIR/campaign-clock.json`, so the caps hold for a whole SLURM
+  array (one process per run) and across a restart; delete the file to start a new budget.
+- **Clean stop.** The server runs in its own process group, and the whole group is stopped after
+  each run, so no worker keeps GPU memory for the next unit.
 - **Results leave the node** after each run when the matrix sets `sync_command`.
 
 ## SLURM (ADR 0002)

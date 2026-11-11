@@ -17,7 +17,9 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import shlex
+import signal
 import subprocess
 import time
 import tomllib
@@ -63,13 +65,21 @@ class Matrix:
         return shlex.split(self.server_command.format(model=self.model, flags=self.units[unit]))
 
 
+def _project_root(matrix_path: Path) -> Path:
+    """The first parent of the matrix holding a pyproject.toml, else the matrix's folder."""
+    for parent in matrix_path.resolve().parents:
+        if (parent / "pyproject.toml").exists():
+            return parent
+    return matrix_path.resolve().parent
+
+
 def load_matrix(path: Path) -> Matrix:
     raw = tomllib.loads(path.read_text())
     server = raw.pop("server", {})
     units = {name: spec.get("flags", "") for name, spec in raw.pop("units").items()}
     results_dir = Path(raw.pop("results_dir"))
     if not results_dir.is_absolute():
-        results_dir = path.parent.parent / results_dir  # relative to the repository root
+        results_dir = _project_root(path) / results_dir
     return Matrix(
         results_dir=results_dir,
         server_command=server.get("command", ""),
@@ -116,30 +126,64 @@ def wait_healthy(url: str, timeout_s: float, proc: subprocess.Popen | None) -> f
 
 
 def stop_server(proc: subprocess.Popen | None) -> None:
-    if proc is None or proc.poll() is not None:
+    """Stop the server and every process it started (vLLM workers hold GPU memory).
+
+    The server runs in its own session (`start_new_session=True`), so its process group id is
+    its pid: the signal reaches the workers too, even when the parent has already exited.
+    """
+    if proc is None:
         return
-    proc.terminate()
+    try:
+        os.killpg(proc.pid, signal.SIGTERM)
+    except (ProcessLookupError, PermissionError):
+        proc.poll()
+        return  # the whole group is already gone
     try:
         proc.wait(timeout=60)
     except subprocess.TimeoutExpired:
-        proc.kill()
-        proc.wait()
+        pass
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)  # workers that outlived the parent, if any
+    except (ProcessLookupError, PermissionError):
+        pass
+    proc.wait()
 
 
 @dataclass
 class Limits:
-    """Stop rules of protocol §10: wall-clock and spending caps for the whole campaign."""
+    """Stop rules of protocol §10: wall-clock and spending caps for the whole campaign.
+
+    A SLURM job array runs each run in its own process, so the campaign time is kept in
+    `clock_file` (in the results folder): each process adds its own time to it. Delete the
+    file to start a new budget.
+    """
 
     max_hours: float | None = None
     budget_usd: float | None = None
     price_per_hour_usd: float = 0.0
+    clock_file: Path | None = None
     started_at: float = field(default_factory=time.monotonic)
+    prior_s: float = 0.0
+
+    def __post_init__(self) -> None:
+        if self.budget_usd is not None and self.price_per_hour_usd <= 0:
+            raise ValueError("a budget needs the instance price (--price-per-hour)")
+        if self.clock_file is not None and self.clock_file.exists():
+            self.prior_s = float(json.loads(self.clock_file.read_text())["elapsed_s"])
+
+    def elapsed_s(self) -> float:
+        return self.prior_s + time.monotonic() - self.started_at
+
+    def save(self) -> None:
+        if self.clock_file is not None:
+            self.clock_file.parent.mkdir(parents=True, exist_ok=True)
+            self.clock_file.write_text(json.dumps({"elapsed_s": round(self.elapsed_s(), 1)}))
 
     def spent_usd(self) -> float:
-        return (time.monotonic() - self.started_at) / 3600 * self.price_per_hour_usd
+        return self.elapsed_s() / 3600 * self.price_per_hour_usd
 
     def reason_to_stop(self) -> str | None:
-        hours = (time.monotonic() - self.started_at) / 3600
+        hours = self.elapsed_s() / 3600
         if self.max_hours is not None and hours >= self.max_hours:
             return f"time limit reached ({hours:.2f} h >= {self.max_hours} h)"
         if self.budget_usd is not None and self.spent_usd() >= self.budget_usd:
@@ -158,43 +202,57 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
     command = matrix.command_for(unit)
     proc = None
     log_path = matrix.results_dir / "logs" / f"{run_id}.server.log"
+
+    def record_failure(stage: str, err: Exception) -> bool:
+        failure = {
+            "run_id": run_id,
+            "unit": unit,
+            "flags": matrix.units[unit],
+            "stage": stage,
+            "error": f"{type(err).__name__}: {err}",
+            "server_log": str(log_path) if command else None,
+        }
+        (matrix.results_dir / f"{run_id}.failed.json").write_text(json.dumps(failure, indent=1))
+        log(f"[{run_id}] FAILED ({stage}): {err}")
+        return False
+
     try:
         if command:
             log_path.parent.mkdir(parents=True, exist_ok=True)
             log(f"[{run_id}] starting: {shlex.join(command)}")
-            proc = subprocess.Popen(command, stdout=log_path.open("w"), stderr=subprocess.STDOUT)
+            with log_path.open("w") as server_log:  # the child keeps its own copy of the fd
+                proc = subprocess.Popen(
+                    command,
+                    stdout=server_log,
+                    stderr=subprocess.STDOUT,
+                    start_new_session=True,  # own process group, see stop_server
+                )
         try:
             cold_start_s = wait_healthy(matrix.server_url, matrix.health_timeout_s, proc)
         except RuntimeError as err:
-            failure = {
-                "run_id": run_id,
-                "unit": unit,
-                "flags": matrix.units[unit],
-                "error": str(err),
-                "server_log": str(log_path) if command else None,
-            }
-            (matrix.results_dir / f"{run_id}.failed.json").write_text(json.dumps(failure, indent=1))
-            log(f"[{run_id}] FAILED to start: {err}")
-            return False
+            return record_failure("start", err)
         log(f"[{run_id}] server ready after {cold_start_s:.0f} s")
 
-        workload = Workload(load_piaf(), MistralTokenizer(), PROFILES[profile], seed=0)
-        bench = Bench(
-            matrix.server_url,
-            matrix.served_model,
-            workload,
-            matrix.step_duration_s,
-            min_requests=matrix.min_requests,
-        )
-        result = asyncio.run(
-            bench.sweep(
-                matrix.targets_s,
-                start_rate=matrix.start_rate,
-                max_rate=matrix.max_rate,
-                bisect_steps=matrix.bisect_steps,
-                tpot_bound_s=matrix.tpot_bound_ms / 1000,
+        try:
+            workload = Workload(load_piaf(), MistralTokenizer(), PROFILES[profile], seed=0)
+            bench = Bench(
+                matrix.server_url,
+                matrix.served_model,
+                workload,
+                matrix.step_duration_s,
+                min_requests=matrix.min_requests,
             )
-        )
+            result = asyncio.run(
+                bench.sweep(
+                    matrix.targets_s,
+                    start_rate=matrix.start_rate,
+                    max_rate=matrix.max_rate,
+                    bisect_steps=matrix.bisect_steps,
+                    tpot_bound_s=matrix.tpot_bound_ms / 1000,
+                )
+            )
+        except Exception as err:  # a crash mid-run must not end the campaign on paid time
+            return record_failure("sweep", err)
         run_meta = {
             "campaign": matrix.name,
             "run_id": run_id,
@@ -240,6 +298,7 @@ def run_campaign(
         if retry_failed:
             (matrix.results_dir / f"{run_id}.failed.json").unlink(missing_ok=True)
         runner(matrix, run_id, meta, log)
+        limits.save()
         if limits.price_per_hour_usd:
             log(f"spent so far: {limits.spent_usd():.2f} USD")
     return status(matrix)
