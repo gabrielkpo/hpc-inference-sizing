@@ -37,7 +37,7 @@ built yet.
 flowchart LR
     P["docs/PROTOCOL.md<br/>(frozen before paid runs)"] --> J["SLURM job<br/>one load step"]
     J --> W["Load generator<br/>RAG / chat profiles,<br/>Poisson arrivals"]
-    W --> V["vLLM unit on 2 GPUs<br/>TP2 / EP2 / PP2"]
+    W --> V["vLLM unit on 2 GPUs<br/>TP2 / EP2 / PP2 / DP2+EP"]
     V --> C["Streaming client<br/>TTFT, TPOT, errors"]
     V --> M["/metrics scraper<br/>queue, KV cache"]
     C --> S{"SLO met?<br/>TTFT p95, TPOT p95,<br/>0 errors"}
@@ -103,7 +103,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 | Step | Content | State |
 |---|---|---|
 | 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | done; protocol is a draft until the freeze |
-| 2 Memory model | Weights and MLA KV cache per GPU for each split, tested; predictions in [`docs/MEMORY.md`](docs/MEMORY.md) | in review |
+| 2 Memory model | Weights and MLA KV cache per GPU for each split, tested; predictions in [`docs/MEMORY.md`](docs/MEMORY.md) | done |
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model | planned |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved | planned |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed | planned |
