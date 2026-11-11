@@ -21,7 +21,8 @@ write it.
 Checked on the test session of 2026-11-11 ([`TEST-SESSION.md`](TEST-SESSION.md)):
 
 - the per-instance key is allowed to destroy its own instance: a 1-GPU instance without a guard
-  destroyed itself about 16 minutes after it started, through the Python path of the script;
+  destroyed itself about 16 minutes after it started (that image has no curl, so the Python path
+  of the script did it; inferred, as the image gave no SSH);
 - an instance's `start_date` is its creation time, so a guard restarted with `vast guard` counts
   the right age (the guard started by `vast rent` still counts from zero);
 - the guard does not count bandwidth, which Vast.ai bills on top of the hourly price: 1.03 USD

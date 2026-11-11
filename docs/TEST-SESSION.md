@@ -23,7 +23,7 @@ The run file and the server logs stay out of Git (`runs/scratch/`), like the dry
 
 | Step | Outcome |
 |---|---|
-| 1. Backstop check: 1-GPU node, `python:3.12-slim`, no guard, deadline 0.1 h | The instance destroyed itself about 16 min after it started (960 s, as set), through the Python fallback of the start script (no curl in that image) and the per-instance key. `start_date` is the creation time. No SSH on that image. Cost 0.01 USD |
+| 1. Backstop check: 1-GPU node, `python:3.12-slim`, no guard, deadline 0.1 h | The instance destroyed itself about 16 min after it started (960 s, as set), with the per-instance key; the image has no curl, so the Python path of the script must have done it (not observed: no SSH on that image). `start_date` is the creation time. Cost 0.01 USD |
 | 2. Rent the 2 × A40 with the guard (1.5 h, 2.5 USD) | Running about 80 s after the rental; SSH works on the vLLM image; the backstop is armed inside |
 | 3. Node setup | The bench installed in seconds; all weights (13 shards, 70.85 GB) downloaded in 4 min 35 s |
 | 4. One unit under load, then a start check of the other three | Below |
@@ -42,9 +42,9 @@ runs on `TRITON_MLA`.
 
 All four 2-GPU units start and answer a request ("Paris" to a one-word question):
 
-| Unit | Start to healthy | Weights loaded per GPU |
+| Unit | Start to healthy (EP2, PP2, DP2+EP: start-check script, from `vllm serve`) | Weights loaded per GPU |
 |---|---|---|
-| TP2 | 229 s (first start, with `torch.compile`) | 33.34 GiB |
+| TP2 | 229 s (campaign runner: from launch, including uv start-up) | 33.34 GiB |
 | EP2 | 175 s | 33.34 GiB |
 | PP2 | 145 s | 33.51 GiB |
 | DP2+EP | 176 s | 35.72 GiB |
@@ -94,8 +94,11 @@ the protocol freeze; the prediction table in `MEMORY.md` stays as it was publish
 
 The ladder stopped at 1 req/s, the first step to break the loosest target. Indicative capacity:
 0.5 req/s at T = 2 s and T = 3 s; no tested rate met T = 1 s (p95 1.45 s already at 0.25 req/s).
-At 1 req/s the time per output token broke first (158 ms against the 67 ms bound), while the
-cache was far from full. With 12 to 61 requests per step, the p95 values rest on few requests.
+At 1 req/s the server fell behind: vLLM's log shows the running requests climbing to 51 and the
+cache usage to 91.7 % then 96.5 % within the step, while TTFT (3.49 s) and TPOT (158 ms against
+the 67 ms bound) both broke. This ladder therefore cannot say whether per-token speed or cache
+space limits TP2 first; the campaign's finer steps and `/metrics` are meant to. With 12 to 61
+requests per step, the p95 values rest on few requests.
 
 ## What changes for the campaign
 
