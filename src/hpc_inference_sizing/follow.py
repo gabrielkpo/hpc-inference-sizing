@@ -277,10 +277,14 @@ def follow(
                         event(kind, f"ALERT campaign {what} for {minutes:.0f} min; {action}")
                     elif not now and kind in alerted:
                         alerted.discard(kind)
-                        event("recovered", f"{kind.replace('_', ' ')} resolved: campaign moving")
+                        state = "moving again" if running else "no longer running"
+                        event(
+                            "recovered", f"{kind.replace('_', ' ')} alert cleared: campaign {state}"
+                        )
                     elif (
                         now
                         and safety_destroy
+                        and destroy_when_done  # keep following when nothing may be destroyed
                         and (
                             (kind == "never_started" and waited >= deadline + alert_grace_s)
                             or (kind == "stalled" and (age or 0) >= deadline + alert_grace_s)

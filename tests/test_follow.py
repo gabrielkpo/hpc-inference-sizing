@@ -487,17 +487,19 @@ def test_a_stall_that_resolves_is_not_destroyed(tmp_path):
 def test_no_destroy_also_disables_the_safety_destroys(tmp_path):
     clock = Clock()
     client = FakeClient()
+    remote = ScriptedRemote([(False, {})] * 20 + [(True, {}), (False, {}), (False, {})])
     result = follow(
         client,
         7,
         matrix(tmp_path),
-        lambda info: ScriptedRemote([(False, {})] * 100),
+        lambda info: remote,
         log=lambda _: None,
         sleep=clock.sleep,
         clock=clock,
         destroy_when_done=False,
     )
-    assert result.reason == "campaign never started" and client.destroyed == 0  # after grace
+    # nothing may be destroyed, so it keeps following past the grace period, to the end
+    assert result.reason == "campaign ended" and client.destroyed == 0
 
 
 def test_ssh_remote_reads_the_log_age(tmp_path, fake_ssh):
