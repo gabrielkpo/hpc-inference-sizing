@@ -184,3 +184,22 @@ def test_stop_server_also_stops_the_workers(tmp_path):
             return
         time.sleep(0.1)
     pytest.fail("the worker outlived stop_server")
+
+
+def test_the_clock_is_saved_when_a_run_is_interrupted(tmp_path):
+    m = write_matrix(tmp_path)
+    clock = tmp_path / "clock.json"
+
+    def interrupted(*_):
+        raise KeyboardInterrupt
+
+    with pytest.raises(KeyboardInterrupt):
+        run_campaign(m, Limits(clock_file=clock), {}, log=lambda _: None, runner=interrupted)
+    assert "elapsed_s" in json.loads(clock.read_text())
+
+
+def test_an_unreadable_clock_is_a_clear_error(tmp_path):
+    clock = tmp_path / "clock.json"
+    clock.write_text("{}")
+    with pytest.raises(ValueError, match="unreadable campaign clock"):
+        Limits(clock_file=clock)

@@ -169,7 +169,10 @@ class Limits:
         if self.budget_usd is not None and self.price_per_hour_usd <= 0:
             raise ValueError("a budget needs the instance price (--price-per-hour)")
         if self.clock_file is not None and self.clock_file.exists():
-            self.prior_s = float(json.loads(self.clock_file.read_text())["elapsed_s"])
+            try:
+                self.prior_s = float(json.loads(self.clock_file.read_text())["elapsed_s"])
+            except (ValueError, KeyError, TypeError) as err:
+                raise ValueError(f"unreadable campaign clock {self.clock_file}: {err}") from err
 
     def elapsed_s(self) -> float:
         return self.prior_s + time.monotonic() - self.started_at
@@ -177,7 +180,9 @@ class Limits:
     def save(self) -> None:
         if self.clock_file is not None:
             self.clock_file.parent.mkdir(parents=True, exist_ok=True)
-            self.clock_file.write_text(json.dumps({"elapsed_s": round(self.elapsed_s(), 1)}))
+            tmp = self.clock_file.with_suffix(".tmp")
+            tmp.write_text(json.dumps({"elapsed_s": round(self.elapsed_s(), 1)}))
+            os.replace(tmp, self.clock_file)  # atomic: a kill mid-write leaves the old clock
 
     def spent_usd(self) -> float:
         return self.elapsed_s() / 3600 * self.price_per_hour_usd
@@ -297,8 +302,10 @@ def run_campaign(
             break
         if retry_failed:
             (matrix.results_dir / f"{run_id}.failed.json").unlink(missing_ok=True)
-        runner(matrix, run_id, meta, log)
-        limits.save()
+        try:
+            runner(matrix, run_id, meta, log)
+        finally:
+            limits.save()  # also when the run is interrupted: its time was paid for
         if limits.price_per_hour_usd:
             log(f"spent so far: {limits.spent_usd():.2f} USD")
     return status(matrix)
