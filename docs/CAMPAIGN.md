@@ -22,6 +22,7 @@ flowchart LR
 | File | Purpose |
 |---|---|
 | [`campaign/a40-x2.toml`](../campaign/a40-x2.toml) | Main campaign, protocol §5.1 and §6: TP2, EP2, PP2, DP2+EP x RAG, chat on 2 x A40, served by vLLM |
+| [`campaign/test-session.toml`](../campaign/test-session.toml) | Test session, protocol §10: TP2 x RAG, a short ladder, same server command as the campaign; checks the path on the real node |
 | [`campaign/local-dryrun.toml`](../campaign/local-dryrun.toml) | Laptop dry run: the runner starts and stops llama.cpp itself for two units |
 | [`campaign/slurm-dryrun.toml`](../campaign/slurm-dryrun.toml) | Local SLURM cluster dry run: jobs in containers, llama.cpp running on the host |
 

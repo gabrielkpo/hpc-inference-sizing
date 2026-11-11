@@ -18,7 +18,7 @@ write it.
 | A bug in the guard does not leave the instance running | Any unexpected error in the guard loop destroys the instance before the guard exits |
 | A failed destroy is loud | Five attempts, then `DESTROY FAILED ... destroy it by hand at https://cloud.vast.ai/instances/` |
 
-What is not proven until the test session:
+What is not proven until the test session (steps 1 and 4 below):
 
 - that the per-instance key is allowed to destroy its own instance (Vast.ai documents `vastai
   destroy instance $CONTAINER_ID` with it, not the REST call): checked first, on a cheap short
@@ -29,34 +29,82 @@ What is not proven until the test session:
 
 ## Commands
 
+The key lives in `.env` (ignored by Git, see `.env.example`); the CLI does not read that file
+by itself, so commands that need the key load it with `uv run --env-file .env` (or the key is
+exported in the shell).
+
 ```bash
-uv run hpc-sizing vast offers --gpu A40 --num-gpus 2           # no key needed
-uv run hpc-sizing vast balance                                  # key needed from here on
-uv run hpc-sizing vast rent --offer ID --max-price 1.5 --max-hours 1 --budget-usd 2   # plan only
-uv run hpc-sizing vast rent --offer ID --max-price 1.5 --max-hours 1 --budget-usd 2 --yes
-uv run hpc-sizing vast show ID      # status, price, ssh command
-uv run hpc-sizing vast list
-uv run hpc-sizing vast destroy ID
+uv run hpc-sizing vast offers --gpu A40 --num-gpus 2           # no key needed; --gpu any works
+uv run --env-file .env hpc-sizing vast balance                  # key needed from here on
+uv run --env-file .env hpc-sizing vast rent --offer ID --max-price 1.5 --max-hours 1 --budget-usd 2   # plan only
+uv run --env-file .env hpc-sizing vast rent --offer ID --max-price 1.5 --max-hours 1 --budget-usd 2 --yes
+uv run --env-file .env hpc-sizing vast show ID      # status, price, ssh command
+uv run --env-file .env hpc-sizing vast list
+uv run --env-file .env hpc-sizing vast destroy ID
 ```
 
 On a laptop, run the guard under `caffeinate -i` (macOS) so it does not sleep during the rental.
 
-## Test session (protocol §10, ≈ 1 h)
+## Test session (protocol §10, ≈ 1 h 15, ≈ 2 USD)
 
-Owner, before: create the Vast.ai account, add prepaid credit (no automatic top-up), create an
-API key, put it in `.env` or the shell (`VAST_API_KEY`), add an SSH public key on the website.
+Owner, before (done on 2026-11-11): Vast.ai account, prepaid credit with automatic top-up off,
+API key in `.env`, SSH public key on the website. Each step below is run, its result reported to
+the owner, and the next step starts only on the owner's go.
 
-1. **Backstop check** (≈ 0.5 $): rent the cheapest 1-GPU offer with `--max-hours 0.1 --no-guard`
-   and watch `vast list`: the instance must disappear by itself about 16 minutes later. If it
-   does not, destroy it by hand and keep the guard running for every rental after that.
-2. **2 × A40**: `vast offers`, pick the cheapest verified host, `vast rent ... --max-hours 1
-   --budget-usd 2 --yes` (the guard runs in that terminal).
-3. On the node (`vast show ID` gives the ssh command): clone the repository, `bash
-   slurm/single-node.sh`, run one unit and one short ladder (`campaign run --only tp-rag` with a
-   short matrix), copy the run file back (`scp`).
-4. The guard destroys the instance at the deadline, or Ctrl-C in its terminal destroys it now.
-   `vast list` must show nothing left.
-5. If the model does not start on Ampere: stop there (protocol §10 fallback, owner's decision).
+`$V` below stands for `uv run --env-file .env hpc-sizing vast`.
+
+**1. Backstop check (≈ 20 min, ≈ 0.02 USD).** Proves that an instance destroys itself if the
+laptop sleeps, before any expensive rental relies on it. A small image, the cheapest node, no
+guard:
+
+```bash
+uv run hpc-sizing vast offers --gpu any --num-gpus 1 --disk 10 --limit 3
+$V rent --offer ID --image python:3.12-slim --disk 10 --max-price 0.15 \
+  --max-hours 0.1 --budget-usd 0.1 --no-guard --yes
+$V show INSTANCE   # once running: note start_date against the creation time
+$V list            # every few minutes: the instance must be gone ~16 min after creation
+```
+
+Pass: the instance disappears by itself (`python:3.12-slim` has no curl, so this also checks the
+Python path of the script). Fail: destroy it by hand (`$V destroy INSTANCE`), report, and every
+later rental keeps the guard running in the foreground.
+
+**2. Rent the 2 × A40 (guard in that terminal).**
+
+```bash
+uv run hpc-sizing vast offers --gpu A40 --num-gpus 2
+caffeinate -i uv run --env-file .env hpc-sizing vast rent --offer ID --max-price 1.6 \
+  --max-hours 1.5 --budget-usd 2.5 --yes
+```
+
+**3. Prepare the node (≈ 20 to 30 min, mostly the 76 GB of weights).** In a second terminal,
+with the ssh command from `$V show INSTANCE`:
+
+```bash
+ssh -p PORT root@HOST 'curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh | bash'
+```
+
+[`scripts/node-setup.sh`](../scripts/node-setup.sh) prints the GPUs, driver, PCIe generation and
+vLLM version, installs git and uv, clones the repository, installs the bench, fetches PIAF and
+the tokenizer, then the weights (anonymous download; the model is not gated). It can be run
+again: done steps are skipped.
+
+**4. Does the model start? Then one short ladder (≈ 15 min).**
+[`campaign/test-session.toml`](../campaign/test-session.toml): unit TP2, RAG profile, steps of
+60 s at 0.25, 0.5, 1 and 2 req/s, the same server command as the campaign.
+
+```bash
+ssh -p PORT root@HOST 'cd hpc-inference-sizing && uv run hpc-sizing campaign run \
+  --matrix campaign/test-session.toml --max-hours 0.5 --meta gpu=2xA40 --meta host=HOST_ID'
+scp -P PORT -r root@HOST:hpc-inference-sizing/runs/scratch/test-session runs/scratch/
+```
+
+Report: cold-start time, the KV-cache size vLLM logs (H6), TTFT and TPOT per step, errors. If the
+server does not start (`tp-rag.failed.json`, server log next to it), stop: protocol §10 fallback,
+owner's decision.
+
+**5. Destroy.** Ctrl-C in the guard terminal (or the guard's deadline), then `$V list` must say
+"no instance on the account".
 
 ## Prices seen on 2026-11-11 (public offers, disk of 150 GB included)
 

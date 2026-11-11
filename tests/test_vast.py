@@ -364,3 +364,8 @@ def test_a_destroy_refused_with_http_200_is_a_failure():
     logs = []
     assert not vast.destroy_with_retries(fake.client(), 777, log=logs.append, sleep=lambda _: None)
     assert "DESTROY FAILED" in logs[-1]
+
+
+def test_any_gpu_drops_the_gpu_filter():
+    q = OfferQuery(gpu_name="any", num_gpus=1, disk_gb=10).to_api()
+    assert "gpu_name" not in q and q["num_gpus"] == {"eq": 1} and q["allocated_storage"] == 10

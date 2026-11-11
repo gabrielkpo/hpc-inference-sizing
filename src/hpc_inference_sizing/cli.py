@@ -288,7 +288,7 @@ def main(argv: list[str] | None = None) -> None:
     vastp = sub.add_parser("vast", help="find, rent, guard and destroy a Vast.ai instance")
     vactions = vastp.add_subparsers(dest="action", required=True)
     p = vactions.add_parser("offers", help="cheapest matching offers (no key needed)")
-    p.add_argument("--gpu", default="A40")
+    p.add_argument("--gpu", default="A40", help='GPU model, or "any"')
     p.add_argument("--num-gpus", type=int, default=2)
     p.add_argument("--disk", type=int, default=150, help="GB, included in the price")
     p.add_argument("--max-price", type=float, help="USD/h")
