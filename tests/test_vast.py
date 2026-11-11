@@ -369,3 +369,10 @@ def test_a_destroy_refused_with_http_200_is_a_failure():
 def test_any_gpu_drops_the_gpu_filter():
     q = OfferQuery(gpu_name="any", num_gpus=1, disk_gb=10).to_api()
     assert "gpu_name" not in q and q["num_gpus"] == {"eq": 1} and q["allocated_storage"] == 10
+
+
+def test_the_guard_keeps_a_reserve_out_of_the_budget():
+    fake = FakeVast(instance={"actual_status": "running", "dph_total": 2.0})
+    result = run_guard(fake, budget_usd=1.0, reserve_usd=0.5)
+    assert result.destroyed and "reserved" in result.reason
+    assert result.spent_usd == pytest.approx(0.5, abs=0.05)

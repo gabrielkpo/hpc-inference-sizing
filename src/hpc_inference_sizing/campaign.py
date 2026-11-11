@@ -196,6 +196,16 @@ class Limits:
         return None
 
 
+def step_line(s, matrix: Matrix) -> str:
+    """One load step in one line: what was sent, what came back, which targets it meets."""
+    met = [f"{t:g}" for t in sorted(matrix.targets_s) if s.meets(t, matrix.tpot_bound_ms / 1000)]
+    return (
+        f"step {s.rate:g} req/s: {s.n_requests} requests, {s.n_errors} errors, "
+        f"TTFT p95 {s.ttft_p95:.2f} s, TPOT p95 {s.tpot_p95 * 1000:.0f} ms; "
+        f"meets {', '.join(met) + ' s' if met else 'no target'}"
+    )
+
+
 def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[str], None]) -> bool:
     """One run; True if a result was written, False if the unit failed to start."""
     from hpc_inference_sizing.bench.data import MistralTokenizer, load_piaf
@@ -254,6 +264,7 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
                     max_rate=matrix.max_rate,
                     bisect_steps=matrix.bisect_steps,
                     tpot_bound_s=matrix.tpot_bound_ms / 1000,
+                    on_step=lambda s: log(f"[{run_id}] {step_line(s, matrix)}"),
                 )
             )
         except Exception as err:  # a crash mid-run must not end the campaign on paid time
@@ -306,6 +317,13 @@ def run_campaign(
             runner(matrix, run_id, meta, log)
         finally:
             limits.save()  # also when the run is interrupted: its time was paid for
+        st_now = status(matrix)
+        line = (
+            f"progress: {len(st_now.done) + len(st_now.failed)}/{len(matrix.run_ids())} runs "
+            f"({len(st_now.done)} done, {len(st_now.failed)} failed), "
+            f"{limits.elapsed_s() / 3600:.2f} h"
+        )
         if limits.price_per_hour_usd:
-            log(f"spent so far: {limits.spent_usd():.2f} USD")
+            line += f", spent so far: {limits.spent_usd():.2f} USD"
+        log(line)
     return status(matrix)

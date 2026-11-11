@@ -203,3 +203,29 @@ def test_an_unreadable_clock_is_a_clear_error(tmp_path):
     clock.write_text("{}")
     with pytest.raises(ValueError, match="unreadable campaign clock"):
         Limits(clock_file=clock)
+
+
+def test_progress_line_after_each_run(tmp_path):
+    m = write_matrix(tmp_path)
+    logs = []
+
+    def runner(matrix, run_id, meta, log):
+        matrix.results_dir.mkdir(parents=True, exist_ok=True)
+        (matrix.results_dir / f"{run_id}.json").write_text("{}")
+
+    run_campaign(m, Limits(price_per_hour_usd=1.5), {}, log=logs.append, runner=runner)
+    progress = [line for line in logs if line.startswith("progress:")]
+    assert progress[0].startswith("progress: 1/4 runs (1 done, 0 failed)")
+    assert progress[-1].startswith("progress: 4/4 runs") and "spent so far" in progress[-1]
+
+
+def test_step_line_says_which_targets_a_step_meets(tmp_path):
+    from hpc_inference_sizing.bench.stats import StepSummary
+
+    m = write_matrix(tmp_path)
+    s = StepSummary(0.5, 60, 33, 0, 0.8, 1.99, 0.028, 0.037, 157.6)
+    assert campaign.step_line(s, m) == (
+        "step 0.5 req/s: 33 requests, 0 errors, TTFT p95 1.99 s, TPOT p95 37 ms; meets 3 s"
+    )
+    slow = StepSummary(1.0, 60, 61, 0, 2.2, 3.5, 0.11, 0.158, 265.0)
+    assert campaign.step_line(slow, m).endswith("meets no target")

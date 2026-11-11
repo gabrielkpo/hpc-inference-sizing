@@ -5,6 +5,7 @@ hpc-sizing bench fetch                                    download PIAF and the 
 hpc-sizing bench step  --url URL --model M --rate 1      one load step
 hpc-sizing bench sweep --url URL --model M --output F    ladder + bisection, run file
 hpc-sizing campaign run --matrix campaign/a40-x2.toml    every run of a matrix, resumable
+hpc-sizing campaign follow --matrix M --instance ID      copy results, report, destroy when done
 hpc-sizing vast offers --gpu A40 --num-gpus 2            cheapest matching offers (no key)
 hpc-sizing vast rent --offer ID --max-price 1.5 ...      plan; rents only with --yes, then guards
 """
@@ -13,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import sys
 from pathlib import Path
 
 from hpc_inference_sizing.memory import GIB, GPUS, MODELS, SPLITS, format_plan, load_model, plan
@@ -99,6 +101,22 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
     from hpc_inference_sizing.campaign import Limits, load_matrix, run_campaign, status
 
     matrix = load_matrix(Path(args.matrix))
+    if args.action == "follow":
+        from hpc_inference_sizing import follow, vast
+        from hpc_inference_sizing.campaign import _project_root
+
+        rel = matrix.results_dir.relative_to(_project_root(Path(args.matrix)))
+        result = follow.follow(
+            vast.VastClient(),
+            args.instance,
+            matrix,
+            follow.remote_for_instance(f"{args.remote_repo}/{rel.as_posix()}"),
+            events_path=Path(args.events) if args.events else matrix.results_dir / "events.jsonl",
+            every_s=args.every,
+            destroy_when_done=not args.no_destroy,
+        )
+        print(f"follow ended: {result.reason}; destroyed: {result.destroyed}")
+        return
     if args.action == "list":
         print("\n".join(matrix.run_ids()))
         return
@@ -174,6 +192,7 @@ def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                 args.max_hours,
                 args.budget_usd,
                 price_hint=args.price_per_hour,
+                reserve_usd=args.reserve_usd,
             )
             print(f"guard ended: {result.reason}; destroyed: {result.destroyed}")
         elif args.action == "rent":
@@ -192,7 +211,8 @@ def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                 print(
                     f"no guard: run `hpc-sizing vast guard {rental.instance_id} --max-hours "
                     f"{args.max_hours} --budget-usd {args.budget_usd} "
-                    f"--price-per-hour {rental.dph_total:.3f}` now"
+                    f"--price-per-hour {rental.dph_total:.3f} --reserve-usd {args.reserve_usd:g}`"
+                    " now"
                 )
                 return
             result = vast.guard(
@@ -201,7 +221,8 @@ def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
                 args.max_hours,
                 args.budget_usd,
                 price_hint=rental.dph_total,
-                count_instance_age=False,  # fresh rental: age 0, start_date not yet checked
+                count_instance_age=False,  # fresh rental: age 0 by construction
+                reserve_usd=args.reserve_usd,
             )
             print(f"guard ended: {result.reason}; destroyed: {result.destroyed}")
     except vast.VastError as err:
@@ -274,6 +295,7 @@ def main(argv: list[str] | None = None) -> None:
         ("list", "print the run ids of a matrix"),
         ("status", "done, failed and pending runs"),
         ("run", "run the pending runs, resumable"),
+        ("follow", "from the laptop: copy results, report, destroy the node when done"),
     ):
         p = cactions.add_parser(name, help=helptext)
         p.add_argument("--matrix", required=True, help="campaign matrix (TOML)")
@@ -284,6 +306,12 @@ def main(argv: list[str] | None = None) -> None:
             p.add_argument("--budget-usd", type=float, help="stop starting runs past this spend")
             p.add_argument("--price-per-hour", type=float, default=0.0, help="instance USD/h")
             p.add_argument("--meta", action="append", default=[], help="KEY=VALUE run metadata")
+        if name == "follow":
+            p.add_argument("--instance", type=int, required=True, help="Vast.ai instance id")
+            p.add_argument("--every", type=float, default=300, help="seconds between looks")
+            p.add_argument("--events", help="JSON lines of events (default: results folder)")
+            p.add_argument("--remote-repo", default="hpc-inference-sizing", help="clone on node")
+            p.add_argument("--no-destroy", action="store_true", help="keep the node at the end")
 
     vastp = sub.add_parser("vast", help="find, rent, guard and destroy a Vast.ai instance")
     vactions = vastp.add_subparsers(dest="action", required=True)
@@ -302,6 +330,9 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--max-hours", type=float, required=True)
     p.add_argument("--budget-usd", type=float, required=True)
     p.add_argument("--price-per-hour", type=float, default=0.0, help="until the API gives it")
+    p.add_argument(
+        "--reserve-usd", type=float, default=0.0, help="kept out of the budget (bandwidth)"
+    )
     p = vactions.add_parser("rent", help="plan a rental; rents only with --yes, then guards it")
     p.add_argument("--offer", type=int, required=True)
     p.add_argument("--max-price", type=float, required=True, help="USD/h cap on the live price")
@@ -312,8 +343,13 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--pass-hf-token", action="store_true", help="give HF_TOKEN to the instance")
     p.add_argument("--yes", action="store_true", help="really rent (paid)")
     p.add_argument("--no-guard", action="store_true", help="do not watch it from here")
+    p.add_argument(
+        "--reserve-usd", type=float, default=0.0, help="kept out of the budget (bandwidth)"
+    )
 
     args = parser.parse_args(argv)
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)  # live logs when written to a file
     if args.command == "memory":
         _memory(args, mem)
     elif args.command == "bench":

@@ -51,6 +51,33 @@ uv run hpc-sizing campaign run    --matrix campaign/a40-x2.toml \
   each run, so no worker keeps GPU memory for the next unit.
 - **Results leave the node** after each run when the matrix sets `sync_command`.
 
+## Following a long run
+
+A campaign day lasts hours, so it is followed without watching a terminal:
+
+- **Live log on the node.** The campaign writes one line per load step as soon as it is measured
+  (rate, requests, errors, TTFT and TPOT p95, targets met) and one progress line per run (runs
+  done out of the total, hours, spend). Output is line-buffered, so `tail campaign.log` is live
+  even under `nohup`.
+- **`campaign follow` on the laptop.** Every few minutes it copies the node's results folder into
+  the local one (results leave the machine), reports each run that finished with its capacities,
+  and appends events (`run_done`, `run_failed`, `unreachable`, `finished`, `destroyed`...) to
+  `RESULTS_DIR/events.jsonl`. When the campaign process has ended, on two looks in a row, and the
+  results are copied, it destroys the instance: a finished campaign does not bill until the
+  guard's deadline. A queued SLURM array task counts as running.
+- **Detached from the Claude app.** [`scripts/detached.sh`](../scripts/detached.sh) starts the
+  guard and the follow in their own session, with a log file, and keeps the Mac awake while they
+  run (plugged in, lid open), so a closed window or a crashed app does not stop them. The
+  backstop inside the instance still covers a laptop that dies.
+- **Notifications.** The Claude session reads `events.jsonl` and sends each event to the owner's
+  phone; nothing leaves the laptop through the scripts themselves.
+
+```bash
+scripts/detached.sh runs/follow.log uv run --env-file .env hpc-sizing campaign follow \
+    --matrix campaign/a40-x2.toml --instance ID --every 300
+tail -f runs/follow.log
+```
+
 ## SLURM (ADR 0002)
 
 The same job array runs on the local cluster and on the rented node.
