@@ -114,6 +114,8 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
             events_path=Path(args.events) if args.events else matrix.results_dir / "events.jsonl",
             every_s=args.every,
             destroy_when_done=not args.no_destroy,
+            start_timeout_s=args.start_timeout_min * 60,
+            stall_timeout_s=args.stall_timeout_min * 60,
         )
         print(f"follow ended: {result.reason}; destroyed: {result.destroyed}")
         return
@@ -327,7 +329,13 @@ def main(argv: list[str] | None = None) -> None:
             p.add_argument("--every", type=float, default=300, help="seconds between looks")
             p.add_argument("--events", help="JSON lines of events (default: results folder)")
             p.add_argument("--remote-repo", default="hpc-inference-sizing", help="clone on node")
-            p.add_argument("--no-destroy", action="store_true", help="keep the node at the end")
+            p.add_argument("--no-destroy", action="store_true", help="never destroy the node")
+            p.add_argument(
+                "--start-timeout-min", type=float, default=30, help="destroy if not started by then"
+            )
+            p.add_argument(
+                "--stall-timeout-min", type=float, default=45, help="destroy if the log is silent"
+            )
 
     vastp = sub.add_parser("vast", help="find, rent, guard and destroy a Vast.ai instance")
     vactions = vastp.add_subparsers(dest="action", required=True)

@@ -69,6 +69,11 @@ class ScriptedRemote:
     def last_log_line(self):
         return "[tp-rag] step 0.25 req/s: 12 requests"
 
+    log_age = 0.0
+
+    def log_age_s(self):
+        return self.log_age
+
 
 class Stop(Exception):
     pass
@@ -359,3 +364,113 @@ def test_runs_of_later_phases_and_repeats_are_reported_too(tmp_path):
     assert "pp_seqs64-rag done (2 s: 0.625 req/s)" in messages
     assert "repeat_pp-rag done (3 repeat steps)" in messages
     assert not any("plan-levers" in m for m in messages)
+
+
+class Clock:
+    def __init__(self):
+        self.t = 0.0
+
+    def __call__(self):
+        return self.t
+
+    def sleep(self, s):
+        self.t += s
+        if self.t > 10 * 3600:
+            raise Stop
+
+
+def test_a_campaign_that_never_starts_ends_the_rental(tmp_path):
+    clock = Clock()
+    remote = ScriptedRemote([(False, {})] * 100)
+    events = tmp_path / "events.jsonl"
+    result = follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: remote,
+        events_path=events,
+        log=lambda _: None,
+        sleep=clock.sleep,
+        clock=clock,
+        every_s=300,
+    )
+    kinds = [json.loads(line)["kind"] for line in events.read_text().splitlines()]
+    assert result.reason == "campaign never started" and result.destroyed
+    assert kinds[-2:] == ["never_started", "destroyed"] and clock.t == pytest.approx(1800)
+
+
+def test_a_stalled_campaign_ends_the_rental(tmp_path):
+    clock = Clock()
+    remote = ScriptedRemote([(True, {})] * 100)
+    remote.log_age = 46 * 60
+    result = follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: remote,
+        log=lambda _: None,
+        sleep=clock.sleep,
+        clock=clock,
+    )
+    assert result.reason == "campaign stalled" and result.destroyed
+
+
+def test_a_long_quiet_server_start_is_not_a_stall(tmp_path):
+    clock = Clock()
+    remote = ScriptedRemote([(True, {})] * 20 + [(False, {}), (False, {})])
+    remote.log_age = 40 * 60  # a slow first start: within the 45 min threshold
+    result = follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: remote,
+        log=lambda _: None,
+        sleep=clock.sleep,
+        clock=clock,
+    )
+    assert result.reason == "campaign ended"
+
+
+def test_no_destroy_also_disables_the_safety_destroys(tmp_path):
+    clock = Clock()
+    client = FakeClient()
+    result = follow(
+        client,
+        7,
+        matrix(tmp_path),
+        lambda info: ScriptedRemote([(False, {})] * 100),
+        log=lambda _: None,
+        sleep=clock.sleep,
+        clock=clock,
+        destroy_when_done=False,
+    )
+    assert result.reason == "campaign never started" and client.destroyed == 0
+
+
+def test_ssh_remote_reads_the_log_age(tmp_path, fake_ssh):
+    log = fake_ssh / "campaign.log"
+    log.write_text("x\n")
+    old = time.time() - 600
+    os.utime(log, (old, old))
+    age = SshRemote("node", 22, "repo").log_age_s()
+    assert 590 <= age <= 700
+
+
+def test_ssh_remote_without_a_campaign_log_judges_no_stall(tmp_path, fake_ssh):
+    assert SshRemote("node", 22, "repo").log_age_s() is None
+
+
+def test_a_campaign_without_log_is_still_followed_to_its_end(tmp_path):
+    clock = Clock()
+    remote = ScriptedRemote([(True, {"tp-rag.json": run_file("tp-rag")})] * 3 + [(False, {})] * 2)
+    remote.log_age = None
+    result = follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: remote,
+        log=lambda _: None,
+        sleep=clock.sleep,
+        clock=clock,
+    )
+    assert result.reason == "campaign ended" and result.destroyed
