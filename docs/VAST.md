@@ -15,11 +15,17 @@ write it.
 | Every rental has a time limit and is destroyed | `vast rent --yes` hands over to the **guard**, which destroys the instance at `--max-hours`, at `--budget-usd`, on Ctrl-C, or when the instance stays dead (exited, offline) for 10 minutes |
 | ... even if the laptop sleeps | A **backstop** in the instance start script destroys the instance from inside, 10 minutes after the deadline, with the per-instance key Vast.ai sets in every container (`CONTAINER_API_KEY`, `CONTAINER_ID`); the owner's key never goes to the instance |
 | Destroy, never stop | A stopped instance keeps billing its disk; the code only calls destroy |
+| A bug in the guard does not leave the instance running | Any unexpected error in the guard loop destroys the instance before the guard exits |
 | A failed destroy is loud | Five attempts, then `DESTROY FAILED ... destroy it by hand at https://cloud.vast.ai/instances/` |
 
-What is not proven until the test session: that the per-instance key is allowed to destroy its
-own instance (Vast.ai documents `vastai destroy instance $CONTAINER_ID` with it, not the REST
-call). The test session checks it first, on a cheap short rental (below).
+What is not proven until the test session:
+
+- that the per-instance key is allowed to destroy its own instance (Vast.ai documents `vastai
+  destroy instance $CONTAINER_ID` with it, not the REST call): checked first, on a cheap short
+  rental (below);
+- that an instance's `start_date` is its creation time: a guard restarted with `vast guard`
+  counts the instance's age from it, while the guard started by `vast rent` counts from zero
+  until this is checked (`vast show` on the test instance).
 
 ## Commands
 
