@@ -140,7 +140,7 @@ The runbook of the test session, with what a day-long run needs on top. `$V` sta
 
    ```bash
    ssh -p PORT root@HOST 'cd hpc-inference-sizing && { nohup uv run hpc-sizing campaign run \
-     --matrix campaign/a40-x2.toml --chain --max-hours 11 --budget-usd 15 \
+     --matrix campaign/a40-x2.toml --chain --max-hours 11 --budget-usd 14.5 \
      --price-per-hour PRICE --meta gpu=2xA40 --meta host=HOST_ID \
      > ../campaign.log 2>&1 < /dev/null & }'
    ```
@@ -153,9 +153,11 @@ The runbook of the test session, with what a day-long run needs on top. `$V` sta
 5. **At the end**: `$V list` must say "no instance on the account"; the run files are in
    `results/a40-x2/` on the laptop.
 
-The campaign checks its caps (`--max-hours 11`, `--budget-usd 15`) before starting each run,
-and a run lasts up to about 45 minutes, so they sit about an hour below the guard's (12 h, and
-17 USD minus the 1 USD reserve): the last run ends and is copied before the guard would act.
+The campaign checks its caps (`--max-hours 11`, `--budget-usd 14.5`) before starting each run,
+from its own start, while the guard counts from the instance's creation (node setup included,
+about 15 min). A run lasts up to about 45 minutes, so the campaign's caps sit about an hour
+below the guard's (12 h, and 17 USD minus the 1 USD reserve) once the setup is counted: the
+last run ends and is copied before the guard would act.
 
 ## Prices seen on 2026-11-11 (public offers, disk of 150 GB included)
 
