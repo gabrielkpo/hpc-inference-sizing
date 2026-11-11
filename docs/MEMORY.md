@@ -79,8 +79,16 @@ split, then compared with the "unit cache" column; H6 passes if every configurat
 | `pp` | the figure for the unit, which is limited by the fullest stage; if vLLM logs one figure per stage, the smallest one |
 | `dp_ep` | the **sum** of the figures logged by each data-parallel engine (each GPU caches its own requests) |
 
-How vLLM reports pipeline and data-parallel caches is to be confirmed on the first run. The 2 GiB overhead is the least certain input: the measured overhead is recorded next to each
-result so that a miss can be traced to its cause.
+How vLLM reports pipeline and data-parallel caches is to be confirmed on the first run. The 2 GiB
+overhead is the least certain input: the measured overhead is recorded next to each result so that
+a miss can be traced to its cause.
+
+**First check against vLLM** (test session, 2026-11-11, [`TEST-SESSION.md`](TEST-SESSION.md)):
+weights within 0.5 % for every split; caches 12 to 17 % above the prediction for `tp`, `ep` and
+`pp`, because vLLM 0.32 defaults to `gpu_memory_utilization` 0.92, not 0.90; `dp_ep` about 1 GiB
+per GPU below the prediction once that is corrected, so its overhead is larger than assumed. vLLM
+logs one cache per data-parallel rank, as the reading rule above expects. The predictions in this
+file are left as published.
 
 ## Corrections
 
