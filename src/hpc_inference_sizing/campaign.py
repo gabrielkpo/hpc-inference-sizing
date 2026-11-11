@@ -49,13 +49,18 @@ class Matrix:
     health_timeout_s: float = 1800.0
     sync_command: str = ""
     model: str = ""
+    run_list: tuple[str, ...] | None = None  # explicit runs instead of every (unit, profile)
+    fixed_rates: dict[str, list[float]] = field(default_factory=dict)  # run -> rates (repeats)
+    repeat: int = 1  # times each fixed rate is measured
 
     def run_ids(self) -> list[str]:
+        if self.run_list is not None:
+            return list(self.run_list)
         return [f"{unit}-{profile}" for unit in self.units for profile in self.profiles]
 
     def split(self, run_id: str) -> tuple[str, str]:
         unit, _, profile = run_id.rpartition("-")
-        if unit not in self.units or profile not in self.profiles:
+        if run_id not in self.run_ids() or unit not in self.units:
             raise ValueError(f"unknown run {run_id!r}; runs: {', '.join(self.run_ids())}")
         return unit, profile
 
@@ -248,6 +253,7 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
             return record_failure("start", err)
         log(f"[{run_id}] server ready after {cold_start_s:.0f} s")
 
+        fixed = matrix.fixed_rates.get(run_id)
         try:
             workload = Workload(load_piaf(), MistralTokenizer(), PROFILES[profile], seed=0)
             bench = Bench(
@@ -257,16 +263,27 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
                 matrix.step_duration_s,
                 min_requests=matrix.min_requests,
             )
-            result = asyncio.run(
-                bench.sweep(
-                    matrix.targets_s,
-                    start_rate=matrix.start_rate,
-                    max_rate=matrix.max_rate,
-                    bisect_steps=matrix.bisect_steps,
-                    tpot_bound_s=matrix.tpot_bound_ms / 1000,
-                    on_step=lambda s: log(f"[{run_id}] {step_line(s, matrix)}"),
+            if fixed:  # repeats (protocol §6.6): the same rates, measured `repeat` times
+                result = None
+
+                async def repeats() -> None:
+                    for _ in range(matrix.repeat):
+                        for rate in fixed:
+                            s = await bench.step(rate)
+                            log(f"[{run_id}] {step_line(s, matrix)}")
+
+                asyncio.run(repeats())
+            else:
+                result = asyncio.run(
+                    bench.sweep(
+                        matrix.targets_s,
+                        start_rate=matrix.start_rate,
+                        max_rate=matrix.max_rate,
+                        bisect_steps=matrix.bisect_steps,
+                        tpot_bound_s=matrix.tpot_bound_ms / 1000,
+                        on_step=lambda s: log(f"[{run_id}] {step_line(s, matrix)}"),
+                    )
                 )
-            )
         except Exception as err:  # a crash mid-run must not end the campaign on paid time
             return record_failure("sweep", err)
         run_meta = {
@@ -276,11 +293,16 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
             "server_flags": matrix.units[unit],
             "server_command": shlex.join(command) if command else "external",
             "cold_start_s": round(cold_start_s, 1),
+            "start_rate": matrix.start_rate,
+            **({"mode": "repeat", "rates": fixed, "repeat": matrix.repeat} if fixed else {}),
             **meta,
         }
         write_run(matrix.results_dir / f"{run_id}.json", metadata(bench, run_meta), bench, result)
-        caps = ", ".join(f"{t:g} s: {c}" for t, c in result.capacity.items())
-        log(f"[{run_id}] done; capacity (req/s) {caps}")
+        if result is None:
+            log(f"[{run_id}] done; {len(bench.steps)} repeat steps")
+        else:
+            caps = ", ".join(f"{t:g} s: {c}" for t, c in result.capacity.items())
+            log(f"[{run_id}] done; capacity (req/s) {caps}")
         return True
     finally:
         stop_server(proc)

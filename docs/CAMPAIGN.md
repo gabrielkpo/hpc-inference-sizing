@@ -51,6 +51,27 @@ uv run hpc-sizing campaign run    --matrix campaign/a40-x2.toml \
   each run, so no worker keeps GPU memory for the next unit.
 - **Results leave the node** after each run when the matrix sets `sync_command`.
 
+## The whole 2-GPU matrix in one session (`--chain`)
+
+The levers and the repeats depend on the base results, and the protocol keeps the whole 2-GPU
+matrix on one host in one session (amendment A5). `campaign run --chain` therefore runs four
+phases on the same node, deriving each from the run files with fixed rules
+([`chain.py`](../src/hpc_inference_sizing/chain.py)):
+
+| Phase | Runs | Rule |
+|---|---|---|
+| Base | every unit x profile (8) | §5.1 |
+| Levers | 7, RAG profile | on the best unit: highest capacity at T = 2 s on RAG, ties broken by the looser targets (1.5 s is stricter, so 3 s); if no unit reaches 2 s, the next looser target. One lever at a time (`max_num_seqs` 32, 64, 128; `max_num_batched_tokens` 2,048, 8,192, 16,384; prefix caching off), each ladder starting at a quarter of the baseline capacity, two doubling steps below it (§5.2) |
+| Best combination | 0 or 1 | the value of each lever that raised the capacity at that target above the baseline, combined, one full ladder (it reads every target); none if no lever helped, the defaults being already measured (§5.2) |
+| Repeats | 1 per profile | on the best unit of each profile, its capacity point for each reachable target, measured 3 more times at that rate (§6.6) |
+
+These rules are how the chain reads §5.2 and §6.6 of the frozen protocol; where the protocol is
+silent (tie-breaks, a 2 s target nobody reaches, which configuration is repeated) the choice
+is written above and in `plan-<phase>.json` next to the results. The phase order is the cut
+order of §10: at the time or budget cap, the repeats are lost first, then lever values, never the
+base. Rerunning the same command resumes. The SLURM array (below) covers the base matrix only;
+the chain runs its phases in one process.
+
 ## Following a long run
 
 A campaign day lasts hours, so it is followed without watching a terminal:
