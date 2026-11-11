@@ -3,7 +3,11 @@ name = "hpc-inference-sizing"
 version = "0.1.0"
 description = "Size LLM inference on GPUs for a client: GPU count for a latency target, latency on a fixed GPU budget."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "httpx>=0.28.1",
+    "mistral-common>=1.13.1",
+    "pyarrow>=26.0.1",
+]
 
 [project.scripts]
 hpc-sizing = "hpc_inference_sizing.cli:main"
