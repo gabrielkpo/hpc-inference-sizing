@@ -7,9 +7,10 @@ Every `every_s` seconds `follow`:
 3. reports each run that finished since the last look, with its capacities;
 4. when the campaign process has ended (or no run is pending) and the results are copied,
    destroys the instance, so a finished campaign does not keep billing until the deadline;
-5. destroys it too when the campaign never starts (`start_timeout_s` after the follow began)
-   or stalls (its log unchanged for `stall_timeout_s` while it runs): a node that does nothing
-   is not left billing until the guard's deadline.
+5. raises an alert when the campaign never starts (`start_timeout_s` after the follow began)
+   or stalls (its log unchanged for `stall_timeout_s` while it runs), so someone can look; if
+   nothing changes for `alert_grace_s` more, destroys the instance, so a node that does
+   nothing is not left billing until the guard's deadline (`safety_destroy=False`: alert only).
 
 Each notable event is also appended to `events_path` as one JSON line, for notifications.
 The guard (`vast guard`) still runs beside it: it owns the time and budget caps.
@@ -173,6 +174,8 @@ def follow(
     destroy_when_done: bool = True,
     start_timeout_s: float = 1800,
     stall_timeout_s: float = 2700,
+    alert_grace_s: float = 1800,
+    safety_destroy: bool = True,
     log: Callable[[str], None] = print,
     sleep: Callable[[float], None] = time.sleep,
     clock: Callable[[], float] = time.monotonic,
@@ -183,6 +186,7 @@ def follow(
     (up to the matrix's health timeout, 40 min) logs nothing until the server is ready.
     """
     started_at = clock()
+    alerted: set[str] = set()  # "never_started", "stalled": alerted, not yet resolved
     seen: set[str] = set()
     seen_running = False
     stopped_looks = 0  # the end is declared on two looks in a row, not on one
@@ -256,12 +260,33 @@ def follow(
                 )
                 stopped_looks = 0 if running else stopped_looks + 1
                 waited = clock() - started_at
-                if not seen_running and st.pending and waited >= start_timeout_s:
-                    event("never_started", f"campaign not started after {waited / 60:.0f} min")
-                    return end("campaign never started", st)
-                if running and age is not None and age >= stall_timeout_s:
-                    event("stalled", f"campaign log unchanged for {age / 60:.0f} min")
-                    return end("campaign stalled", st)
+                never = not seen_running and bool(st.pending) and waited >= start_timeout_s
+                stalled = running and age is not None and age >= stall_timeout_s
+                for kind, now, minutes, deadline in (
+                    ("never_started", never, waited / 60, start_timeout_s),
+                    ("stalled", stalled, (age or 0) / 60, stall_timeout_s),
+                ):
+                    if now and kind not in alerted:
+                        alerted.add(kind)
+                        what = "not started" if kind == "never_started" else "log unchanged"
+                        action = (
+                            f"destroy in {alert_grace_s / 60:.0f} min if nothing changes"
+                            if safety_destroy and destroy_when_done
+                            else "alert only, the node is kept"
+                        )
+                        event(kind, f"ALERT campaign {what} for {minutes:.0f} min; {action}")
+                    elif not now and kind in alerted:
+                        alerted.discard(kind)
+                        event("recovered", f"{kind.replace('_', ' ')} resolved: campaign moving")
+                    elif (
+                        now
+                        and safety_destroy
+                        and (
+                            (kind == "never_started" and waited >= deadline + alert_grace_s)
+                            or (kind == "stalled" and (age or 0) >= deadline + alert_grace_s)
+                        )
+                    ):
+                        return end(f"campaign {kind.replace('_', ' ')}", st)
                 if stopped_looks >= 2 and (seen_running or not st.pending):
                     if st.pending:
                         event("stopped", f"campaign stopped with {len(st.pending)} runs pending")
