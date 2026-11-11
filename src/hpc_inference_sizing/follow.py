@@ -46,7 +46,7 @@ class Remote(Protocol):
     def pull(self, local_dir: Path) -> None: ...
     def campaign_running(self) -> bool: ...
     def last_log_line(self) -> str: ...
-    def log_age_s(self) -> float: ...
+    def log_age_s(self) -> float | None: ...
 
 
 @dataclass
@@ -103,15 +103,20 @@ class SshRemote:
         out = self._ssh(f"tail -n 1 {shlex.quote(self.log_file)}", capture_output=True)
         return plain(out.stdout.decode(errors="replace"))
 
-    def log_age_s(self) -> float:
-        """Seconds since the campaign log last changed on the node."""
-        script = "import os, sys, time; print(time.time() - os.path.getmtime(sys.argv[1]))"
+    def log_age_s(self) -> float | None:
+        """Seconds since the campaign log last changed on the node; None without a log (e.g. a
+        SLURM array writes its own output files), in which case no stall is judged."""
+        script = (
+            "import os, sys, time; p = sys.argv[1]; "
+            "print(time.time() - os.path.getmtime(p) if os.path.exists(p) else 'none')"
+        )
         out = self._ssh(
             f"python3 -c {shlex.quote(script)} {shlex.quote(self.log_file)}", capture_output=True
         )
         if out.returncode != 0:
             raise OSError(f"cannot read the campaign log age: {out.stderr.decode()[-200:]}")
-        return float(out.stdout.decode().strip())
+        answer = out.stdout.decode().strip()
+        return None if answer == "none" else float(answer)
 
 
 @dataclass
@@ -221,7 +226,7 @@ def follow(
                 running = remote.campaign_running()
                 remote.pull(matrix.results_dir)  # after the check: a run that just ended is in
                 last = remote.last_log_line()
-                age = remote.log_age_s() if running else 0.0
+                age = remote.log_age_s() if running else None
                 failures = 0
             except Exception as err:  # noqa: BLE001 - detached: a surprise must not end it
                 failures += 1
@@ -254,7 +259,7 @@ def follow(
                 if not seen_running and st.pending and waited >= start_timeout_s:
                     event("never_started", f"campaign not started after {waited / 60:.0f} min")
                     return end("campaign never started", st)
-                if running and age >= stall_timeout_s:
+                if running and age is not None and age >= stall_timeout_s:
                     event("stalled", f"campaign log unchanged for {age / 60:.0f} min")
                     return end("campaign stalled", st)
                 if stopped_looks >= 2 and (seen_running or not st.pending):

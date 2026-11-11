@@ -454,3 +454,23 @@ def test_ssh_remote_reads_the_log_age(tmp_path, fake_ssh):
     os.utime(log, (old, old))
     age = SshRemote("node", 22, "repo").log_age_s()
     assert 590 <= age <= 700
+
+
+def test_ssh_remote_without_a_campaign_log_judges_no_stall(tmp_path, fake_ssh):
+    assert SshRemote("node", 22, "repo").log_age_s() is None
+
+
+def test_a_campaign_without_log_is_still_followed_to_its_end(tmp_path):
+    clock = Clock()
+    remote = ScriptedRemote([(True, {"tp-rag.json": run_file("tp-rag")})] * 3 + [(False, {})] * 2)
+    remote.log_age = None
+    result = follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: remote,
+        log=lambda _: None,
+        sleep=clock.sleep,
+        clock=clock,
+    )
+    assert result.reason == "campaign ended" and result.destroyed
