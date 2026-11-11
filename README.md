@@ -95,7 +95,7 @@ Best unit        EP2 (2 x A40), RAG profile, TTFT p95 <= 2 s
 Unit capacity    <measured> req/s
 GPUs needed      <units> x 2
 Monthly cost     <GPUs> x 1.10 $/h x 730 h
-Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
+Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1.5 s: <GPUs>   1 s: <GPUs or unreachable>
 ```
 
 ## Status / Roadmap
