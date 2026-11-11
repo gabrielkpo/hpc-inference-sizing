@@ -147,7 +147,10 @@ def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         elif args.action == "balance":
             print(f"credit: {client.balance():.2f} USD")
         elif args.action == "list":
-            for inst in client.instances():
+            found = client.instances()
+            if not found:
+                print("no instance on the account")
+            for inst in found:
                 print(
                     f"{inst.get('id')}  {inst.get('label')}  {inst.get('actual_status')}  "
                     f"{inst.get('num_gpus')} x {inst.get('gpu_name')}"

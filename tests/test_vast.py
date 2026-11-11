@@ -34,8 +34,17 @@ def offer(id_, price, **kw):
 class FakeVast:
     """In-memory Vast.ai API: records every request, serves offers and one instance."""
 
-    def __init__(self, offers=(), instance=None, destroy_fails=0, listed=False, create_fails=False):
+    def __init__(
+        self,
+        offers=(),
+        instance=None,
+        destroy_fails=0,
+        listed=False,
+        create_fails=False,
+        destroy_status=200,
+    ):
         self.offers = list(offers)
+        self.destroy_status = destroy_status
         self.listed = listed
         self.create_fails = create_fails
         self.instance = instance
@@ -45,6 +54,9 @@ class FakeVast:
     def handler(self, request: httpx.Request) -> httpx.Response:
         self.requests.append(request)
         path = request.url.path
+        if path.startswith("/api/") and not path.endswith("/"):
+            # the live API moves paths without their trailing slash, with an HTML page
+            return httpx.Response(301, text="<html>301 Moved Permanently</html>")
         if path == "/api/v0/bundles/":
             q = json.loads(request.url.params["q"])
             offers = self.offers
@@ -63,13 +75,20 @@ class FakeVast:
                     self.destroy_fails -= 1
                     return httpx.Response(500, json={"error": "busy"})
                 self.instance = None
+                if self.destroy_status == 204:
+                    return httpx.Response(204)
+                if self.destroy_status == "refused":
+                    self.instance = {"actual_status": "running"}
+                    return httpx.Response(200, json={"success": False, "msg": "refused"})
+                if self.destroy_status != 200:
+                    return httpx.Response(self.destroy_status, json={"error": "not found"})
                 return httpx.Response(200, json={"success": True})
             return httpx.Response(200, json={"instances": self.instance})
-        if path == "/api/v1/instances":
+        if path == "/api/v1/instances/":
             listed = [{"id": 777}] if self.listed else []
             return httpx.Response(200, json={"instances": listed})
-        if path == "/api/v0/users/current":
-            return httpx.Response(200, json={"balance": 19.5})
+        if path == "/api/v0/users/current/":
+            return httpx.Response(200, json={"balance": 0, "credit": 19.5})
         return httpx.Response(404)
 
     def client(self, key=KEY):
@@ -173,10 +192,24 @@ def test_guard_destroys_an_instance_that_stays_dead():
 
 
 def test_guard_stops_when_the_instance_is_already_gone():
-    fake = FakeVast(instance={})
+    fake = FakeVast(instance={}, destroy_status=404)
     result = run_guard(fake)
     assert not result.destroyed and "no longer exists" in result.reason
-    assert fake.calls("DELETE") == []
+    assert len(fake.calls("DELETE")) == 1  # a destroy is always tried before giving up
+
+
+def test_an_instance_the_api_does_not_report_yet_is_destroyed_anyway():
+    # just after creation the API may answer null and not list it: the guard still destroys
+    fake = FakeVast(instance={})
+    result = run_guard(fake)
+    assert result.destroyed and "to be sure" in result.reason
+
+
+def test_a_destroy_answered_without_a_body_is_a_success():
+    fake = FakeVast(instance={"actual_status": "running"}, destroy_status=204)
+    logs = []
+    assert vast.destroy_with_retries(fake.client(), 777, log=logs.append, sleep=lambda _: None)
+    assert len(fake.calls("DELETE")) == 1
 
 
 def test_guard_destroys_on_ctrl_c():
@@ -304,3 +337,30 @@ def test_an_unexpected_error_in_the_guard_still_destroys():
     result = run_guard(fake)
     assert result.destroyed and "guard error" in result.reason
     assert len(fake.calls("DELETE")) == 1
+
+
+def test_the_instance_list_is_read_from_the_live_path():
+    assert FakeVast(listed=True).client().instances() == [{"id": 777}]
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(301, text="<html>301 Moved Permanently</html>"),
+        httpx.Response(200, text="<html>maintenance</html>"),
+        httpx.Response(200, json=[]),
+    ],
+)
+def test_a_redirect_or_a_non_json_answer_is_an_error_not_an_empty_result(response):
+    client = VastClient(api_key=KEY, transport=httpx.MockTransport(lambda _: response))
+    with pytest.raises(VastError):
+        client.instances()
+    # the guard cannot confirm the instance is gone, so it keeps guarding
+    assert vast._listed(client, 777)
+
+
+def test_a_destroy_refused_with_http_200_is_a_failure():
+    fake = FakeVast(instance={"actual_status": "running"}, destroy_status="refused")
+    logs = []
+    assert not vast.destroy_with_retries(fake.client(), 777, log=logs.append, sleep=lambda _: None)
+    assert "DESTROY FAILED" in logs[-1]

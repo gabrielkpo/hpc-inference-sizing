@@ -170,7 +170,9 @@ class VastClient:
     def has_key(self) -> bool:
         return bool(self._key)
 
-    def _request(self, method: str, path: str, *, auth: bool = True, **kwargs) -> dict:
+    def _request(
+        self, method: str, path: str, *, auth: bool = True, allow_empty: bool = False, **kwargs
+    ) -> dict:
         headers = {}
         if self._key:
             headers["Authorization"] = f"Bearer {self._key}"
@@ -180,12 +182,19 @@ class VastClient:
             resp = self._http.request(method, path, headers=headers, **kwargs)
         except httpx.HTTPError as err:
             raise VastError(f"{method} {path}: {type(err).__name__}") from err
-        if resp.status_code >= 400:
+        # A redirect (the API moves paths without their trailing slash) or a non-JSON answer is
+        # an error, never an empty result: an empty instance list would end the guard.
+        if resp.status_code >= 300:
             raise VastError(f"{method} {path}: HTTP {resp.status_code}: {resp.text[:200]}")
-        try:
-            return resp.json()
-        except ValueError:
+        if allow_empty and not resp.content.strip():  # e.g. 204 to a destroy
             return {}
+        try:
+            data = resp.json()
+        except ValueError:
+            raise VastError(f"{method} {path}: answer is not JSON") from None
+        if not isinstance(data, dict):
+            raise VastError(f"{method} {path}: unexpected answer {str(data)[:200]}")
+        return data
 
     # Search works without a key (public offers); the key, when set, is sent anyway.
     def search(self, query: OfferQuery) -> list[Offer]:
@@ -219,13 +228,19 @@ class VastClient:
         return self._request("GET", f"/api/v0/instances/{instance_id}/").get("instances") or {}
 
     def instances(self) -> list[dict]:
-        return self._request("GET", "/api/v1/instances", params={"limit": 25}).get("instances", [])
+        return self._request("GET", "/api/v1/instances/", params={"limit": 25}).get("instances", [])
 
     def destroy(self, instance_id: int) -> None:
-        self._request("DELETE", f"/api/v0/instances/{instance_id}/")
+        data = self._request("DELETE", f"/api/v0/instances/{instance_id}/", allow_empty=True)
+        if data.get("success") is False:  # a refusal can come with HTTP 200
+            raise VastError(f"destroy refused: {str(data)[:200]}")
 
     def balance(self) -> float:
-        return float(self._request("GET", "/api/v0/users/current").get("balance", 0.0))
+        """Prepaid credit left (`credit`; the API's `balance` is the amount owed)."""
+        data = self._request("GET", "/api/v0/users/current/")
+        if data.get("credit") is None:
+            raise VastError("account answer has no credit field")
+        return float(data["credit"])
 
 
 @dataclass(frozen=True)
@@ -319,8 +334,16 @@ def guard(
                     log(f"guard: cannot read the instance ({err}); retrying")
                     info = None
                 if info is not None and not info and not _listed(client, instance_id):
-                    reason = "instance no longer exists"
-                    return GuardResult(reason, False, elapsed / 3600, elapsed / 3600 * price)
+                    # The API may not report a live instance yet (just after creation): send a
+                    # destroy anyway; it fails only if the instance is really gone.
+                    hours = elapsed / 3600
+                    try:
+                        client.destroy(instance_id)
+                    except VastError:
+                        return GuardResult("instance no longer exists", False, hours, hours * price)
+                    reason = "instance not reported by the API; destroyed to be sure"
+                    log(f"guard: {reason}")
+                    return GuardResult(reason, True, hours, hours * price)
                 if info:
                     price = float(info.get("dph_total") or price)
                     if count_instance_age and info.get("start_date"):
