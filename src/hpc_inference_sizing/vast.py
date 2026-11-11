@@ -170,7 +170,9 @@ class VastClient:
     def has_key(self) -> bool:
         return bool(self._key)
 
-    def _request(self, method: str, path: str, *, auth: bool = True, **kwargs) -> dict:
+    def _request(
+        self, method: str, path: str, *, auth: bool = True, json_body: bool = True, **kwargs
+    ) -> dict:
         headers = {}
         if self._key:
             headers["Authorization"] = f"Bearer {self._key}"
@@ -184,6 +186,8 @@ class VastClient:
         # an error, never an empty result: an empty instance list would end the guard.
         if resp.status_code >= 300:
             raise VastError(f"{method} {path}: HTTP {resp.status_code}: {resp.text[:200]}")
+        if not json_body:  # any 2xx is success (destroy)
+            return {}
         try:
             data = resp.json()
         except ValueError:
@@ -227,7 +231,7 @@ class VastClient:
         return self._request("GET", "/api/v1/instances/", params={"limit": 25}).get("instances", [])
 
     def destroy(self, instance_id: int) -> None:
-        self._request("DELETE", f"/api/v0/instances/{instance_id}/")
+        self._request("DELETE", f"/api/v0/instances/{instance_id}/", json_body=False)
 
     def balance(self) -> float:
         """Prepaid credit left (`credit`; the API's `balance` is the amount owed)."""
@@ -328,8 +332,16 @@ def guard(
                     log(f"guard: cannot read the instance ({err}); retrying")
                     info = None
                 if info is not None and not info and not _listed(client, instance_id):
-                    reason = "instance no longer exists"
-                    return GuardResult(reason, False, elapsed / 3600, elapsed / 3600 * price)
+                    # The API may not report a live instance yet (just after creation): send a
+                    # destroy anyway; it fails only if the instance is really gone.
+                    hours = elapsed / 3600
+                    try:
+                        client.destroy(instance_id)
+                    except VastError:
+                        return GuardResult("instance no longer exists", False, hours, hours * price)
+                    reason = "instance not reported by the API; destroyed to be sure"
+                    log(f"guard: {reason}")
+                    return GuardResult(reason, True, hours, hours * price)
                 if info:
                     price = float(info.get("dph_total") or price)
                     if count_instance_age and info.get("start_date"):

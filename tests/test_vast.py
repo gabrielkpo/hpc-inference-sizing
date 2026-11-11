@@ -34,8 +34,17 @@ def offer(id_, price, **kw):
 class FakeVast:
     """In-memory Vast.ai API: records every request, serves offers and one instance."""
 
-    def __init__(self, offers=(), instance=None, destroy_fails=0, listed=False, create_fails=False):
+    def __init__(
+        self,
+        offers=(),
+        instance=None,
+        destroy_fails=0,
+        listed=False,
+        create_fails=False,
+        destroy_status=200,
+    ):
         self.offers = list(offers)
+        self.destroy_status = destroy_status
         self.listed = listed
         self.create_fails = create_fails
         self.instance = instance
@@ -66,6 +75,10 @@ class FakeVast:
                     self.destroy_fails -= 1
                     return httpx.Response(500, json={"error": "busy"})
                 self.instance = None
+                if self.destroy_status == 204:
+                    return httpx.Response(204)
+                if self.destroy_status != 200:
+                    return httpx.Response(self.destroy_status, json={"error": "not found"})
                 return httpx.Response(200, json={"success": True})
             return httpx.Response(200, json={"instances": self.instance})
         if path == "/api/v1/instances/":
@@ -176,10 +189,24 @@ def test_guard_destroys_an_instance_that_stays_dead():
 
 
 def test_guard_stops_when_the_instance_is_already_gone():
-    fake = FakeVast(instance={})
+    fake = FakeVast(instance={}, destroy_status=404)
     result = run_guard(fake)
     assert not result.destroyed and "no longer exists" in result.reason
-    assert fake.calls("DELETE") == []
+    assert len(fake.calls("DELETE")) == 1  # a destroy is always tried before giving up
+
+
+def test_an_instance_the_api_does_not_report_yet_is_destroyed_anyway():
+    # just after creation the API may answer null and not list it: the guard still destroys
+    fake = FakeVast(instance={})
+    result = run_guard(fake)
+    assert result.destroyed and "to be sure" in result.reason
+
+
+def test_a_destroy_answered_without_a_body_is_a_success():
+    fake = FakeVast(instance={"actual_status": "running"}, destroy_status=204)
+    logs = []
+    assert vast.destroy_with_retries(fake.client(), 777, log=logs.append, sleep=lambda _: None)
+    assert len(fake.calls("DELETE")) == 1
 
 
 def test_guard_destroys_on_ctrl_c():
