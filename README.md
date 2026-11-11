@@ -106,7 +106,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 | 2 Memory model | Weights and MLA KV cache per GPU for each split, tested; predictions in [`docs/MEMORY.md`](docs/MEMORY.md) | done |
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model; see [`docs/BENCH.md`](docs/BENCH.md) | done |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved; see [`docs/CAMPAIGN.md`](docs/CAMPAIGN.md) | done |
-| 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed; rental driver with guard and backstop, see [`docs/VAST.md`](docs/VAST.md) | driver in review; rental waits for the owner |
+| 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed; rental driver with guard and backstop, see [`docs/VAST.md`](docs/VAST.md) | driver, short matrix and node setup ready; rental step by step with the owner |
 | 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | planned |
 | 7 Sizing and report | Sizing tool, price-of-latency curve, results in this README | planned |
 
@@ -144,12 +144,13 @@ GPU runs will read `VAST_API_KEY` and `HF_TOKEN` from the environment (see `.env
 | `docs/BENCH.md` | Measurement bench: workload, streaming client, SLO statistics, sweep, run files |
 | `docs/CAMPAIGN.md` | Campaign runner, matrices, resume and stop rules, SLURM job arrays |
 | `docs/VAST.md` | Renting the GPU node: offer search, rental only on `--yes`, guard, backstop, test session |
-| `campaign/` | Campaign matrices: the 2 x A40 campaign and two dry runs |
+| `campaign/` | Campaign matrices: the 2 x A40 campaign, the test session and two dry runs |
 | `slurm/` | Local SLURM cluster (Docker), job array scripts, single-node setup for the rented node |
 | `docs/adr/` | Decision records: model and hardware, SLURM on one node |
 | `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), campaign runner (`campaign.py`), Vast.ai driver (`vast.py`), `hpc-sizing` command; sizing tool to come |
 | `src/hpc_inference_sizing/data/` | Measured component sizes of the checkpoints |
 | `scripts/measure_checkpoint.py` | Reads the safetensors headers of a Hugging Face checkpoint (no weights downloaded) |
+| `scripts/node-setup.sh` | Prepares a rented node: reports the GPUs, installs the bench, fetches data and weights |
 | `tests/` | pytest suite |
 
 ## Data and privacy

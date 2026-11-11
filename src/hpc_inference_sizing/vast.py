@@ -78,6 +78,8 @@ class OfferQuery:
             "type": "on-demand",
             "limit": self.limit,
         }
+        if self.gpu_name.lower() == "any":  # e.g. the cheapest 1-GPU node for the backstop check
+            del q["gpu_name"]
         if self.max_dph is not None:
             q["dph_total"] = {"lte": self.max_dph}
         return q
