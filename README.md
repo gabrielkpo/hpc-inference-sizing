@@ -105,7 +105,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 | 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | done; protocol is a draft until the freeze |
 | 2 Memory model | Weights and MLA KV cache per GPU for each split, tested; predictions in [`docs/MEMORY.md`](docs/MEMORY.md) | done |
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model; see [`docs/BENCH.md`](docs/BENCH.md) | in review |
-| 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved | planned |
+| 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved; see [`docs/CAMPAIGN.md`](docs/CAMPAIGN.md) | in review |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed | planned |
 | 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | planned |
 | 7 Sizing and report | Sizing tool, price-of-latency curve, results in this README | planned |
@@ -142,6 +142,9 @@ GPU runs will read `VAST_API_KEY` and `HF_TOKEN` from the environment (see `.env
 | `docs/PROTOCOL.md` | Question, workload, SLO, configurations, hypotheses, stop rules |
 | `docs/MEMORY.md` | Memory model, split rules and the pre-registered KV-cache predictions (H6) |
 | `docs/BENCH.md` | Measurement bench: workload, streaming client, SLO statistics, sweep, run files |
+| `docs/CAMPAIGN.md` | Campaign runner, matrices, resume and stop rules, SLURM job arrays |
+| `campaign/` | Campaign matrices: the 2 x A40 campaign and two dry runs |
+| `slurm/` | Local SLURM cluster (Docker), job array scripts, single-node setup for the rented node |
 | `docs/adr/` | Decision records: model and hardware, SLURM on one node |
 | `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), `hpc-sizing` command; sizing tool to come |
 | `src/hpc_inference_sizing/data/` | Measured component sizes of the checkpoints |

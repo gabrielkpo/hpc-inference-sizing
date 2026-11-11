@@ -1,0 +1,29 @@
+# Laptop dry run of the campaign path: a small Mistral model served by llama.cpp, two "units"
+# that only differ by the number of parallel slots. It checks the runner (server start and stop,
+# health wait, sweep, run files, resume); no number from it enters the results.
+
+name = "local-dryrun"
+results_dir = "runs/scratch/local-dryrun"
+model = "models/Ministral-3-3B-Instruct-2512-Q4_K_M.gguf"
+profiles = ["chat"]
+targets_s = [20.0, 60.0]
+step_duration_s = 15
+min_requests = 4
+start_rate = 0.1
+max_rate = 0.4
+bisect_steps = 0
+tpot_bound_ms = 300  # a laptop cannot reach the protocol's 66.7 ms
+sync_command = ""
+
+[server]
+url = "http://127.0.0.1:8091"
+served_model = "ministral-3b"
+health_timeout_s = 180
+command = """llama-server -m {model} --host 127.0.0.1 --port 8091 -c 13312 --metrics -ngl 99 \
+  --alias ministral-3b {flags}"""
+
+[units.one-slot]
+flags = "--parallel 1"
+
+[units.two-slots]
+flags = "--parallel 2"

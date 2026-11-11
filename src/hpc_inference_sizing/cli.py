@@ -4,6 +4,7 @@ hpc-sizing memory --gpu a40 --gpus 2 --split pp          predicted KV-cache capa
 hpc-sizing bench fetch                                    download PIAF and the tokenizer
 hpc-sizing bench step  --url URL --model M --rate 1      one load step
 hpc-sizing bench sweep --url URL --model M --output F    ladder + bisection, run file
+hpc-sizing campaign run --matrix campaign/a40-x2.toml    every run of a matrix, resumable
 """
 
 from __future__ import annotations
@@ -92,6 +93,38 @@ def _bench(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
         print(f"run file: {args.output}")
 
 
+def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    from hpc_inference_sizing.campaign import Limits, load_matrix, run_campaign, status
+
+    matrix = load_matrix(Path(args.matrix))
+    if args.action == "list":
+        print("\n".join(matrix.run_ids()))
+        return
+    if args.action == "status":
+        st = status(matrix)
+        print(f"done ({len(st.done)}): {' '.join(st.done)}")
+        print(f"failed ({len(st.failed)}): {' '.join(st.failed)}")
+        print(f"pending ({len(st.pending)}): {' '.join(st.pending)}")
+        return
+    try:
+        limits = Limits(
+            args.max_hours,
+            args.budget_usd,
+            args.price_per_hour,
+            clock_file=matrix.results_dir / "campaign-clock.json",
+        )
+        final = run_campaign(
+            matrix,
+            limits,
+            _parse_meta(args.meta, parser),
+            only=args.only or None,
+            retry_failed=args.retry_failed,
+        )
+    except ValueError as err:
+        parser.error(str(err))
+    print(f"done {len(final.done)}, failed {len(final.failed)}, pending {len(final.pending)}")
+
+
 def _format_summary(s) -> str:
     return (
         f"rate {s.rate:6.3f} req/s | {s.n_requests:4d} req, {s.n_errors} err | "
@@ -152,11 +185,30 @@ def main(argv: list[str] | None = None) -> None:
                 help="TPOT p95 bound of the SLO (protocol: 66.7 ms); change only for dry runs",
             )
 
+    campaign = sub.add_parser("campaign", help="run a matrix of (unit, profile) sweeps")
+    cactions = campaign.add_subparsers(dest="action", required=True)
+    for name, helptext in (
+        ("list", "print the run ids of a matrix"),
+        ("status", "done, failed and pending runs"),
+        ("run", "run the pending runs, resumable"),
+    ):
+        p = cactions.add_parser(name, help=helptext)
+        p.add_argument("--matrix", required=True, help="campaign matrix (TOML)")
+        if name == "run":
+            p.add_argument("--only", action="append", default=[], help="run id (repeatable)")
+            p.add_argument("--retry-failed", action="store_true")
+            p.add_argument("--max-hours", type=float, help="stop starting runs after this")
+            p.add_argument("--budget-usd", type=float, help="stop starting runs past this spend")
+            p.add_argument("--price-per-hour", type=float, default=0.0, help="instance USD/h")
+            p.add_argument("--meta", action="append", default=[], help="KEY=VALUE run metadata")
+
     args = parser.parse_args(argv)
     if args.command == "memory":
         _memory(args, mem)
-    else:
+    elif args.command == "bench":
         _bench(args, bench)
+    else:
+        _campaign(args, campaign)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,26 @@
+# Dry run of the SLURM path on the local Docker cluster (slurm/docker-compose.yml): the jobs run
+# in the containers and reach a llama.cpp server already running on the host. It checks the job
+# array, the throttle and the resume; no number from it enters the results.
+
+name = "slurm-dryrun"
+results_dir = "runs/scratch/slurm-dryrun"
+profiles = ["chat"]
+targets_s = [20.0, 60.0]
+step_duration_s = 15
+min_requests = 4
+start_rate = 0.1
+max_rate = 0.2
+bisect_steps = 0
+tpot_bound_ms = 300  # a laptop cannot reach the protocol's 66.7 ms
+
+[server]
+url = "http://host.docker.internal:8091"
+served_model = "ministral-3b"
+health_timeout_s = 30
+command = ""  # external server, started by hand on the host
+
+[units.first]
+flags = ""
+
+[units.second]
+flags = ""
