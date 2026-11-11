@@ -5,6 +5,8 @@ hpc-sizing bench fetch                                    download PIAF and the 
 hpc-sizing bench step  --url URL --model M --rate 1      one load step
 hpc-sizing bench sweep --url URL --model M --output F    ladder + bisection, run file
 hpc-sizing campaign run --matrix campaign/a40-x2.toml    every run of a matrix, resumable
+hpc-sizing vast offers --gpu A40 --num-gpus 2            cheapest matching offers (no key)
+hpc-sizing vast rent --offer ID --max-price 1.5 ...      plan; rents only with --yes, then guards
 """
 
 from __future__ import annotations
@@ -125,6 +127,84 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
     print(f"done {len(final.done)}, failed {len(final.failed)}, pending {len(final.pending)}")
 
 
+def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    import os
+
+    from hpc_inference_sizing import vast
+
+    client = vast.VastClient()
+    try:
+        if args.action == "offers":
+            query = vast.OfferQuery(
+                gpu_name=args.gpu,
+                num_gpus=args.num_gpus,
+                disk_gb=args.disk,
+                max_dph=args.max_price,
+                limit=args.limit,
+            )
+            offers = client.search(query)
+            print("\n".join(vast.offer_row(o) for o in offers) or "no matching offer")
+        elif args.action == "balance":
+            print(f"credit: {client.balance():.2f} USD")
+        elif args.action == "list":
+            for inst in client.instances():
+                print(
+                    f"{inst.get('id')}  {inst.get('label')}  {inst.get('actual_status')}  "
+                    f"{inst.get('num_gpus')} x {inst.get('gpu_name')}"
+                )
+        elif args.action == "show":
+            info = client.show(args.instance)
+            print(
+                f"{args.instance}: status {info.get('actual_status')}, "
+                f"{info.get('dph_total')} USD/h"
+            )
+            if ssh := vast.ssh_command(info):
+                print(ssh)
+        elif args.action == "destroy":
+            ok = vast.destroy_with_retries(client, args.instance)
+            if not ok:
+                raise SystemExit(1)
+        elif args.action == "guard":
+            result = vast.guard(
+                client,
+                args.instance,
+                args.max_hours,
+                args.budget_usd,
+                price_hint=args.price_per_hour,
+            )
+            print(f"guard ended: {result.reason}; destroyed: {result.destroyed}")
+        elif args.action == "rent":
+            env = {}
+            if args.pass_hf_token:
+                if not os.environ.get("HF_TOKEN"):
+                    parser.error("--pass-hf-token: HF_TOKEN is not set in the environment")
+                env["HF_TOKEN"] = os.environ["HF_TOKEN"]
+            spec = vast.RentSpec(
+                image=args.image, disk_gb=args.disk, max_hours=args.max_hours, env=env
+            )
+            rental = vast.rent(client, args.offer, spec, args.max_price, confirm=args.yes)
+            if rental is None:
+                return
+            if args.no_guard:
+                print(
+                    f"no guard: run `hpc-sizing vast guard {rental.instance_id} --max-hours "
+                    f"{args.max_hours} --budget-usd {args.budget_usd} "
+                    f"--price-per-hour {rental.dph_total:.3f}` now"
+                )
+                return
+            result = vast.guard(
+                client,
+                rental.instance_id,
+                args.max_hours,
+                args.budget_usd,
+                price_hint=rental.dph_total,
+                count_instance_age=False,  # fresh rental: age 0, start_date not yet checked
+            )
+            print(f"guard ended: {result.reason}; destroyed: {result.destroyed}")
+    except vast.VastError as err:
+        parser.error(str(err))
+
+
 def _format_summary(s) -> str:
     return (
         f"rate {s.rate:6.3f} req/s | {s.n_requests:4d} req, {s.n_errors} err | "
@@ -202,13 +282,43 @@ def main(argv: list[str] | None = None) -> None:
             p.add_argument("--price-per-hour", type=float, default=0.0, help="instance USD/h")
             p.add_argument("--meta", action="append", default=[], help="KEY=VALUE run metadata")
 
+    vastp = sub.add_parser("vast", help="find, rent, guard and destroy a Vast.ai instance")
+    vactions = vastp.add_subparsers(dest="action", required=True)
+    p = vactions.add_parser("offers", help="cheapest matching offers (no key needed)")
+    p.add_argument("--gpu", default="A40")
+    p.add_argument("--num-gpus", type=int, default=2)
+    p.add_argument("--disk", type=int, default=150, help="GB, included in the price")
+    p.add_argument("--max-price", type=float, help="USD/h")
+    p.add_argument("--limit", type=int, default=10)
+    vactions.add_parser("balance", help="prepaid credit left (key needed)")
+    vactions.add_parser("list", help="my instances (key needed)")
+    for name, helptext in (("show", "status, price, ssh command"), ("destroy", "destroy now")):
+        vactions.add_parser(name, help=helptext).add_argument("instance", type=int)
+    p = vactions.add_parser("guard", help="destroy at the time or budget limit, on Ctrl-C")
+    p.add_argument("instance", type=int)
+    p.add_argument("--max-hours", type=float, required=True)
+    p.add_argument("--budget-usd", type=float, required=True)
+    p.add_argument("--price-per-hour", type=float, default=0.0, help="until the API gives it")
+    p = vactions.add_parser("rent", help="plan a rental; rents only with --yes, then guards it")
+    p.add_argument("--offer", type=int, required=True)
+    p.add_argument("--max-price", type=float, required=True, help="USD/h cap on the live price")
+    p.add_argument("--max-hours", type=float, required=True, help="deadline of the instance")
+    p.add_argument("--budget-usd", type=float, required=True, help="spend cap for the guard")
+    p.add_argument("--image", default="vllm/vllm-openai:v0.32.0")
+    p.add_argument("--disk", type=int, default=150, help="GB")
+    p.add_argument("--pass-hf-token", action="store_true", help="give HF_TOKEN to the instance")
+    p.add_argument("--yes", action="store_true", help="really rent (paid)")
+    p.add_argument("--no-guard", action="store_true", help="do not watch it from here")
+
     args = parser.parse_args(argv)
     if args.command == "memory":
         _memory(args, mem)
     elif args.command == "bench":
         _bench(args, bench)
-    else:
+    elif args.command == "campaign":
         _campaign(args, campaign)
+    else:
+        _vast(args, vastp)
 
 
 if __name__ == "__main__":
