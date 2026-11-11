@@ -297,6 +297,7 @@ def guard(
     dead_grace_s: float = 600,
     price_hint: float = 0.0,
     count_instance_age: bool = True,
+    reserve_usd: float = 0.0,
     log: Callable[[str], None] = print,
     clock: Callable[[], float] = time.monotonic,
     wall: Callable[[], float] = time.time,
@@ -305,11 +306,12 @@ def guard(
     """Watch the instance and destroy it at the deadline, the budget, on Ctrl-C or SIGTERM,
     or when it stays dead (exited, offline, unknown) for `dead_grace_s`.
 
-    With `count_instance_age`, time counts from the instance's own start (`start_date`) when
-    the API gives it, so a guard restarted on a running instance does not grant it a new
-    deadline. `rent` turns it off for the guard of a fresh rental (age 0 by construction)
-    until the meaning of `start_date` is checked on the test session. Spending uses the
-    instance's price, or `price_hint` until it is read. Any unexpected error destroys too.
+    With `count_instance_age`, time counts from the instance's creation (`start_date`, checked
+    on the test session), so a guard restarted on a running instance does not grant it a new
+    deadline; `rent` turns it off for the guard of a fresh rental (age 0 by construction).
+    Spending uses the instance's price, or `price_hint` until it is read; `reserve_usd` is kept
+    out of the budget for what the guard cannot see, such as bandwidth. Any unexpected error
+    destroys too.
     """
     start = clock()
     price = price_hint
@@ -363,8 +365,8 @@ def guard(
                 if elapsed >= max_hours * 3600:
                     reason = f"time limit ({max_hours} h)"
                     break
-                if spent >= budget_usd:
-                    reason = f"budget ({spent:.2f} >= {budget_usd} USD)"
+                if spent + reserve_usd >= budget_usd:
+                    reason = f"budget ({spent:.2f} + {reserve_usd:g} reserved >= {budget_usd} USD)"
                     break
                 log(f"guard: {elapsed / 3600:.2f} h, {spent:.2f} USD, status {status}")
                 for _ in range(max(1, int(poll_s))):  # 1 s slices: Ctrl-C acts within a second

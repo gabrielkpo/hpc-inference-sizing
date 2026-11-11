@@ -252,3 +252,10 @@ def test_bench_step_writes_a_complete_run_file(tmp_path):
     # requests and /metrics samples share the same time origin
     assert 0 <= step["metrics"][0]["t"] < 0.1 and 0 <= step["requests"][0]["sent_at"] < 0.3
     assert not list(tmp_path.glob("*.part"))
+
+
+def test_sweep_reports_each_step_as_it_is_measured():
+    seen = []
+    step, _ = fake_step_factory()
+    asyncio.run(sweep(step, [0.75, 3.0], start_rate=0.25, max_rate=64, on_step=seen.append))
+    assert [s.rate for s in seen][:4] == [0.25, 0.5, 1.0, 2.0]

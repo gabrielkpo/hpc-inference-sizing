@@ -43,7 +43,9 @@ async def sweep(
     max_rate: float = 64.0,
     bisect_steps: int = 2,
     tpot_bound_s: float = TPOT_BOUND_S,
+    on_step: Callable[[StepSummary], None] | None = None,
 ) -> SweepResult:
+    """`on_step` is called with each step as soon as it is measured (live progress)."""
     result = SweepResult(targets_s=sorted(targets_s), tpot_bound_s=tpot_bound_s)
     by_rate: dict[float, StepSummary] = {}
 
@@ -51,6 +53,8 @@ async def sweep(
         if rate not in by_rate:  # never measure the same rate twice
             by_rate[rate] = await step(rate)
             result.steps.append(by_rate[rate])
+            if on_step is not None:
+                on_step(by_rate[rate])
         return by_rate[rate]
 
     loosest = max(targets_s)

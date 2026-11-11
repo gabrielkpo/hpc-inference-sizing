@@ -118,6 +118,41 @@ owner's decision.
 **5. Destroy.** Ctrl-C in the guard terminal (or the guard's deadline), then `$V list` must say
 "no instance on the account".
 
+## Campaign day (2-GPU matrix, one session, protocol §10 and amendment A5)
+
+The runbook of the test session, with what a day-long run needs on top. `$V` stands for
+`uv run --env-file .env hpc-sizing vast` as above.
+
+1. **Rent without the attached guard**, then start the guard detached, with a deadline and a
+   budget that cover the matrix and a reserve for bandwidth:
+
+   ```bash
+   $V offers --gpu A40 --num-gpus 2      # prefer machine 151324, the test session's host
+   $V rent --offer ID --max-price 1.6 --max-hours 12 --budget-usd 17 --no-guard --yes
+   scripts/detached.sh runs/guard.log uv run --env-file .env hpc-sizing vast guard INSTANCE \
+       --max-hours 12 --budget-usd 17 --reserve-usd 1
+   ```
+
+   The detached guard counts the instance's age from its creation (`start_date`), so the minute
+   between the rental and its start is not given away.
+2. **Prepare the node**: `node-setup.sh` as in step 3 of the test session.
+3. **Start the campaign on the node**, under `nohup`:
+
+   ```bash
+   ssh -p PORT root@HOST 'cd hpc-inference-sizing && { nohup uv run hpc-sizing campaign run \
+     --matrix campaign/a40-x2.toml --max-hours 11.5 --budget-usd 16 --price-per-hour PRICE \
+     --meta gpu=2xA40 --meta host=HOST_ID > ../campaign.log 2>&1 < /dev/null & }'
+   ```
+
+4. **Start the follow** on the laptop (detached, see [`CAMPAIGN.md`](CAMPAIGN.md)): it copies the
+   results after every run, reports, and destroys the instance once the campaign has ended and
+   everything is copied.
+5. **At the end**: `$V list` must say "no instance on the account"; the run files are in
+   `results/a40-x2/` on the laptop.
+
+The campaign's own caps (`--max-hours`, `--budget-usd`) stop it before the guard's, so the last
+results are copied before the guard destroys the instance.
+
 ## Prices seen on 2026-11-11 (public offers, disk of 150 GB included)
 
 | Offer | USD/h | Note |

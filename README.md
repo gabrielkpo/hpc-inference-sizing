@@ -148,10 +148,11 @@ GPU runs will read `VAST_API_KEY` and `HF_TOKEN` from the environment (see `.env
 | `campaign/` | Campaign matrices: the 2 x A40 campaign, the test session and two dry runs |
 | `slurm/` | Local SLURM cluster (Docker), job array scripts, single-node setup for the rented node |
 | `docs/adr/` | Decision records: model and hardware, SLURM on one node |
-| `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), campaign runner (`campaign.py`), Vast.ai driver (`vast.py`), `hpc-sizing` command; sizing tool to come |
+| `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), campaign runner (`campaign.py`), follow from the laptop (`follow.py`), Vast.ai driver (`vast.py`), `hpc-sizing` command; sizing tool to come |
 | `src/hpc_inference_sizing/data/` | Measured component sizes of the checkpoints |
 | `scripts/measure_checkpoint.py` | Reads the safetensors headers of a Hugging Face checkpoint (no weights downloaded) |
 | `scripts/node-setup.sh` | Prepares a rented node: reports the GPUs, installs the bench, fetches data and weights |
+| `scripts/detached.sh` | Runs a long command (guard, follow) detached from the terminal and the Claude app, Mac kept awake |
 | `tests/` | pytest suite |
 
 ## Data and privacy
