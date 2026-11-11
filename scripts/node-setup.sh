@@ -2,7 +2,7 @@
 # Prepare a rented GPU node (vllm/vllm-openai image) for the bench, so no paid minute is spent
 # typing commands. Run as root on the node, from the home directory:
 #   curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh -o node-setup.sh
-#   nohup bash node-setup.sh > node-setup.log 2>&1 &    # survives an ssh drop; tail the log
+#   nohup bash node-setup.sh > node-setup.log 2>&1 < /dev/null &   # survives an ssh drop
 # or, once the repository is cloned: bash scripts/node-setup.sh
 # Steps: report the node, install git and uv, clone the repository, install the bench, fetch
 # the bench data and the model weights. Each step is skipped when already done.

@@ -82,7 +82,7 @@ caffeinate -i uv run --env-file .env hpc-sizing vast rent --offer ID --max-price
 with the ssh command from `$V show INSTANCE`:
 
 ```bash
-ssh -p PORT root@HOST 'curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh -o node-setup.sh && nohup bash node-setup.sh > node-setup.log 2>&1 &'
+ssh -p PORT root@HOST 'curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh -o node-setup.sh && nohup bash node-setup.sh > node-setup.log 2>&1 < /dev/null &'
 ssh -p PORT root@HOST 'tail -n 20 node-setup.log'   # again until "== ready"
 ```
 
@@ -101,7 +101,7 @@ again: done steps are skipped.
 ```bash
 ssh -p PORT root@HOST 'cd hpc-inference-sizing && nohup uv run hpc-sizing campaign run \
   --matrix campaign/test-session.toml --max-hours 0.5 --meta gpu=2xA40 --meta host=HOST_ID \
-  > ../campaign.log 2>&1 &'
+  > ../campaign.log 2>&1 < /dev/null &'
 ssh -p PORT root@HOST 'tail -n 30 campaign.log'   # again until the run is written
 scp -P PORT -r root@HOST:hpc-inference-sizing/runs/scratch/test-session runs/scratch/
 ```
