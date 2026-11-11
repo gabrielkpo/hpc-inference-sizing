@@ -7,9 +7,9 @@ Size the GPU fleet that serves an open-weight LLM for a client, from **measureme
 multi-GPU hardware**: how many GPUs a latency target needs, and what latency a fixed GPU budget
 gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on a rented 2-GPU node.
 
-> **Status: framing done, no measurement yet (step 1 of 7), expect breaking changes.** The
-> measurement protocol is written and will be frozen before the first paid GPU run. See
-> [Status / Roadmap](#status--roadmap).
+> **Status: step 2 of 7 done, no GPU measurement yet, expect breaking changes.** The memory
+> model and its predictions are in [`docs/MEMORY.md`](docs/MEMORY.md); the measurement protocol
+> will be frozen before the first paid GPU run. See [Status / Roadmap](#status--roadmap).
 
 ## Why
 

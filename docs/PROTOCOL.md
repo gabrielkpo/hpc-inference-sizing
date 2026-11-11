@@ -94,14 +94,14 @@ The **capacity** C(unit, profile, T) is the highest arrival rate whose step meet
 ### 5.1 Serving units on 2 GPUs
 
 The weights (70.8 GB) do not fit on one 48 GB card, so every unit spans both GPUs. Four ways of
-splitting a MoE across them are the main comparison:
+splitting a MoE across them are the main comparison (calculator names in brackets):
 
 | Unit | vLLM flags (indicative) | What is split |
 |---|---|---|
-| **TP2** | `--tensor-parallel-size 2` | every layer, attention and experts, across both GPUs |
-| **EP2** | `--tensor-parallel-size 2 --enable-expert-parallel` | experts placed whole on one GPU or the other |
-| **PP2** | `--pipeline-parallel-size 2` | the first half of the layers on one GPU, the second half on the other |
-| **DP2+EP** | `--data-parallel-size 2 --enable-expert-parallel` | attention, shared expert, embedding and output head copied on both GPUs, each GPU serving its own requests; routed experts placed whole on one GPU or the other |
+| **TP2** (`tp`) | `--tensor-parallel-size 2` | every layer, attention and experts, across both GPUs |
+| **EP2** (`ep`) | `--tensor-parallel-size 2 --enable-expert-parallel` | experts placed whole on one GPU or the other |
+| **PP2** (`pp`) | `--pipeline-parallel-size 2` | the first half of the layers on one GPU, the second half on the other |
+| **DP2+EP** (`dp_ep`) | `--data-parallel-size 2 --enable-expert-parallel` | attention, shared expert, embedding and output head copied on both GPUs, each GPU serving its own requests; routed experts placed whole on one GPU or the other |
 
 With MLA attention the KV cache is copied on both GPUs under TP2 and EP2, split by layers under
 PP2 and split by requests under DP2+EP. The predicted capacity of each unit is in
