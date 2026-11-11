@@ -88,7 +88,8 @@ weights within 0.5 % for every split; caches 12 to 17 % above the prediction for
 `pp`, because vLLM 0.32 defaults to `gpu_memory_utilization` 0.92, not 0.90; `dp_ep` about 1 GiB
 per GPU below the prediction once that is corrected, so its overhead is larger than assumed. vLLM
 logs one cache per data-parallel rank, as the reading rule above expects. The predictions in this
-file are left as published.
+file are left as published. At the protocol freeze the server command pins
+`--gpu-memory-utilization 0.90` (protocol amendment A2), the value this model assumes.
 
 ## Corrections
 

@@ -24,7 +24,7 @@ hardware, which answers neither question a client actually asks:
   and how many can work at once before it breaks?*
 
 Both clients are fictional, modelled on public cases of in-house LLM deployments; their sizes
-are proposals until the protocol is frozen ([§3.2](docs/PROTOCOL.md#32-arrivals-and-users)). This project
+were fixed when the protocol was frozen ([§3.2](docs/PROTOCOL.md#32-arrivals-and-users)). This project
 answers both from one measured quantity: the **capacity of a serving unit under a latency
 target**.
 
@@ -102,7 +102,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 
 | Step | Content | State |
 |---|---|---|
-| 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | done; protocol is a draft until the freeze |
+| 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | done; protocol frozen on 2026-11-11 (v1.0, amendments A1 to A6) |
 | 2 Memory model | Weights and MLA KV cache per GPU for each split, tested; predictions in [`docs/MEMORY.md`](docs/MEMORY.md) | done |
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model; see [`docs/BENCH.md`](docs/BENCH.md) | done |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved; see [`docs/CAMPAIGN.md`](docs/CAMPAIGN.md) | done |
@@ -111,7 +111,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 | 7 Sizing and report | Sizing tool, price-of-latency curve, results in this README | planned |
 
 **Evaluation plan.** Six hypotheses with pass criteria written before any run (thresholds
-proposed, frozen with the protocol)
+frozen with the protocol on 2026-11-11)
 ([protocol §7](docs/PROTOCOL.md#7-hypotheses-and-pass-criteria)): the price of latency is
 non-linear (H1), the best way to split the model depends on the latency target (H2), tuning
 vLLM parameters adds at least 20 % capacity (H3), two units deliver at least 1.8 × one unit
