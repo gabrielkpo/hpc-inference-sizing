@@ -93,14 +93,20 @@ The **capacity** C(unit, profile, T) is the highest arrival rate whose step meet
 
 ### 5.1 Serving units on 2 GPUs
 
-The weights (70.8 GB) do not fit on one 48 GB card, so every unit spans both GPUs. The three
-ways of splitting a MoE across them are the main comparison:
+The weights (70.8 GB) do not fit on one 48 GB card, so every unit spans both GPUs. Four ways of
+splitting a MoE across them are the main comparison (calculator names in brackets):
 
 | Unit | vLLM flags (indicative) | What is split |
 |---|---|---|
-| **TP2** | `--tensor-parallel-size 2` | every layer, attention and experts, across both GPUs |
-| **EP2** | `--tensor-parallel-size 2 --enable-expert-parallel` | experts placed whole on one GPU or the other |
-| **PP2** | `--pipeline-parallel-size 2` | the first half of the layers on one GPU, the second half on the other |
+| **TP2** (`tp`) | `--tensor-parallel-size 2` | every layer, attention and experts, across both GPUs |
+| **EP2** (`ep`) | `--tensor-parallel-size 2 --enable-expert-parallel` | experts placed whole on one GPU or the other |
+| **PP2** (`pp`) | `--pipeline-parallel-size 2` | the first half of the layers on one GPU, the second half on the other |
+| **DP2+EP** (`dp_ep`) | `--data-parallel-size 2 --enable-expert-parallel` | attention, shared expert, embedding and output head copied on both GPUs, each GPU serving its own requests; routed experts placed whole on one GPU or the other |
+
+With MLA attention the KV cache is copied on both GPUs under TP2 and EP2, split by layers under
+PP2 and split by requests under DP2+EP. The predicted capacity of each unit is in
+[`MEMORY.md`](MEMORY.md) (2 x A40, RAG profile: TP2 and EP2 37 concurrent requests, PP2 74,
+DP2+EP 42).
 
 All units use `--attention-backend TRITON_MLA` and the Mistral formats (`--tokenizer-mode
 mistral --config-format mistral --load-format mistral`). A unit that does not start on the test
@@ -147,11 +153,11 @@ Each hypothesis is confirmed or refuted by the numbers, and both outcomes are pu
 | ID | Hypothesis | Pass criterion |
 |---|---|---|
 | **H1** | The price of latency is non-linear: a stricter TTFT target costs disproportionately more GPUs | GPUs(T = 1 s) / GPUs(T = 3 s) ≥ 1.5 for the administration scenario, RAG profile *(proposed)* |
-| **H2** | The best split depends on the target: TP2 wins at a strict TTFT, EP2 at a loose one | C(TP2) > C(EP2) at T = 1 s **and** C(EP2) > C(TP2) at T = 3 s, beyond the repeat range |
+| **H2** | The best split depends on the target: under a strict TTFT target per-request speed limits first and TP2 wins; under a loose target cache space limits first and a split that does not copy the cache (PP2 or DP2+EP) wins | C(TP2) is the highest of the four units at T = 1 s **and** C(PP2) or C(DP2+EP) exceeds C(TP2) at T = 3 s, beyond the repeat range *(proposed)* |
 | **H3** | Tuning the levers raises capacity over vLLM defaults | ≥ +20 % capacity, best unit, RAG, T = 2 s *(proposed)* |
 | **H4** | Capacity scales linearly with the number of units, so extrapolating from one unit is valid | 2 units behind round-robin reach ≥ 1.8 × the capacity of 1 unit (§8) |
 | **H5** | NVFP4 costs little quality against FP8 | PIAF F1 of NVFP4 ≥ F1 of FP8 − 2 points (§9) *(proposed)* |
-| **H6** | The memory calculator predicts the KV-cache capacity vLLM reports | within 10 % for every unit |
+| **H6** | The memory calculator predicts the KV-cache capacity vLLM reports | within 10 % of the predictions in [`MEMORY.md`](MEMORY.md) for every unit, vLLM's log read per split as described there |
 
 ## 8. Extrapolation and its check (4 GPUs)
 
@@ -181,12 +187,12 @@ Not tested, and written as a limit: units on separate machines, smarter routing,
 | Run | GPUs | Content | Estimated cost |
 |---|---|---|---|
 | Test session | 2 | the model loads, one unit answers, one short ladder, results leave the machine, the instance is destroyed | ≈ 1 $ |
-| Main campaign | 2 | §5.1 on both profiles (6 ladders, ≈ 4.5 h), §5.2 (≈ 7 short ladders, ≈ 3 h), repeats (≈ 1.5 h) | ≈ 9 h, ≈ 10 $ |
+| Main campaign | 2 | §5.1 on both profiles (8 ladders, ≈ 6 h), §5.2 (≈ 7 short ladders, ≈ 3 h), repeats (≈ 1.5 h) | ≈ 10.5 h, ≈ 11 $ |
 | Scaling and quality | 4 | §8 and §9 | ≈ 2 h, ≈ 4 $ |
 
 - **No rental** until the whole chain (SLURM jobs, load generator, client, sweep, save, resume)
   has run end to end locally.
-- **Hard budget: 20 €** in total; the plan above comes to ≈ 15 $. The campaign script prints the
+- **Hard budget: 20 €** in total; the plan above comes to ≈ 16 $. The campaign script prints the
   amount spent after each block; if the projection passes the cap, repeats are dropped first,
   then lever values, never the base ladders.
 - Prepaid credit only, no automatic top-up. Keys and card are entered by the owner, never by a

@@ -7,9 +7,9 @@ Size the GPU fleet that serves an open-weight LLM for a client, from **measureme
 multi-GPU hardware**: how many GPUs a latency target needs, and what latency a fixed GPU budget
 gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on a rented 2-GPU node.
 
-> **Status: framing done, no measurement yet (step 1 of 7), expect breaking changes.** The
-> measurement protocol is written and will be frozen before the first paid GPU run. See
-> [Status / Roadmap](#status--roadmap).
+> **Status: step 2 of 7 done, no GPU measurement yet, expect breaking changes.** The memory
+> model and its predictions are in [`docs/MEMORY.md`](docs/MEMORY.md); the measurement protocol
+> will be frozen before the first paid GPU run. See [Status / Roadmap](#status--roadmap).
 
 ## Why
 
@@ -37,7 +37,7 @@ built yet.
 flowchart LR
     P["docs/PROTOCOL.md<br/>(frozen before paid runs)"] --> J["SLURM job<br/>one load step"]
     J --> W["Load generator<br/>RAG / chat profiles,<br/>Poisson arrivals"]
-    W --> V["vLLM unit on 2 GPUs<br/>TP2 / EP2 / PP2"]
+    W --> V["vLLM unit on 2 GPUs<br/>TP2 / EP2 / PP2 / DP2+EP"]
     V --> C["Streaming client<br/>TTFT, TPOT, errors"]
     V --> M["/metrics scraper<br/>queue, KV cache"]
     C --> S{"SLO met?<br/>TTFT p95, TPOT p95,<br/>0 errors"}
@@ -103,7 +103,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1 s: <GPUs>
 | Step | Content | State |
 |---|---|---|
 | 1 Framing | Clients, model, hardware, budget, [protocol](docs/PROTOCOL.md) and decision records | done; protocol is a draft until the freeze |
-| 2 Memory model | Weights and MLA KV cache per GPU for each split, tested; predictions in [`docs/MEMORY.md`](docs/MEMORY.md) | in review |
+| 2 Memory model | Weights and MLA KV cache per GPU for each split, tested; predictions in [`docs/MEMORY.md`](docs/MEMORY.md) | done |
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model | planned |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved | planned |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed | planned |

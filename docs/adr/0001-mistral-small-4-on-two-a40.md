@@ -44,3 +44,10 @@ tensor, expert and pipeline parallel. Small 3.2 is dropped, not kept as a fallba
   and is itself a result to measure.
 - **No independent units on 2 GPUs.** Checking the one-unit-to-many extrapolation needs a 4-GPU
   node for about an hour, which also hosts the FP8 checkpoint for the quality comparison.
+
+## Update (2026-11-11)
+
+A fourth 2-GPU unit was added to the comparison: attention copied on both GPUs and experts
+spread (DP2+EP), the published recipe for large MoE models with MLA attention. See
+[`PROTOCOL.md` §5.1](../PROTOCOL.md#51-serving-units-on-2-gpus) and the memory predictions in
+[`MEMORY.md`](../MEMORY.md).
