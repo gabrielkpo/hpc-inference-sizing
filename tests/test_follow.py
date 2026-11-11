@@ -396,13 +396,19 @@ def test_a_campaign_that_never_starts_ends_the_rental(tmp_path):
     )
     kinds = [json.loads(line)["kind"] for line in events.read_text().splitlines()]
     assert result.reason == "campaign never started" and result.destroyed
-    assert kinds[-2:] == ["never_started", "destroyed"] and clock.t == pytest.approx(1800)
+    assert kinds[-2:] == ["never_started", "destroyed"] and clock.t == pytest.approx(3600)
+    alert = [json.loads(line) for line in events.read_text().splitlines()][1]
+    assert alert["message"].startswith("ALERT campaign not started for 30 min; destroy in 30 min")
 
 
 def test_a_stalled_campaign_ends_the_rental(tmp_path):
     clock = Clock()
-    remote = ScriptedRemote([(True, {})] * 100)
-    remote.log_age = 46 * 60
+
+    class Frozen(ScriptedRemote):
+        def log_age_s(self):
+            return 46 * 60 + clock.t  # the log stopped changing and stays silent
+
+    remote = Frozen([(True, {})] * 100)
     result = follow(
         FakeClient(),
         7,
@@ -413,6 +419,7 @@ def test_a_stalled_campaign_ends_the_rental(tmp_path):
         clock=clock,
     )
     assert result.reason == "campaign stalled" and result.destroyed
+    assert clock.t == pytest.approx(1800)  # alert at once (46 min), destroy 30 min later
 
 
 def test_a_long_quiet_server_start_is_not_a_stall(tmp_path):
@@ -431,20 +438,68 @@ def test_a_long_quiet_server_start_is_not_a_stall(tmp_path):
     assert result.reason == "campaign ended"
 
 
+def test_alert_only_flags_but_keeps_the_node(tmp_path):
+    clock = Clock()
+    client = FakeClient()
+    events = tmp_path / "events.jsonl"
+    with pytest.raises(Stop):
+        follow(
+            client,
+            7,
+            matrix(tmp_path),
+            lambda info: ScriptedRemote([(False, {})] * 200),
+            events_path=events,
+            log=lambda _: None,
+            sleep=clock.sleep,
+            clock=clock,
+            safety_destroy=False,
+        )
+    kinds = [json.loads(line)["kind"] for line in events.read_text().splitlines()]
+    assert kinds == ["start", "never_started"] and client.destroyed == 0
+
+
+def test_a_stall_that_resolves_is_not_destroyed(tmp_path):
+    clock = Clock()
+
+    class Healing(ScriptedRemote):
+        looks = 0
+
+        def log_age_s(self):
+            Healing.looks += 1
+            return 50 * 60 if Healing.looks <= 3 else 60.0  # stalled 3 looks, then moving
+
+    remote = Healing([(True, {})] * 8 + [(False, {}), (False, {})])
+    events = tmp_path / "events.jsonl"
+    result = follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: remote,
+        events_path=events,
+        log=lambda _: None,
+        sleep=clock.sleep,
+        clock=clock,
+    )
+    kinds = [json.loads(line)["kind"] for line in events.read_text().splitlines()]
+    assert "stalled" in kinds and "recovered" in kinds and result.reason == "campaign ended"
+
+
 def test_no_destroy_also_disables_the_safety_destroys(tmp_path):
     clock = Clock()
     client = FakeClient()
+    remote = ScriptedRemote([(False, {})] * 20 + [(True, {}), (False, {}), (False, {})])
     result = follow(
         client,
         7,
         matrix(tmp_path),
-        lambda info: ScriptedRemote([(False, {})] * 100),
+        lambda info: remote,
         log=lambda _: None,
         sleep=clock.sleep,
         clock=clock,
         destroy_when_done=False,
     )
-    assert result.reason == "campaign never started" and client.destroyed == 0
+    # nothing may be destroyed, so it keeps following past the grace period, to the end
+    assert result.reason == "campaign ended" and client.destroyed == 0
 
 
 def test_ssh_remote_reads_the_log_age(tmp_path, fake_ssh):

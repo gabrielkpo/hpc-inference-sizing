@@ -85,11 +85,14 @@ A campaign day lasts hours, so it is followed without watching a terminal:
   and appends events (`run_done`, `run_failed`, `unreachable`, `finished`, `destroyed`...) to
   `RESULTS_DIR/events.jsonl`. When the campaign process has ended, on two looks in a row, and the
   results are copied, it destroys the instance: a finished campaign does not bill until the
-  guard's deadline. A queued SLURM array task counts as running. It also destroys the instance
-  when nothing happens: the campaign has not started 30 minutes after the follow began
-  (`--start-timeout-min`), or its log has not changed for 45 minutes while it runs
-  (`--stall-timeout-min`; a first server start can stay silent up to 40 minutes). `--no-destroy`
-  turns every destroy off.
+  guard's deadline. A queued SLURM array task counts as running. When nothing happens it first
+  raises an **alert** (an event, so a notification): the campaign has not started 30 minutes
+  after the follow began (`--start-timeout-min`), or its log has not changed for 45 minutes while
+  it runs (`--stall-timeout-min`; a first server start can stay silent up to 40 minutes). That
+  leaves time to look and repair; if nothing changes for 30 more minutes (`--alert-grace-min`),
+  it destroys the instance. A campaign that moves again clears the alert. `--alert-only` keeps
+  the node whatever happens; `--no-destroy` turns every destroy off, the end of campaign
+  included.
 - **Detached from the Claude app.** [`scripts/detached.sh`](../scripts/detached.sh) starts the
   guard and the follow in their own session, with a log file, and keeps the Mac awake while they
   run (plugged in, lid open), so a closed window or a crashed app does not stop them. The

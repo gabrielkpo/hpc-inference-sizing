@@ -116,6 +116,8 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
             destroy_when_done=not args.no_destroy,
             start_timeout_s=args.start_timeout_min * 60,
             stall_timeout_s=args.stall_timeout_min * 60,
+            alert_grace_s=args.alert_grace_min * 60,
+            safety_destroy=not args.alert_only,
         )
         print(f"follow ended: {result.reason}; destroyed: {result.destroyed}")
         return
@@ -331,10 +333,16 @@ def main(argv: list[str] | None = None) -> None:
             p.add_argument("--remote-repo", default="hpc-inference-sizing", help="clone on node")
             p.add_argument("--no-destroy", action="store_true", help="never destroy the node")
             p.add_argument(
-                "--start-timeout-min", type=float, default=30, help="destroy if not started by then"
+                "--start-timeout-min", type=float, default=30, help="alert if not started by then"
             )
             p.add_argument(
-                "--stall-timeout-min", type=float, default=45, help="destroy if the log is silent"
+                "--stall-timeout-min", type=float, default=45, help="alert if the log is silent"
+            )
+            p.add_argument(
+                "--alert-grace-min", type=float, default=30, help="then destroy if nothing changes"
+            )
+            p.add_argument(
+                "--alert-only", action="store_true", help="never destroy on a stall or a no-start"
             )
 
     vastp = sub.add_parser("vast", help="find, rent, guard and destroy a Vast.ai instance")
