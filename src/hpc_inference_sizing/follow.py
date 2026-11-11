@@ -6,7 +6,10 @@ Every `every_s` seconds `follow`:
 2. copies the node's results folder into the local one (results leave the machine);
 3. reports each run that finished since the last look, with its capacities;
 4. when the campaign process has ended (or no run is pending) and the results are copied,
-   destroys the instance, so a finished campaign does not keep billing until the deadline.
+   destroys the instance, so a finished campaign does not keep billing until the deadline;
+5. destroys it too when the campaign never starts (`start_timeout_s` after the follow began)
+   or stalls (its log unchanged for `stall_timeout_s` while it runs): a node that does nothing
+   is not left billing until the guard's deadline.
 
 Each notable event is also appended to `events_path` as one JSON line, for notifications.
 The guard (`vast guard`) still runs beside it: it owns the time and budget caps.
@@ -43,6 +46,7 @@ class Remote(Protocol):
     def pull(self, local_dir: Path) -> None: ...
     def campaign_running(self) -> bool: ...
     def last_log_line(self) -> str: ...
+    def log_age_s(self) -> float: ...
 
 
 @dataclass
@@ -99,6 +103,16 @@ class SshRemote:
         out = self._ssh(f"tail -n 1 {shlex.quote(self.log_file)}", capture_output=True)
         return plain(out.stdout.decode(errors="replace"))
 
+    def log_age_s(self) -> float:
+        """Seconds since the campaign log last changed on the node."""
+        script = "import os, sys, time; print(time.time() - os.path.getmtime(sys.argv[1]))"
+        out = self._ssh(
+            f"python3 -c {shlex.quote(script)} {shlex.quote(self.log_file)}", capture_output=True
+        )
+        if out.returncode != 0:
+            raise OSError(f"cannot read the campaign log age: {out.stderr.decode()[-200:]}")
+        return float(out.stdout.decode().strip())
+
 
 @dataclass
 class FollowResult:
@@ -152,10 +166,18 @@ def follow(
     events_path: Path | None = None,
     every_s: float = 300,
     destroy_when_done: bool = True,
+    start_timeout_s: float = 1800,
+    stall_timeout_s: float = 2700,
     log: Callable[[str], None] = print,
     sleep: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.monotonic,
 ) -> FollowResult:
-    """Follow until the campaign is finished and copied (then destroy) or the instance is gone."""
+    """Follow until the campaign is finished and copied (then destroy) or the instance is gone.
+
+    `stall_timeout_s` must exceed the longest silent stretch of a healthy run: a server start
+    (up to the matrix's health timeout, 40 min) logs nothing until the server is ready.
+    """
+    started_at = clock()
     seen: set[str] = set()
     seen_running = False
     stopped_looks = 0  # the end is declared on two looks in a row, not on one
@@ -171,6 +193,16 @@ def follow(
 
     def as_dict(st) -> dict[str, list[str]]:
         return {"done": st.done, "failed": st.failed, "pending": st.pending}
+
+    def end(reason: str, st) -> FollowResult:
+        if not destroy_when_done:
+            return FollowResult(reason, False, as_dict(st))
+        destroyed = destroy_with_retries(client, instance_id, log=log, sleep=sleep)
+        if destroyed:
+            event("destroyed", f"instance {instance_id} destroyed ({reason})")
+        else:
+            event("destroy_failed", f"DESTROY FAILED for {instance_id}: by hand now")
+        return FollowResult(reason, destroyed, as_dict(st))
 
     seen.update(sum(run_files(matrix.results_dir), []))  # copied before this follow started
     event("start", f"following instance {instance_id}, {len(seen)} runs already here")
@@ -189,6 +221,7 @@ def follow(
                 running = remote.campaign_running()
                 remote.pull(matrix.results_dir)  # after the check: a run that just ended is in
                 last = remote.last_log_line()
+                age = remote.log_age_s() if running else 0.0
                 failures = 0
             except Exception as err:  # noqa: BLE001 - detached: a surprise must not end it
                 failures += 1
@@ -217,6 +250,13 @@ def follow(
                     f"; node: {last[-160:]}"
                 )
                 stopped_looks = 0 if running else stopped_looks + 1
+                waited = clock() - started_at
+                if not seen_running and st.pending and waited >= start_timeout_s:
+                    event("never_started", f"campaign not started after {waited / 60:.0f} min")
+                    return end("campaign never started", st)
+                if running and age >= stall_timeout_s:
+                    event("stalled", f"campaign log unchanged for {age / 60:.0f} min")
+                    return end("campaign stalled", st)
                 if stopped_looks >= 2 and (seen_running or not st.pending):
                     if st.pending:
                         event("stopped", f"campaign stopped with {len(st.pending)} runs pending")
@@ -226,14 +266,7 @@ def follow(
                             f"campaign finished: {len(st.done)} done, "
                             f"{len(st.failed)} failed, results copied",
                         )
-                    if not destroy_when_done:
-                        return FollowResult("campaign ended", False, as_dict(st))
-                    destroyed = destroy_with_retries(client, instance_id, log=log, sleep=sleep)
-                    if destroyed:
-                        event("destroyed", f"instance {instance_id} destroyed")
-                    else:
-                        event("destroy_failed", f"DESTROY FAILED for {instance_id}: by hand now")
-                    return FollowResult("campaign ended", destroyed, as_dict(st))
+                    return end("campaign ended", st)
         sleep(every_s)
 
 
