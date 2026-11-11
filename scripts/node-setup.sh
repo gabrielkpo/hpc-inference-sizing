@@ -1,7 +1,8 @@
 #!/bin/bash
 # Prepare a rented GPU node (vllm/vllm-openai image) for the bench, so no paid minute is spent
 # typing commands. Run as root on the node, from the home directory:
-#   curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh -o node-setup.sh
+#   nohup bash node-setup.sh > node-setup.log 2>&1 &    # survives an ssh drop; tail the log
 # or, once the repository is cloned: bash scripts/node-setup.sh
 # Steps: report the node, install git and uv, clone the repository, install the bench, fetch
 # the bench data and the model weights. Each step is skipped when already done.
@@ -24,7 +25,9 @@ if ! command -v git >/dev/null; then
   apt-get update -q && DEBIAN_FRONTEND=noninteractive apt-get install -y -q git
 fi
 if ! command -v uv >/dev/null; then
-  python3 -m pip install -q uv
+  # pip may refuse a system install (PEP 668): fall back to the official installer, on PATH
+  python3 -m pip install -q uv 2>/dev/null ||
+    curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh
 fi
 uv --version
 

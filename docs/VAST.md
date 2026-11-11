@@ -62,10 +62,11 @@ uv run hpc-sizing vast offers --gpu any --num-gpus 1 --disk 10 --limit 3
 $V rent --offer ID --image python:3.12-slim --disk 10 --max-price 0.15 \
   --max-hours 0.1 --budget-usd 0.1 --no-guard --yes
 $V show INSTANCE   # once running: note start_date against the creation time
-$V list            # every few minutes: the instance must be gone ~16 min after creation
+$V list            # every few minutes: the instance must be gone ~16 min after it started
 ```
 
-Pass: the instance disappears by itself (`python:3.12-slim` has no curl, so this also checks the
+The backstop counts from the start script, which runs once the image is pulled (status
+`running`), not from the creation. Pass: the instance disappears by itself (`python:3.12-slim` has no curl, so this also checks the
 Python path of the script). Fail: destroy it by hand (`$V destroy INSTANCE`), report, and every
 later rental keeps the guard running in the foreground.
 
@@ -81,8 +82,12 @@ caffeinate -i uv run --env-file .env hpc-sizing vast rent --offer ID --max-price
 with the ssh command from `$V show INSTANCE`:
 
 ```bash
-ssh -p PORT root@HOST 'curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh | bash'
+ssh -p PORT root@HOST 'curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh -o node-setup.sh && nohup bash node-setup.sh > node-setup.log 2>&1 &'
+ssh -p PORT root@HOST 'tail -n 20 node-setup.log'   # again until "== ready"
 ```
+
+Long steps run under `nohup` with a log, so an ssh drop (laptop sleep, network) does not kill
+them halfway through paid time.
 
 [`scripts/node-setup.sh`](../scripts/node-setup.sh) prints the GPUs, driver, PCIe generation and
 vLLM version, installs git and uv, clones the repository, installs the bench, fetches PIAF and
@@ -94,8 +99,10 @@ again: done steps are skipped.
 60 s at 0.25, 0.5, 1 and 2 req/s, the same server command as the campaign.
 
 ```bash
-ssh -p PORT root@HOST 'cd hpc-inference-sizing && uv run hpc-sizing campaign run \
-  --matrix campaign/test-session.toml --max-hours 0.5 --meta gpu=2xA40 --meta host=HOST_ID'
+ssh -p PORT root@HOST 'cd hpc-inference-sizing && nohup uv run hpc-sizing campaign run \
+  --matrix campaign/test-session.toml --max-hours 0.5 --meta gpu=2xA40 --meta host=HOST_ID \
+  > ../campaign.log 2>&1 &'
+ssh -p PORT root@HOST 'tail -n 30 campaign.log'   # again until the run is written
 scp -P PORT -r root@HOST:hpc-inference-sizing/runs/scratch/test-session runs/scratch/
 ```
 
