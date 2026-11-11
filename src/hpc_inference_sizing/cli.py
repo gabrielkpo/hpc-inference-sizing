@@ -165,7 +165,13 @@ def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             if not ok:
                 raise SystemExit(1)
         elif args.action == "guard":
-            result = vast.guard(client, args.instance, args.max_hours, args.budget_usd)
+            result = vast.guard(
+                client,
+                args.instance,
+                args.max_hours,
+                args.budget_usd,
+                price_hint=args.price_per_hour,
+            )
             print(f"guard ended: {result.reason}; destroyed: {result.destroyed}")
         elif args.action == "rent":
             env = {}
@@ -176,16 +182,23 @@ def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             spec = vast.RentSpec(
                 image=args.image, disk_gb=args.disk, max_hours=args.max_hours, env=env
             )
-            instance = vast.rent(client, args.offer, spec, args.max_price, confirm=args.yes)
-            if instance is None:
+            rental = vast.rent(client, args.offer, spec, args.max_price, confirm=args.yes)
+            if rental is None:
                 return
             if args.no_guard:
                 print(
-                    f"no guard: run `hpc-sizing vast guard {instance} --max-hours "
-                    f"{args.max_hours} --budget-usd {args.budget_usd}` now"
+                    f"no guard: run `hpc-sizing vast guard {rental.instance_id} --max-hours "
+                    f"{args.max_hours} --budget-usd {args.budget_usd} "
+                    f"--price-per-hour {rental.dph_total:.3f}` now"
                 )
                 return
-            result = vast.guard(client, instance, args.max_hours, args.budget_usd)
+            result = vast.guard(
+                client,
+                rental.instance_id,
+                args.max_hours,
+                args.budget_usd,
+                price_hint=rental.dph_total,
+            )
             print(f"guard ended: {result.reason}; destroyed: {result.destroyed}")
     except vast.VastError as err:
         parser.error(str(err))
@@ -284,6 +297,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("instance", type=int)
     p.add_argument("--max-hours", type=float, required=True)
     p.add_argument("--budget-usd", type=float, required=True)
+    p.add_argument("--price-per-hour", type=float, default=0.0, help="until the API gives it")
     p = vactions.add_parser("rent", help="plan a rental; rents only with --yes, then guards it")
     p.add_argument("--offer", type=int, required=True)
     p.add_argument("--max-price", type=float, required=True, help="USD/h cap on the live price")

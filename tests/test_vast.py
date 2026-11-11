@@ -34,8 +34,10 @@ def offer(id_, price, **kw):
 class FakeVast:
     """In-memory Vast.ai API: records every request, serves offers and one instance."""
 
-    def __init__(self, offers=(), instance=None, destroy_fails=0):
+    def __init__(self, offers=(), instance=None, destroy_fails=0, listed=False, create_fails=False):
         self.offers = list(offers)
+        self.listed = listed
+        self.create_fails = create_fails
         self.instance = instance
         self.destroy_fails = destroy_fails
         self.requests: list[httpx.Request] = []
@@ -52,6 +54,8 @@ class FakeVast:
         if request.headers.get("authorization") != f"Bearer {KEY}":
             return httpx.Response(401, json={"error": "unauthorized"})
         if request.method == "PUT" and path.startswith("/api/v0/asks/"):
+            if self.create_fails:
+                return httpx.Response(504, text="gateway timeout")
             return httpx.Response(200, json={"success": True, "new_contract": 777})
         if path == "/api/v0/instances/777/":
             if request.method == "DELETE":
@@ -61,6 +65,9 @@ class FakeVast:
                 self.instance = None
                 return httpx.Response(200, json={"success": True})
             return httpx.Response(200, json={"instances": self.instance})
+        if path == "/api/v1/instances":
+            listed = [{"id": 777}] if self.listed else []
+            return httpx.Response(200, json={"instances": listed})
         if path == "/api/v0/users/current":
             return httpx.Response(200, json={"balance": 19.5})
         return httpx.Response(404)
@@ -98,7 +105,7 @@ def test_the_key_is_never_shown():
     client = VastClient(api_key=KEY)
     assert KEY not in repr(client)
     spec = RentSpec(env={"HF_TOKEN": "hf_secret"})
-    assert "hf_secret" not in json.dumps(spec.plan())
+    assert "hf_secret" not in json.dumps(spec.plan()) and "hf_secret" not in repr(spec)
     assert spec.body()["env"]["HF_TOKEN"] == "hf_secret"  # only the API request carries it
 
 
@@ -120,8 +127,8 @@ def test_rent_without_confirmation_only_prints_the_plan():
 
 def test_rent_checks_the_live_price_then_creates_with_the_backstop():
     fake = FakeVast([offer(1, 1.3)])
-    instance = vast.rent(fake.client(), 1, RentSpec(max_hours=2), 1.5, confirm=True, log=print)
-    assert instance == 777
+    rental = vast.rent(fake.client(), 1, RentSpec(max_hours=2), 1.5, confirm=True, log=print)
+    assert rental == vast.Rental(777, 1.3)
     body = json.loads(fake.calls("PUT")[0].content)
     assert body["image"] == "vllm/vllm-openai:v0.32.0" and body["disk"] == 150
     assert "sleep 7800" in body["onstart"] and "CONTAINER_API_KEY" in body["onstart"]
@@ -135,11 +142,13 @@ def test_rent_refuses_a_price_above_the_cap_or_a_gone_offer(offers, match):
     assert fake.calls("PUT") == []
 
 
-def run_guard(fake, **kw):
+def run_guard(fake, wall=lambda: 1_000_000.0, **kw):
     clock = FakeClock()
     args = {"max_hours": 1.0, "budget_usd": 100.0, "poll_s": 60, "log": lambda _: None}
     args.update(kw)
-    return vast.guard(fake.client(), 777, clock=clock, sleep=clock.sleep, **args)
+    return vast.guard(
+        fake.client(), 777, clock=clock, wall=lambda: wall() + clock(), sleep=clock.sleep, **args
+    )
 
 
 def test_guard_destroys_at_the_time_limit():
@@ -240,3 +249,44 @@ def test_the_backstop_destroys_the_instance_from_inside(tmp_path, curl_works):
     finally:
         server.shutdown()
     assert seen == [("/api/v0/instances/42/", "Bearer instance-key")]
+
+
+def test_a_restarted_guard_counts_the_instance_age():
+    # the instance started 50 min ago; a new guard with --max-hours 1 must stop it in ~10 min
+    fake = FakeVast(
+        instance={"actual_status": "running", "dph_total": 1.3, "start_date": 1_000_000 - 3000}
+    )
+    result = run_guard(fake, max_hours=1.0)
+    assert result.destroyed and "time limit" in result.reason
+    assert result.elapsed_h == pytest.approx(1.0, abs=0.02)
+    assert result.spent_usd == pytest.approx(1.3, abs=0.05)
+
+
+def test_an_empty_read_of_a_listed_instance_keeps_guarding():
+    fake = FakeVast(instance={}, listed=True)
+    result = run_guard(fake, max_hours=0.1)
+    assert result.destroyed and "time limit" in result.reason
+
+
+def test_the_budget_counts_from_the_offer_price_while_the_api_is_unreadable():
+    clock = FakeClock()
+    result = vast.guard(
+        FakeVast().client(key="wrong-key"),  # every read (and the destroy) fails with 401
+        777,
+        max_hours=10,
+        budget_usd=1.0,
+        price_hint=2.0,
+        log=lambda _: None,
+        clock=clock,
+        sleep=clock.sleep,
+    )
+    assert "budget" in result.reason and not result.destroyed
+    assert result.elapsed_h == pytest.approx(0.5, abs=0.02)
+
+
+def test_a_failed_creation_says_to_check_for_a_live_instance():
+    fake = FakeVast([offer(1, 1.3)], create_fails=True)
+    logs = []
+    with pytest.raises(VastError, match="504"):
+        vast.rent(fake.client(), 1, RentSpec(), 1.5, confirm=True, log=logs.append)
+    assert "vast list" in logs[-1]

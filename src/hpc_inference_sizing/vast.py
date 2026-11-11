@@ -122,7 +122,7 @@ class RentSpec:
     disk_gb: int = 150
     label: str = "hpc-sizing"
     max_hours: float = 1.0
-    env: dict[str, str] = field(default_factory=dict)  # values never printed
+    env: dict[str, str] = field(default_factory=dict, repr=False)  # values never printed
 
     backstop_margin_s: int = 600
 
@@ -228,6 +228,12 @@ class VastClient:
         return float(self._request("GET", "/api/v0/users/current").get("balance", 0.0))
 
 
+@dataclass(frozen=True)
+class Rental:
+    instance_id: int
+    dph_total: float  # live price of the offer when it was rented
+
+
 def rent(
     client: VastClient,
     offer_id: int,
@@ -235,7 +241,7 @@ def rent(
     max_dph: float,
     confirm: bool,
     log: Callable[[str], None] = print,
-) -> int | None:
+) -> Rental | None:
     """Rent one offer if its live price is within `max_dph`; without `confirm`, plan only."""
     offer = client.offer(offer_id, spec.disk_gb)
     if offer is None:
@@ -247,9 +253,14 @@ def rent(
     if not confirm:
         log("dry run: nothing rented (add --yes to rent)")
         return None
-    instance_id = client.create(offer_id, spec)
+    try:
+        instance_id = client.create(offer_id, spec)
+    except VastError:
+        # the answer may be lost after the instance was made: say where to look
+        log("creation failed; an instance may exist anyway: check `hpc-sizing vast list` now")
+        raise
     log(f"rented instance {instance_id}; the guard must run until it is destroyed")
-    return instance_id
+    return Rental(instance_id, offer.dph_total)
 
 
 @dataclass
@@ -267,17 +278,22 @@ def guard(
     budget_usd: float,
     poll_s: float = 60,
     dead_grace_s: float = 600,
+    price_hint: float = 0.0,
     log: Callable[[str], None] = print,
     clock: Callable[[], float] = time.monotonic,
+    wall: Callable[[], float] = time.time,
     sleep: Callable[[float], None] = time.sleep,
 ) -> GuardResult:
     """Watch the instance and destroy it at the deadline, the budget, on Ctrl-C or SIGTERM,
     or when it stays dead (exited, offline, unknown) for `dead_grace_s`.
 
-    Spending is counted from the guard's start at the instance's own price.
+    Time counts from the instance's own start (`start_date`) when the API gives it, so a guard
+    restarted on a running instance does not grant it a new deadline; otherwise from the
+    guard's start. Spending uses the instance's price, or `price_hint` until it is read.
     """
     start = clock()
-    price = 0.0
+    price = price_hint
+    age_s = 0.0  # instance age at the last read, minus the guard time at that read
     status = None
     dead_since: float | None = None
     stop = {"signal": None}
@@ -289,7 +305,7 @@ def guard(
     reason = ""
     try:
         while True:
-            elapsed = clock() - start
+            elapsed = clock() - start + age_s
             if stop["signal"]:
                 reason = f"{stop['signal']} received"
                 break
@@ -298,11 +314,14 @@ def guard(
             except VastError as err:
                 log(f"guard: cannot read the instance ({err}); retrying")
                 info = None
-            if info is not None:
-                if not info:
-                    reason = "instance no longer exists"
-                    return GuardResult(reason, False, elapsed / 3600, elapsed / 3600 * price)
+            if info is not None and not info and not _listed(client, instance_id):
+                reason = "instance no longer exists"
+                return GuardResult(reason, False, elapsed / 3600, elapsed / 3600 * price)
+            if info:
                 price = float(info.get("dph_total") or price)
+                if info.get("start_date"):
+                    age_s = max(age_s, wall() - float(info["start_date"]) - (clock() - start))
+                    elapsed = clock() - start + age_s
                 status = info.get("actual_status")
                 if status in DEAD_STATES:
                     dead_since = dead_since if dead_since is not None else clock()
@@ -319,13 +338,24 @@ def guard(
                 reason = f"budget ({spent:.2f} >= {budget_usd} USD)"
                 break
             log(f"guard: {elapsed / 3600:.2f} h, {spent:.2f} USD, status {status}")
-            sleep(poll_s)
-        elapsed = clock() - start
+            for _ in range(max(1, int(poll_s))):  # 1 s slices: Ctrl-C acts within a second
+                if stop["signal"]:
+                    break
+                sleep(min(1.0, poll_s))
+        elapsed = clock() - start + age_s
         destroyed = destroy_with_retries(client, instance_id, log=log, sleep=sleep)
         return GuardResult(reason, destroyed, elapsed / 3600, elapsed / 3600 * price)
     finally:
         for s, handler in previous.items():
             signal.signal(s, handler)
+
+
+def _listed(client: VastClient, instance_id: int) -> bool:
+    """True unless the instance list, read successfully, does not contain it."""
+    try:
+        return any(int(i.get("id", -1)) == instance_id for i in client.instances())
+    except VastError:
+        return True  # cannot confirm it is gone: keep guarding
 
 
 def destroy_with_retries(
