@@ -96,25 +96,37 @@ def test_poisson_arrivals_have_the_expected_rate():
 
 
 def test_send_times_first_token_and_tokens():
-    server = FakeServer(first_delay=0.05, token_delay=0.01)
-
-    async def go():
-        import httpx
-
-        async with httpx.AsyncClient(transport=server.transport) as client:
-            return await send(client, "http://fake", "m", "hello", 11, t0=0.0)
-
     import time
 
-    t_start = time.perf_counter()
-    rec = asyncio.run(go())
+    import httpx
+
+    server = FakeServer(first_delay=0.05, token_delay=0.01)
+
+    async def go(t0):
+        async with httpx.AsyncClient(transport=server.transport) as client:
+            return await send(client, "http://fake", "m", "hello", 11, t0=t0)
+
+    rec = asyncio.run(go(time.perf_counter()))
     assert rec.error is None
     assert rec.completion_tokens == 11 and rec.prompt_tokens == 7
+    assert 0 <= rec.sent_at < 0.05  # measured from t0, not from an absolute clock
     assert 0.04 < rec.ttft < 0.15
     assert 0.008 < rec.tpot < 0.03
-    assert rec.sent_at >= t_start - 1e-3  # times are measured from t0
     body = server.requests[0]
     assert body["stream"] and body["max_tokens"] == body["min_tokens"] == 11 and body["ignore_eos"]
+
+
+def test_send_records_a_server_error_event_mid_stream():
+    import httpx
+
+    server = FakeServer(first_delay=0.0, token_delay=0.0, error_after=3)
+
+    async def go():
+        async with httpx.AsyncClient(transport=server.transport) as client:
+            return await send(client, "http://fake", "m", "x", 10, t0=0.0)
+
+    rec = asyncio.run(go())
+    assert rec.error.startswith("server error") and "out of KV cache" in rec.error
 
 
 def test_send_records_http_errors():
@@ -233,7 +245,10 @@ def test_bench_step_writes_a_complete_run_file(tmp_path):
     write_run(path, metadata(bench, {"gpu": "fake"}), bench, None)
     doc = json.loads(path.read_text())
     assert doc["metadata"]["gpu"] == "fake" and doc["metadata"]["profile"] == "chat"
+    assert "host" not in doc["metadata"]  # no hostname unless given with --meta
     step = doc["steps"][0]
     assert len(step["requests"]) == summary.n_requests
     assert step["metrics"] and "vllm:num_requests_running" in step["metrics"][0]["metrics"]
+    # requests and /metrics samples share the same time origin
+    assert 0 <= step["metrics"][0]["t"] < 0.1 and 0 <= step["requests"][0]["sent_at"] < 0.3
     assert not list(tmp_path.glob("*.part"))

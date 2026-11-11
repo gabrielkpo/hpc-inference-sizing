@@ -44,7 +44,10 @@ that cannot reach it, and the value used is written in the run file.
 | `stats.py` | p50 and p95 with linear interpolation; a step meets target T when TTFT p95 <= T, TPOT p95 <= 1/15 s and no request failed |
 | `sweep.py` | Ladder 0.25, 0.5, 1, 2 ... req/s until the loosest target breaks, then 2 bisection steps per target; a rate is never measured twice |
 | `scrape.py` | `/metrics` read during each step, keeping only `vllm:` and `llamacpp:` series |
-| `runner.py` | Runs steps with the scraper in parallel and writes the run file atomically (complete or absent) |
+| `runner.py` | Builds a step's prompts first, then runs the step with the scraper in parallel on one time origin, and writes the run file atomically (complete or absent); the host is recorded only when given with `--meta host=...` |
+
+Known cost: prompts are built before each step (about 20 ms per RAG prompt), so a fast step at
+8 req/s waits about 30 s before it starts; over a campaign this is a few minutes of idle GPU.
 
 ## Local dry runs
 

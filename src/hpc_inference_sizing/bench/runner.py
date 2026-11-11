@@ -24,7 +24,7 @@ from hpc_inference_sizing.bench.client import run_step
 from hpc_inference_sizing.bench.scrape import scrape_until
 from hpc_inference_sizing.bench.stats import StepSummary, summarize
 from hpc_inference_sizing.bench.sweep import SweepResult, sweep
-from hpc_inference_sizing.bench.workload import Workload
+from hpc_inference_sizing.bench.workload import Workload, poisson_arrivals
 
 
 @dataclass
@@ -47,6 +47,11 @@ class Bench:
         requests arrive: a step with a handful of requests measures nothing.
         """
         duration = max(self.step_duration_s, self.min_requests / rate)
+        seed = self.seed + len(self.steps)
+        # Build every prompt first, so that request and /metrics times share one origin (t0).
+        first = self._next_index
+        n = len(poisson_arrivals(rate, duration, seed))
+        prompts = [self.workload.prompt(first + i)[0] for i in range(n)]
         stop = asyncio.Event()
         t0 = time.perf_counter()
         scraper = asyncio.create_task(
@@ -55,13 +60,14 @@ class Bench:
         records = await run_step(
             self.base_url,
             self.model,
-            lambda i: self.workload.prompt(i)[0],
+            lambda i: prompts[i - first],
             self.workload.profile.output_tokens,
             rate,
             duration,
-            seed=self.seed + len(self.steps),
-            first_index=self._next_index,
+            seed=seed,
+            first_index=first,
             transport=self.transport,
+            t0=t0,
         )
         stop.set()
         samples = await scraper
@@ -96,7 +102,6 @@ def metadata(bench: Bench, extra: dict[str, str]) -> dict:
         "package_version": __version__,
         "git_commit": git_commit(),
         "python": sys.version.split()[0],
-        "host": platform.node(),
         "platform": platform.platform(),
         "server_url": bench.base_url,
         "model": bench.model,

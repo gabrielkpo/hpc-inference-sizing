@@ -55,6 +55,9 @@ async def send(
                 if data == "[DONE]":
                     break
                 event = json.loads(data)
+                if "error" in event:  # e.g. vLLM aborting a request mid-stream
+                    rec.error = f"server error: {json.dumps(event['error'])[:200]}"
+                    return rec
                 choices = event.get("choices") or []
                 if choices and choices[0].get("text"):
                     now = time.perf_counter() - t0
@@ -86,16 +89,19 @@ async def run_step(
     first_index: int = 0,
     transport: httpx.AsyncBaseTransport | None = None,
     timeout_s: float = 300.0,
+    t0: float | None = None,
 ) -> list[RequestRecord]:
     """Send Poisson arrivals at `rate` for `duration_s`, then wait for every answer.
 
     Prompts are built before the step starts so that tokenizing does not delay the send times.
+    `t0` lets the caller share the time origin with other measurements (the /metrics scraper).
     """
     arrivals = poisson_arrivals(rate, duration_s, seed)
     prompts = [prompt_for(first_index + i) for i in range(len(arrivals))]
     limits = httpx.Limits(max_connections=None, max_keepalive_connections=None)
     async with httpx.AsyncClient(limits=limits, transport=transport) as client:
-        t0 = time.perf_counter()
+        if t0 is None:
+            t0 = time.perf_counter()
 
         async def fire(at: float, prompt: str) -> RequestRecord:
             await asyncio.sleep(max(0.0, at - (time.perf_counter() - t0)))
