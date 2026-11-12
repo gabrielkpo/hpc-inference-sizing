@@ -9,8 +9,9 @@ gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on a rent
 
 > **Status: step 6 of 7 in progress.** The protocol was frozen on 2026-11-11
 > ([`docs/PROTOCOL.md`](docs/PROTOCOL.md), with dated amendments). The 2-GPU campaign ran on
-> 2026-11-11 and 12 (18 runs, no error, 13.81 USD); its analysis and the sizing tool are not
-> published yet. See [Status / Roadmap](#status--roadmap).
+> 2026-11-11 and 12 (18 runs, no error, 13.81 USD); its results are in
+> [`docs/RESULTS.md`](docs/RESULTS.md). The sizing tool and the 4-GPU part are not done yet. See
+> [Status / Roadmap](#status--roadmap).
 
 ## Why
 
@@ -110,7 +111,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1.5 s: <GPUs>   1 s: <GPUs or 
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model; see [`docs/BENCH.md`](docs/BENCH.md) | done |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved; see [`docs/CAMPAIGN.md`](docs/CAMPAIGN.md) | done |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed; rental driver with guard and backstop, see [`docs/VAST.md`](docs/VAST.md) | done on 2026-11-11: the four units start on Ampere, 1.22 USD; see [`docs/TEST-SESSION.md`](docs/TEST-SESSION.md) |
-| 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | 2-GPU matrix run on 2026-11-11 and 12 (18 runs, 13.81 USD), analysis to publish; 4-GPU planned |
+| 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | 2-GPU matrix done (18 runs, 13.81 USD), results in [`docs/RESULTS.md`](docs/RESULTS.md); 4-GPU planned |
 | 7 Sizing and report | Sizing tool, price-of-latency curve, results in this README | planned |
 
 **Evaluation plan.** Six hypotheses with pass criteria written before any run (thresholds
@@ -148,10 +149,12 @@ GPU runs read `VAST_API_KEY` (and `HF_TOKEN` if needed) from the environment (se
 | `docs/CAMPAIGN.md` | Campaign runner, matrices, resume and stop rules, SLURM job arrays |
 | `docs/VAST.md` | Renting the GPU node: offer search, rental only on `--yes`, guard, backstop, test session |
 | `docs/TEST-SESSION.md` | What the test session checked and found (path checks, not results) |
+| `docs/RESULTS.md` | Results of the 2-GPU campaign: capacities, repeats, levers, memory model, hypotheses, what it means for the two clients |
+| `docs/results/` | Small summaries of the campaign's run files, which the results are built from |
 | `campaign/` | Campaign matrices: the 2 x A40 campaign, the test session and two dry runs |
 | `slurm/` | Local SLURM cluster (Docker), job array scripts, single-node setup for the rented node |
 | `docs/adr/` | Decision records: model and hardware, SLURM locally, the chained campaign on the rented node |
-| `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), campaign runner (`campaign.py`), follow from the laptop (`follow.py`), Vast.ai driver (`vast.py`), `hpc-sizing` command; sizing tool to come |
+| `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), campaign runner (`campaign.py`), follow from the laptop (`follow.py`), run-file summaries (`analysis.py`), Vast.ai driver (`vast.py`), `hpc-sizing` command; sizing tool to come |
 | `src/hpc_inference_sizing/data/` | Measured component sizes of the checkpoints |
 | `scripts/measure_checkpoint.py` | Reads the safetensors headers of a Hugging Face checkpoint (no weights downloaded) |
 | `scripts/node-setup.sh` | Prepares a rented node: reports the GPUs, installs the bench, fetches data and weights |

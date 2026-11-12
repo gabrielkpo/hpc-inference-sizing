@@ -6,6 +6,8 @@ hpc-sizing bench step  --url URL --model M --rate 1      one load step
 hpc-sizing bench sweep --url URL --model M --output F    ladder + bisection, run file
 hpc-sizing campaign run --matrix campaign/a40-x2.toml    every run of a matrix, resumable
 hpc-sizing campaign follow --matrix M --instance ID      copy results, report, destroy when done
+hpc-sizing results summarize --dir results/a40-x2 --out docs/results/a40-x2.json
+                                                          recompute capacities from the run files
 hpc-sizing vast offers --gpu A40 --num-gpus 2            cheapest matching offers (no key)
 hpc-sizing vast rent --offer ID --max-price 1.5 ...      plan; rents only with --yes, then guards
 """
@@ -172,6 +174,21 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
     except ValueError as err:
         parser.error(str(err))
     print(f"done {len(final.done)}, failed {len(final.failed)}, pending {len(final.pending)}")
+
+
+def _results(args: argparse.Namespace) -> None:
+    import json
+
+    from hpc_inference_sizing import analysis
+
+    summary = analysis.summarize_dir(Path(args.dir), args.targets)
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(summary, indent=1) + "\n")
+    base = args.units
+    for profile in sorted({r["profile"] for r in summary["runs"]}):
+        print(f"\n{profile}\n\n{analysis.capacity_table(summary, profile, base)}")
+    print(f"\nsummary of {len(summary['runs'])} runs written to {out}")
 
 
 def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -357,6 +374,14 @@ def main(argv: list[str] | None = None) -> None:
                 "--alert-only", action="store_true", help="never destroy on a stall or a no-start"
             )
 
+    results = sub.add_parser("results", help="summarize a campaign's run files")
+    ractions = results.add_subparsers(dest="action", required=True)
+    p = ractions.add_parser("summarize", help="capacities recomputed from every step (§4, A8)")
+    p.add_argument("--dir", required=True, help="results folder of a campaign")
+    p.add_argument("--out", required=True, help="summary JSON (small, versioned)")
+    p.add_argument("--targets", type=float, nargs="+", default=[1.0, 1.5, 2.0, 3.0])
+    p.add_argument("--units", nargs="+", default=["tp", "ep", "pp", "dp_ep"], help="for tables")
+
     vastp = sub.add_parser("vast", help="find, rent, guard and destroy a Vast.ai instance")
     vactions = vastp.add_subparsers(dest="action", required=True)
     p = vactions.add_parser("offers", help="cheapest matching offers (no key needed)")
@@ -400,6 +425,8 @@ def main(argv: list[str] | None = None) -> None:
         _bench(args, bench)
     elif args.command == "campaign":
         _campaign(args, campaign)
+    elif args.command == "results":
+        _results(args)
     else:
         _vast(args, vastp)
 
