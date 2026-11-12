@@ -22,11 +22,11 @@ of rented time in all.
   must first read documents,** however many cards are bought. Reading the documents alone takes
   about one second, before the first word. Getting below it likely needs newer cards, shorter
   documents, or fewer documents per question.
-- **For the administration, with answers starting within 2 seconds: about 115 to 145 cards of
+- **For the administration, with answers starting within 2 seconds: about 110 to 160 cards of
   this kind,** that is about 50,000 to 70,000 USD a month at the rental prices we paid. The range
   is honest: on rented cards, the same test does not give exactly the same result twice.
-- **For the defence ministry, 8 cards serve about 110 to 140 people at once asking questions on
-  documents, or about 750 people chatting.** The same fleet serves five times more people if they
+- **For the defence ministry, 8 cards serve about 100 to 150 people at once asking questions on
+  documents, or about 750 to 800 people chatting.** The same fleet serves five times more people if they
   chat than if they work on documents.
 
 **What drives the bill, in order.**
@@ -94,7 +94,7 @@ run files (15-40 MB each, kept out of Git) made by
    shorter prompts (the chat profile, 500 tokens, has a TTFT p95 of 0.14 to 0.18 s), faster GPUs
    with native low-precision compute, or fewer retrieved passages.
 2. **Prompt length decides capacity far more than how the model is split.** A 2-GPU unit serves
-   about 2.5 req/s of chat but about 0.4 to 0.5 req/s of RAG at T = 2 s: a factor of five for
+   about 2.5 req/s of chat but about 0.375 to 0.5 req/s of RAG at T = 2 s: a factor of five for
    twelve times more prompt tokens.
 3. **What breaks first is generation speed, not memory.** Above every capacity at 2 and 3 s, and
    at every target on chat, the step that fails breaks on TPOT (alone or with TTFT): with more
@@ -149,7 +149,7 @@ arrival sequences. Passes out of three:
 EP2's 0.75 req/s at 3 s passed in the base run, in six of the seven lever runs and in the
 combination run, which reach it by the same path and so replay the same arrival sequence (124
 requests, 0.69 req/s sent). With three
-other sequences it fails every time. A robust reading of RAG on 2 × A40 is **0.4 to 0.5 req/s at
+other sequences it fails every time. A robust reading of RAG on 2 × A40 is **0.375 to 0.5 req/s at
 2 to 3 s**, the same for every unit within the noise. On chat, TP2 sits on the TPOT bound at 2.5
 to 2.58 req/s (the p95 drifts between 58 and 68 ms around the 67 ms limit).
 
@@ -191,29 +191,36 @@ per GPU than its fixed 2 GiB overhead allows.
 
 | ID | Verdict | Why |
 |---|---|---|
-| H1 price of latency | **Not resolved** | 1 s is unreachable for every unit, so H1 is judged at 1.5 s (A3). On single runs, the best unit needs 0.75 / 0.4375 = 1.7 times the GPUs at 1.5 s than at 3 s, above the 1.5 threshold, but the 0.75 req/s at 3 s it rests on failed all three repeats; with the robust 0.4 to 0.5 req/s the ratio falls to about 1.1-1.3. What holds is cruder and stronger: the price of latency is a wall at the prefill floor (TTFT p95 about 1.3 s), not a curve between 1.5 and 3 s |
+| H1 price of latency | **Not resolved** | 1 s is unreachable for every unit, so H1 is judged at 1.5 s (A3). On single runs, the best unit needs 0.75 / 0.4375 = 1.7 times the GPUs at 1.5 s than at 3 s, above the 1.5 threshold, but the 0.75 req/s at 3 s it rests on failed all three repeats; with the robust 0.375 to 0.5 req/s the ratio falls to about 1.1-1.3. What holds is cruder and stronger: the price of latency is a wall at the prefill floor (TTFT p95 about 1.3 s), not a curve between 1.5 and 3 s |
 | H2 best split depends on the target | **Not resolved; its mechanism refuted** | At 1.5 s TP2 is not ahead of the others (all within one step); at 3 s no split that avoids copying the cache beats TP2. The premise that cache space limits at loose targets is wrong here: TPOT limits everywhere |
 | H3 levers add ≥ 20 % | **Not resolved** | The one lever that moved (`max_num_batched_tokens` 8,192) gained one step at 2 s on a single run, inside the repeat spread; +20 % is finer than the lever ladders resolve (A9). Turning prefix caching off clearly lowers capacity |
 | H4 two units scale linearly | **Not tested** | Needs the 4-GPU session |
 | H5 NVFP4 costs little quality | **Not tested** | Needs the 4-GPU session (FP8 reference) |
 | H6 memory model within 10 % | **Refuted** | Three units within 5.3 %, DP2+EP off by 32.7 % |
 
-### What it means for the two clients (indicative)
+### What it means for the two clients (sizing tool)
 
-The sizing tool will do this properly; here are the orders of magnitude, with the robust RAG
-capacity of 0.4 to 0.5 req/s per 2-GPU unit at T = 2 s, the response time measured at capacity
-(about 10 s for RAG, 17 s for chat) and a think time of 60 s (§3.2).
+`hpc-sizing size` turns the capacities into the clients' answers (§3.2, §8): users send
+N / (R + Z) requests per second, with R the response time measured at that capacity and Z = 60 s
+of think time; units = ⌈load / capacity⌉, two GPUs each. It gives two bounds: optimistic, the
+best single run of any unit; prudent, the highest rate a unit met in every repeat. Rental at
+0.61 USD per GPU-hour (2 × A40 at 1.216 USD/h), 730 h a month.
 
-- **Administration** (2,000 active agents, RAG): 2,000 / (10 + 60) ≈ 29 req/s at peak, so 58 to 72
-  units, **about 115 to 145 A40s** at 2 s; at 1.5 s, near the prefill floor, far more and very
-  sensitive to noise; **1 s is not reachable on A40s at any fleet size**. At the 2 × A40 market
-  rate seen (1.2 to 1.35 USD/h per node), 115 to 145 A40s cost about 51,000 to 71,000 USD per
-  month to rent. If `max_num_batched_tokens` 8,192 holds up when repeated, the fleet shrinks by about a
-  third.
-- **Defence** (fixed fleet of 8 A40s, so 4 units): about 1.6 to 2 req/s of RAG at 2 s, that is
-  **about 110 to 140 active users** (one request per 70 s each), or about 10 req/s of chat at a
-  TTFT p95 of 0.3 s, **about 750 active users**. A fixed fleet sized on chat is overwhelmed by
-  RAG use: the mix of request lengths is the first thing to agree on with the client.
+| Question | Target | Optimistic | Prudent |
+|---|---|---|---|
+| Administration, 2,000 active agents, RAG: GPUs | 1 s | unreachable | unreachable |
+| | 1.5 s | 136 GPUs (DP2+EP 0.44 req/s) | unknown: no repeated rate met 1.5 s |
+| | 2 s | 108 GPUs, 48,000 USD/month (TP2 0.53 req/s) | 160 GPUs, 71,000 USD/month (0.375 req/s) |
+| | 3 s | 72 GPUs (EP2 0.75 req/s, which failed 3 of 3 repeats) | 160 GPUs (0.375 req/s) |
+| Defence, 8 GPUs: active users | RAG, 2 s | about 148 | about 100 |
+| | chat, 2 s | about 798 | about 762 |
+
+Reading: the prudent RAG capacity is the same at 2 s and 3 s, because 0.5 req/s passed one repeat
+in three at both targets; the optimistic gap between 2 s and 3 s rests on a step that did not
+reproduce. Between 1.5 and 3 s the fleet changes within the noise; below about 1.3 s it cannot be
+built on this hardware. If `max_num_batched_tokens` 8,192 holds up when repeated, the fleet
+shrinks by about a third. A fixed fleet sized on chat is overwhelmed by RAG use: the mix of
+request lengths is the first thing to agree on with a client.
 
 ### Limits
 

@@ -8,6 +8,8 @@ hpc-sizing campaign run --matrix campaign/a40-x2.toml    every run of a matrix, 
 hpc-sizing campaign follow --matrix M --instance ID      copy results, report, destroy when done
 hpc-sizing results summarize --dir results/a40-x2 --out docs/results/a40-x2.json
                                                           recompute capacities from the run files
+hpc-sizing size --profile rag --target 2 --users 2000    GPUs and cost for a user count
+hpc-sizing size --profile rag --target 2 --gpus 8        users a fixed fleet serves
 hpc-sizing vast offers --gpu A40 --num-gpus 2            cheapest matching offers (no key)
 hpc-sizing vast rent --offer ID --max-price 1.5 ...      plan; rents only with --yes, then guards
 """
@@ -189,6 +191,27 @@ def _results(args: argparse.Namespace) -> None:
     for profile in sorted({r["profile"] for r in summary["runs"]}):
         print(f"\n{profile}\n\n{analysis.capacity_table(summary, profile, base)}")
     print(f"\nsummary of {len(summary['runs'])} runs written to {out}")
+
+
+def _size(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    import json
+
+    from hpc_inference_sizing import sizing
+
+    if (args.users is None) == (args.gpus is None):
+        parser.error("give either --users (how many GPUs?) or --gpus (how many users?)")
+    summary = json.loads(Path(args.summary).read_text())
+    print(
+        sizing.report(
+            summary,
+            args.profile,
+            args.target,
+            args.think_time,
+            args.price_per_gpu_hour,
+            users=args.users,
+            gpus=args.gpus,
+        )
+    )
 
 
 def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -382,6 +405,17 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--targets", type=float, nargs="+", default=[1.0, 1.5, 2.0, 3.0])
     p.add_argument("--units", nargs="+", default=["tp", "ep", "pp", "dp_ep"], help="for tables")
 
+    size = sub.add_parser("size", help="GPUs for a user count, or users for a fleet")
+    size.add_argument("--summary", default="docs/results/a40-x2.json", help="results summary")
+    size.add_argument("--profile", choices=["rag", "chat"], default="rag")
+    size.add_argument("--target", type=float, default=2.0, help="TTFT p95 target, seconds")
+    size.add_argument("--users", type=int, help="active users at peak: how many GPUs?")
+    size.add_argument("--gpus", type=int, help="fixed fleet: how many users?")
+    size.add_argument("--think-time", type=float, default=60.0, help="seconds (protocol §3.2)")
+    size.add_argument(
+        "--price-per-gpu-hour", type=float, default=0.61, help="USD; 2 x A40 at 1.216 USD/h"
+    )
+
     vastp = sub.add_parser("vast", help="find, rent, guard and destroy a Vast.ai instance")
     vactions = vastp.add_subparsers(dest="action", required=True)
     p = vactions.add_parser("offers", help="cheapest matching offers (no key needed)")
@@ -427,6 +461,8 @@ def main(argv: list[str] | None = None) -> None:
         _campaign(args, campaign)
     elif args.command == "results":
         _results(args)
+    elif args.command == "size":
+        _size(args, size)
     else:
         _vast(args, vastp)
 
