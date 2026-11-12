@@ -10,7 +10,7 @@ gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on a rent
 > **Status: step 6 of 7 in progress.** The protocol was frozen on 2026-11-11
 > ([`docs/PROTOCOL.md`](docs/PROTOCOL.md), with dated amendments). The 2-GPU campaign ran on
 > 2026-11-11 and 12 (18 runs, no error, 13.81 USD); its results are in
-> [`docs/RESULTS.md`](docs/RESULTS.md). The sizing tool and the 4-GPU part are not done yet. See
+> [`docs/RESULTS.md`](docs/RESULTS.md). The sizing tool answers both clients from them; the 4-GPU part is not done yet. See
 > [Status / Roadmap](#status--roadmap).
 
 ## Why
@@ -88,19 +88,23 @@ flowchart LR
 
 ## Example
 
-Illustrative output of the planned sizing tool. **The numbers below are placeholders, not
-measurements.**
+The sizing tool, on the measured campaign (`docs/results/a40-x2.json`): the administration's
+question, 2,000 active agents asking questions on documents, first token within 2 s for 95 % of
+requests. It gives a range, not one number: the best single measurement, and the highest load a
+unit held in every repeat.
 
 ```text
-$ hpc-sizing plan --client administration --users 2000 --think-time 60 --ttft 2 --price 1.10
+$ hpc-sizing size --profile rag --target 2 --users 2000
 
-Peak load        2,000 active users / (60 s think + ~3 s answer)  ->  ~32 req/s
-Best unit        EP2 (2 x A40), RAG profile, TTFT p95 <= 2 s
-Unit capacity    <measured> req/s
-GPUs needed      <units> x 2
-Monthly cost     <GPUs> x 1.10 $/h x 730 h
-Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1.5 s: <GPUs>   1 s: <GPUs or unreachable>
+Profile rag, first token within 2 s for 95 % of requests, think time 60 s
+Unit capacity (optimistic)  0.531 req/s per 2 GPUs (tp), answer in 9.9 s
+Unit capacity (prudent)  0.375 req/s per 2 GPUs (ep, passed every repeat), answer in 6.9 s
+GPUs needed (optimistic)   108 for 2,000 active users (28.6 req/s), 48,092 USD a month at 0.61 USD per GPU-hour
+GPUs needed (prudent)   160 for 2,000 active users (29.9 req/s), 71,248 USD a month at 0.61 USD per GPU-hour
 ```
+
+The same question with `--target 1` answers "Unreachable", and `--gpus 8` turns it around (how
+many users a fixed fleet serves). See [`docs/RESULTS.md`](docs/RESULTS.md).
 
 ## Status / Roadmap
 
@@ -112,7 +116,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1.5 s: <GPUs>   1 s: <GPUs or 
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved; see [`docs/CAMPAIGN.md`](docs/CAMPAIGN.md) | done |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed; rental driver with guard and backstop, see [`docs/VAST.md`](docs/VAST.md) | done on 2026-11-11: the four units start on Ampere, 1.22 USD; see [`docs/TEST-SESSION.md`](docs/TEST-SESSION.md) |
 | 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | 2-GPU matrix done (18 runs, 13.81 USD), results in [`docs/RESULTS.md`](docs/RESULTS.md); 4-GPU planned |
-| 7 Sizing and report | Sizing tool, price-of-latency curve, results in this README | planned |
+| 7 Sizing and report | Sizing tool (`hpc-sizing size`), results for decision-makers and engineers | sizing tool and 2-GPU results done; README final with the 4-GPU decision |
 
 **Evaluation plan.** Six hypotheses with pass criteria written before any run (thresholds
 frozen with the protocol on 2026-11-11)
@@ -154,7 +158,7 @@ GPU runs read `VAST_API_KEY` (and `HF_TOKEN` if needed) from the environment (se
 | `campaign/` | Campaign matrices: the 2 x A40 campaign, the test session and two dry runs |
 | `slurm/` | Local SLURM cluster (Docker), job array scripts, single-node setup for the rented node |
 | `docs/adr/` | Decision records: model and hardware, SLURM locally, the chained campaign on the rented node |
-| `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), campaign runner (`campaign.py`), follow from the laptop (`follow.py`), run-file summaries (`analysis.py`), Vast.ai driver (`vast.py`), `hpc-sizing` command; sizing tool to come |
+| `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), campaign runner (`campaign.py`), follow from the laptop (`follow.py`), run-file summaries (`analysis.py`), sizing tool (`sizing.py`), Vast.ai driver (`vast.py`), `hpc-sizing` command |
 | `src/hpc_inference_sizing/data/` | Measured component sizes of the checkpoints |
 | `scripts/measure_checkpoint.py` | Reads the safetensors headers of a Hugging Face checkpoint (no weights downloaded) |
 | `scripts/node-setup.sh` | Prepares a rented node: reports the GPUs, installs the bench, fetches data and weights |
