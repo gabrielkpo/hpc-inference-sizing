@@ -1,5 +1,68 @@
 # Results: the 2-GPU campaign (2 × A40)
 
+## For decision-makers
+
+**The question.** Two organisations want to run an AI assistant on their own graphics cards
+(GPUs), the chips that run these models. A public administration plans a document assistant for
+20,000 agents, about 2,000 of them using it at the same time at peak hours: how many cards does
+it need, and can the assistant start answering in under one second? A defence ministry already
+has 8 cards: how many people can use them at once? Both clients are fictional; the measurements
+are real.
+
+**What we measured.** We rented two NVIDIA A40 cards (a 2020 generation, common and cheap to
+rent), ran Mistral Small 4 on them, and sent them traffic shaped like real use: questions about
+documents (the assistant first reads a few pages, about 4,500 words with its instructions, then
+answers) and plain chat (short questions). We raised the traffic step by step until answers
+became too slow, with hundreds to thousands of test requests per configuration, for about 15 USD
+of rented time in all.
+
+**The answers.**
+
+- **Starting to answer in under one second is not possible on these cards when the assistant
+  must first read documents,** however many cards are bought. Reading the documents alone takes
+  about one second, before the first word. Getting below it likely needs newer cards, shorter
+  documents, or fewer documents per question.
+- **For the administration, with answers starting within 2 seconds: about 115 to 145 cards of
+  this kind,** that is about 50,000 to 70,000 USD a month at the rental prices we paid. The range
+  is honest: on rented cards, the same test does not give exactly the same result twice.
+- **For the defence ministry, 8 cards serve about 110 to 140 people at once asking questions on
+  documents, or about 750 people chatting.** The same fleet serves five times more people if they
+  chat than if they work on documents.
+
+**What drives the bill, in order.**
+
+1. **How much the assistant has to read for each question.** Documents make each question about
+   five times more expensive than a chat message.
+2. **How fast it writes once it has started.** When too many people use it at once, each answer
+   is written more slowly; that, not memory, is what sets the limit.
+3. **Two settings.** One kind of reuse of already-read text must stay on (turning it off costs
+   about a quarter of the capacity); a second setting looks able to cut the fleet by about a
+   third, but was measured once and needs confirming.
+
+**What we recommend.**
+
+1. Agree with the future users on an acceptable wait: within 2 seconds is realistic on this
+   hardware, under 1 second is not.
+2. Measure what share of the questions will be about documents: it moves the fleet size more
+   than any technical choice.
+3. Budget a range, not a single figure, and confirm it on the cards you intend to buy before
+   buying them: this study shows that a few days of measurement on rented cards cost tens of
+   dollars, against a fleet costing tens of thousands a month.
+
+**How sure we are.** Solid: the one-second limit, the effect of document length, and what limits
+the assistant (all well above the measurement noise). Not settled: which of the four ways of
+spreading the model over the two cards is best, and the exact gain from settings (the
+differences are as small as the noise). Not tested yet: whether two machines double the capacity
+of one, and how much answer quality the compressed version of the model loses.
+
+**Five words used below.** *First-token time (TTFT)*: how long before the first word of the
+answer appears. *Time per output token (TPOT)*: how long each following word takes. *p95*: the
+value 95 % of requests stay under, so a guarantee that holds for almost everyone. *RAG*: a
+question answered from documents the assistant reads first. *Unit*: one copy of the model
+running on two cards; a fleet is a number of units.
+
+## Technical details
+
 The 2-GPU matrix of the protocol (§5) ran on 2026-11-11 and 12 on one Vast.ai node (2 × NVIDIA
 A40, PCIe 4.0, vLLM 0.32.0, Mistral Small 4 NVFP4): 18 runs, no error, 11.1 h, 13.81 USD. It ran
 under protocol v1.0; amendments A7 to A9 ([`PROTOCOL.md`](PROTOCOL.md#12-amendments)) state what
@@ -9,7 +72,7 @@ Every number below comes from [`results/a40-x2.json`](results/a40-x2.json), a su
 run files (15-40 MB each, kept out of Git) made by
 `hpc-sizing results summarize --dir results/a40-x2 --out docs/results/a40-x2.json`.
 
-## How to read the numbers
+### How to read the numbers
 
 - **Capacity** of a unit at target T: the highest arrival rate whose 3-minute step met the SLO
   (TTFT p95 ≤ T, TPOT p95 ≤ 67 ms, no error), read from every step of the run (§4, A8). Rates
@@ -22,7 +85,7 @@ run files (15-40 MB each, kept out of Git) made by
   arrival sequence: good for comparing configurations, but a pass then says "passes this
   sequence". The repeats (§6.6) draw new sequences and show how much that matters.
 
-## What a client should take from it
+### Findings, technically
 
 1. **A first token in under 1 s is out of reach for 6,100-token RAG prompts on this hardware, at
    any number of GPUs.** Even at 0.125 req/s, almost idle, TTFT p95 is 1.25 to 1.44 s on every
@@ -48,7 +111,7 @@ run files (15-40 MB each, kept out of Git) made by
    same rate passes or fails from one arrival sequence to the next; differences of one ladder step
    between units are not real until repeated. A sizing should carry that range, not one number.
 
-## Capacity of each unit (req/s, rate actually sent in brackets)
+### Capacity of each unit (req/s, rate actually sent in brackets)
 
 RAG profile (6,100 input and 300 output tokens):
 
@@ -69,7 +132,7 @@ same capacity, set by TPOT:
 | DP2+EP | 2.17 (2.06) | TPOT at 2.180 | 183,456 | 147 |
 | PP2 | 1.56 (1.39) | TPOT at 1.566 | 451,440 | 127 |
 
-## Repeats (§6.6): how much a pass is worth
+### Repeats (§6.6): how much a pass is worth
 
 Each capacity point of the best unit of each profile was measured three more times, with new
 arrival sequences. Passes out of three:
@@ -90,7 +153,7 @@ other sequences it fails every time. A robust reading of RAG on 2 × A40 is **0.
 2 to 3 s**, the same for every unit within the noise. On chat, TP2 sits on the TPOT bound at 2.5
 to 2.58 req/s (the p95 drifts between 58 and 68 ms around the 67 ms limit).
 
-## Levers (§5.2), on EP2, RAG profile
+### Levers (§5.2), on EP2, RAG profile
 
 The lever phase ran on EP2, which the faulty capacities made the best unit by tie-break; with
 the recomputed values TP2 is ahead at 2 s by less than the resolution (A8).
@@ -111,7 +174,7 @@ buffers from them:
 fewer sequences leave more room for the cache, a bigger prefill chunk leaves less. None of these
 changes the conclusion that memory is not what limits.
 
-## Memory model against vLLM (H6)
+### Memory model against vLLM (H6)
 
 | Unit | Predicted (tokens) | Reported by vLLM | Gap |
 |---|---|---|---|
@@ -124,7 +187,7 @@ The calculator in [`MEMORY.md`](MEMORY.md) is right to 5 % where one engine hold
 wrong by a third for DP2+EP, whose two engines and expert-parallel buffers use about 1 GiB more
 per GPU than its fixed 2 GiB overhead allows.
 
-## Hypotheses (§7)
+### Hypotheses (§7)
 
 | ID | Verdict | Why |
 |---|---|---|
@@ -135,7 +198,7 @@ per GPU than its fixed 2 GiB overhead allows.
 | H5 NVFP4 costs little quality | **Not tested** | Needs the 4-GPU session (FP8 reference) |
 | H6 memory model within 10 % | **Refuted** | Three units within 5.3 %, DP2+EP off by 32.7 % |
 
-## What it means for the two clients (indicative)
+### What it means for the two clients (indicative)
 
 The sizing tool will do this properly; here are the orders of magnitude, with the robust RAG
 capacity of 0.4 to 0.5 req/s per 2-GPU unit at T = 2 s, the response time measured at capacity
@@ -152,7 +215,7 @@ capacity of 0.4 to 0.5 req/s per 2-GPU unit at T = 2 s, the response time measur
   TTFT p95 of 0.3 s, **about 750 active users**. A fixed fleet sized on chat is overwhelmed by
   RAG use: the mix of request lengths is the first thing to agree on with the client.
 
-## Limits
+### Limits
 
 - One host, one GPU class: A40s over PCIe without NVLink. The method and the trade-offs transfer;
   the absolute numbers do not (§11).
