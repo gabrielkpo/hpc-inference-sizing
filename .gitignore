@@ -3,7 +3,10 @@
 # model weights, downloads and scratch run output stay out of Git
 models/
 data/raw/
-runs/scratch/
+runs/
+# raw campaign output: run files of 15-40 MB each, server logs, events; published as a
+# small summary and release assets, never committed as they are
+results/
 # python
 __pycache__/
 *.pyc
@@ -13,4 +16,3 @@ __pycache__/
 .DS_Store
 # local VibeWise learning notes (personal, never published)
 .vibe-wise/
-runs/slurm/

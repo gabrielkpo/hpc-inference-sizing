@@ -18,3 +18,9 @@ repos:
     rev: v8.30.1
     hooks:
       - id: gitleaks
+  # the owner's rule: no file above 10 MB in Git (raw run files are 15-40 MB)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=10240]
