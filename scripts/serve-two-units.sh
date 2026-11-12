@@ -45,4 +45,9 @@ http {
   }
 }
 NGINX
-nginx -c "$conf" -g 'daemon off;'
+nginx -c "$conf" -g 'daemon off;' &
+# if a unit (or nginx) exits, stop everything: nginx would otherwise send all the load to the
+# surviving unit and the run would measure one unit under the name of two
+wait -n
+echo "a vLLM unit or nginx exited; stopping the group" >&2
+exit 1
