@@ -144,6 +144,9 @@ def test_run_one_measures_fixed_rates_for_a_repeat_run(tmp_path, monkeypatch):
         def __init__(self, *a, **kw):
             self.steps = []
 
+        async def warm_up(self, rate, duration_s):
+            return 0
+
         async def step(self, rate):
             self.steps.append({"summary": {"rate": rate}})
             return StepSummary(rate, 1, 10, 0, 0.5, 0.6, 0.01, 0.02, 100)

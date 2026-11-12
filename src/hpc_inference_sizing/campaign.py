@@ -49,6 +49,7 @@ class Matrix:
     health_timeout_s: float = 1800.0
     sync_command: str = ""
     model: str = ""
+    warmup_s: float = 30.0  # protocol §6.2: unmeasured load before the first step
     run_list: tuple[str, ...] | None = None  # explicit runs instead of every (unit, profile)
     fixed_rates: dict[str, list[float]] = field(default_factory=dict)  # run -> rates (repeats)
     repeat: int = 1  # times each fixed rate is measured
@@ -128,6 +129,37 @@ def wait_healthy(url: str, timeout_s: float, proc: subprocess.Popen | None) -> f
             pass
         time.sleep(2)
     raise RuntimeError(f"server not ready after {timeout_s:.0f} s")
+
+
+PROTOCOL_VERSION = "1.0"  # docs/PROTOCOL.md; amendments listed in its section 12
+
+
+def server_provenance(url: str, server_log: Path | None) -> dict:
+    """Protocol §2: what every result records about the server and the GPUs, read where it
+    is (vLLM's /version, nvidia-smi, the KV cache line of the server log); missing items are
+    left out rather than guessed."""
+    from hpc_inference_sizing.analysis import kv_cache_tokens
+
+    out: dict = {}
+    try:
+        out["server_version"] = httpx.get(f"{url}/version", timeout=5).json().get("version")
+    except (httpx.HTTPError, ValueError, AttributeError):
+        pass
+    query = "name,driver_version,pcie.link.gen.max,pcie.link.width.max,memory.total"
+    try:
+        smi = subprocess.run(
+            ["nvidia-smi", f"--query-gpu={query}", "--format=csv,noheader"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        if smi.returncode == 0:
+            out["gpus"] = [line.strip() for line in smi.stdout.splitlines() if line.strip()]
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if server_log is not None and (kv := kv_cache_tokens(server_log)):
+        out["kv_cache_tokens"] = kv
+    return out
 
 
 def _answers(url: str) -> bool:
@@ -268,6 +300,7 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
         log(f"[{run_id}] server ready after {cold_start_s:.0f} s")
 
         fixed = matrix.fixed_rates.get(run_id)
+        provenance = server_provenance(matrix.server_url, log_path if command else None)
         try:
             workload = Workload(load_piaf(), MistralTokenizer(), PROFILES[profile], seed=0)
             bench = Bench(
@@ -277,6 +310,8 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
                 matrix.step_duration_s,
                 min_requests=matrix.min_requests,
             )
+            warm = asyncio.run(bench.warm_up(matrix.start_rate, matrix.warmup_s))
+            log(f"[{run_id}] warm-up: {warm} requests in {matrix.warmup_s:g} s, not measured")
             if fixed:  # repeats (protocol §6.6): the same rates, measured `repeat` times
                 result = None
 
@@ -308,6 +343,9 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
             "server_command": shlex.join(command) if command else "external",
             "cold_start_s": round(cold_start_s, 1),
             "start_rate": matrix.start_rate,
+            "warmup_s": matrix.warmup_s,
+            "protocol_version": PROTOCOL_VERSION,
+            **provenance,
             **({"mode": "repeat", "rates": fixed, "repeat": matrix.repeat} if fixed else {}),
             **meta,
         }

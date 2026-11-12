@@ -254,3 +254,11 @@ def test_a_server_already_on_the_port_is_not_measured_under_a_new_name(tmp_path)
         leftover.shutdown()
     failure = json.loads((m.results_dir / "tp-rag.failed.json").read_text())
     assert failure["stage"] == "start" and "already answers" in failure["error"]
+
+
+def test_provenance_reads_what_exists_and_skips_the_rest(tmp_path, monkeypatch):
+    log = tmp_path / "server.log"
+    log.write_text("INFO GPU KV cache size: 237,280 tokens, ...\n")
+    monkeypatch.setattr(campaign.subprocess, "run", lambda *a, **k: (_ for _ in ()).throw(OSError))
+    out = campaign.server_provenance("http://127.0.0.1:9", log)  # nothing listens there
+    assert out == {"kv_cache_tokens": 237280}
