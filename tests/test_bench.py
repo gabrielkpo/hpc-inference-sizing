@@ -259,3 +259,20 @@ def test_sweep_reports_each_step_as_it_is_measured():
     step, _ = fake_step_factory()
     asyncio.run(sweep(step, [0.75, 3.0], start_rate=0.25, max_rate=64, on_step=seen.append))
     assert [s.rate for s in seen][:4] == [0.25, 0.5, 1.0, 2.0]
+
+
+def test_a_step_measured_for_a_looser_target_counts_for_the_stricter_ones():
+    # TTFT never binds; TPOT breaks above 2.58 req/s: every target has the same capacity
+    async def step(rate):
+        tpot = 0.05 if rate <= 2.58 else 0.08
+        return StepSummary(rate, 180, int(rate * 180), 0, 0.2, 0.3, tpot, tpot, 100.0)
+
+    result = asyncio.run(sweep(step, [1.0, 1.5, 2.0, 3.0], start_rate=0.125, max_rate=64))
+    assert set(result.capacity.values()) == {2.578125}
+    assert list(result.to_dict()["capacity_rps"]) == ["1.0", "1.5", "2.0", "3.0"]
+
+
+def test_a_step_records_the_rate_actually_sent():
+    s = StepSummary(1.0, 180, 148, 0, 1.0, 2.0, 0.05, 0.1, 100.0)
+    assert s.achieved_rate == pytest.approx(0.822, abs=0.001)
+    assert s.to_dict()["achieved_rate"] == pytest.approx(0.822, abs=0.001)

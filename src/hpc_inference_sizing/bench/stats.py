@@ -68,8 +68,15 @@ class StepSummary:
             return False
         return self.ttft_p95 <= ttft_target_s and self.tpot_p95 <= tpot_bound_s
 
+    @property
+    def achieved_rate(self) -> float:
+        """Requests actually sent per second. Arrivals are random (Poisson), so on a 180 s step
+        this differs from the nominal `rate` by about 1/sqrt(rate x duration): 21 % at 0.125
+        req/s, 7 % at 1 req/s. Capacities are stated in nominal rates; this is the check."""
+        return self.n_requests / self.duration_s if self.duration_s > 0 else 0.0
+
     def to_dict(self) -> dict:
-        return asdict(self)
+        return {**asdict(self), "achieved_rate": self.achieved_rate}
 
 
 def summarize(records: list[RequestRecord], rate: float, duration_s: float) -> StepSummary:

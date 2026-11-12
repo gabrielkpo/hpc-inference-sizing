@@ -30,7 +30,7 @@ class SweepResult:
         return {
             "targets_s": self.targets_s,
             "tpot_bound_s": self.tpot_bound_s,
-            "capacity_rps": {str(t): c for t, c in self.capacity.items()},
+            "capacity_rps": {str(float(t)): c for t, c in self.capacity.items()},
             "reached_max_rate": self.reached_max_rate,
             "steps": [s.to_dict() for s in self.steps],
         }
@@ -82,5 +82,10 @@ async def sweep(
                     lo = mid
                 else:
                     hi = mid
-        result.capacity[target] = lo
+    # Protocol §4: the capacity is the highest rate whose step meets the SLO, read once every
+    # step is measured. A step measured while bisecting a looser target can pass a stricter
+    # one too (when TPOT, not TTFT, is what limits), so no capacity is fixed before the end.
+    for target in result.targets_s:
+        passing = [r for r, s in by_rate.items() if s.meets(target, tpot_bound_s)]
+        result.capacity[target] = max(passing) if passing else None
     return result
