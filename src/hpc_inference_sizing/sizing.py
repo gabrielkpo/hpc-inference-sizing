@@ -81,10 +81,12 @@ def capacity(
         unit = run["unit"].removeprefix("repeat_")
         if always:
             rate = max(always)
+            if prudent is not None and prudent.capacity >= rate:
+                continue  # several repeated units: keep the highest rate held every time
             steps = [s for s in run["steps"] if s["rate"] == rate]
             r_s = sum(_response_s(s, output_tokens) for s in steps) / len(steps)
             prudent, note = Point(rate, r_s, f"{unit}, passed every repeat"), ""
-        else:
+        elif prudent is None:
             lowest = min((float(r) for r in passes), default=None)
             tried = f" (lowest tried: {lowest:g} req/s)" if lowest is not None else ""
             note = f"no repeated rate of {unit} met it{tried}"

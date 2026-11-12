@@ -72,3 +72,17 @@ def test_the_published_campaign_answers_the_two_clients():
     assert "Unreachable" in sizing.report(SUMMARY, "rag", 1.0, 60, 0.61, users=2000)
     defence = sizing.report(SUMMARY, "chat", 2.0, 60, 0.61, gpus=8)
     assert "about 798 active users" in defence and "about 762 active users" in defence
+
+
+def test_the_prudent_bound_is_the_best_of_several_repeated_units():
+    data = summary()
+    data["runs"].append(
+        {
+            "unit": "repeat_tp",
+            "profile": "rag",
+            "mode": "repeat",
+            "steps": [step(0.25)],
+            "repeat_pass": {"2": {"0.25": [True, True]}},
+        }
+    )
+    assert sizing.capacity(data, "rag", 2.0).prudent.capacity == 0.375
