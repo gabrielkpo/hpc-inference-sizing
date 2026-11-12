@@ -83,7 +83,9 @@ A campaign day lasts hours, so it is followed without watching a terminal:
 - **`campaign follow` on the laptop.** Every few minutes it copies the node's results folder into
   the local one (results leave the machine), reports each run that finished with its capacities,
   and appends events (`run_done`, `run_failed`, `unreachable`, `finished`, `destroyed`...) to
-  `RESULTS_DIR/events.jsonl`. When the campaign process has ended, on two looks in a row, and the
+  `runs/events-NAME.jsonl`, outside the results folder where the node's files land. Only
+  expected files are taken from the node (run files, failure records, plans, the campaign clock,
+  server logs), and event text is made plain. When the campaign process has ended, on two looks in a row, and the
   results are copied, it destroys the instance: a finished campaign does not bill until the
   guard's deadline. A queued SLURM array task counts as running. When nothing happens it first
   raises an **alert** (an event, so a notification): the campaign has not started 30 minutes
@@ -97,7 +99,7 @@ A campaign day lasts hours, so it is followed without watching a terminal:
   guard and the follow in their own session, with a log file, and keeps the Mac awake while they
   run (plugged in, lid open), so a closed window or a crashed app does not stop them. The
   backstop inside the instance still covers a laptop that dies.
-- **Notifications.** The Claude session reads `events.jsonl` and sends each event to the owner's
+- **Notifications.** The Claude session reads the events file and sends each event to the owner's
   phone; nothing leaves the laptop through the scripts themselves.
 
 ```bash

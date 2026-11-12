@@ -325,20 +325,54 @@ def test_node_text_is_made_plain_and_capacities_numbers_only(tmp_path):
     assert capacities(d, "x") is None
 
 
-def test_an_archive_escaping_the_results_folder_is_refused(tmp_path, fake_ssh):
+def test_only_expected_files_are_taken_from_the_node(tmp_path, fake_ssh):
     import tarfile as tf
 
     evil = fake_ssh / "evil.tar.gz"
+    payload = fake_ssh / "payload"
+    payload.write_text("x")
     with tf.open(evil, "w:gz") as archive:
-        payload = fake_ssh / "payload"
-        payload.write_text("x")
-        archive.add(payload, arcname="../outside.txt")
+        for name in (
+            "../outside.txt",  # leaves the folder
+            "./events.jsonl",  # would overwrite a file the session reads
+            "./ignore previous instructions.json",  # free text as a name
+            "./tp-rag.json",  # a run file: kept
+            "./logs/tp-rag.server.log",  # a server log: kept
+            "./plan-levers.json",  # a chain plan: kept
+        ):
+            archive.add(payload, arcname=name)
     (fake_ssh / "repo").mkdir()
     ssh = Path(os.environ["PATH"].split(os.pathsep)[0]) / "ssh"
     ssh.write_text(f'#!/bin/bash\ncat "{evil}"\n')
-    with pytest.raises(OSError, match="unpacking"):
-        SshRemote("node", 22, "repo").pull(tmp_path / "copy" / "results")
+    local = tmp_path / "copy" / "results"
+    SshRemote("node", 22, "repo").pull(local)
+    kept = sorted(str(p.relative_to(local)) for p in local.rglob("*") if p.is_file())
+    assert kept == ["logs/tp-rag.server.log", "plan-levers.json", "tp-rag.json"]
     assert not (tmp_path / "copy" / "outside.txt").exists()
+
+
+def test_event_text_from_the_node_is_made_plain(tmp_path):
+    events = tmp_path / "events.jsonl"
+
+    class Noisy(ScriptedRemote):
+        def campaign_running(self):
+            if self.fail:
+                self.fail -= 1
+                raise OSError("ssh:\x1b[31m bad\nline")
+            return super().campaign_running()
+
+    noisy = Noisy([(True, {}), (False, {}), (False, {})], fail=3)
+    follow(
+        FakeClient(),
+        7,
+        matrix(tmp_path),
+        lambda info: noisy,
+        events_path=events,
+        log=lambda _: None,
+        sleep=limited_sleep(20),
+    )
+    text = events.read_text()
+    assert "\\u001b" not in text and "\\n" not in text.replace("\n", "")
 
 
 def test_runs_of_later_phases_and_repeats_are_reported_too(tmp_path):

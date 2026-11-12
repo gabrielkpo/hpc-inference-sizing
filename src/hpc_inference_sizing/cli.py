@@ -105,13 +105,20 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         from hpc_inference_sizing import follow, vast
         from hpc_inference_sizing.campaign import _project_root
 
-        rel = matrix.results_dir.relative_to(_project_root(Path(args.matrix)))
+        root = _project_root(Path(args.matrix))
+        rel = matrix.results_dir.relative_to(root)
+        # events are read and relayed: keep them out of the folder the node's files land in
+        events = Path(args.events) if args.events else root / "runs" / f"events-{matrix.name}.jsonl"
+        if events.resolve().is_relative_to(matrix.results_dir.resolve()):
+            parser.error(
+                "--events must be outside the results folder (the node's files land there)"
+            )
         result = follow.follow(
             vast.VastClient(),
             args.instance,
             matrix,
             follow.remote_for_instance(f"{args.remote_repo}/{rel.as_posix()}"),
-            events_path=Path(args.events) if args.events else matrix.results_dir / "events.jsonl",
+            events_path=events,
             every_s=args.every,
             destroy_when_done=not args.no_destroy,
             start_timeout_s=args.start_timeout_min * 60,
@@ -329,7 +336,7 @@ def main(argv: list[str] | None = None) -> None:
         if name == "follow":
             p.add_argument("--instance", type=int, required=True, help="Vast.ai instance id")
             p.add_argument("--every", type=float, default=300, help="seconds between looks")
-            p.add_argument("--events", help="JSON lines of events (default: results folder)")
+            p.add_argument("--events", help="JSON lines of events (default: runs/events-NAME)")
             p.add_argument("--remote-repo", default="hpc-inference-sizing", help="clone on node")
             p.add_argument("--no-destroy", action="store_true", help="never destroy the node")
             p.add_argument(
