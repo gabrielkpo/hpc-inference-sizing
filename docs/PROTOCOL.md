@@ -1,7 +1,8 @@
 # Measurement protocol
 
 - **Status: frozen, version 1.0, 2026-11-11**, by the pull request `docs: freeze protocol`;
-  amendments A7 to A9 (2026-11-12) record what the 2-GPU campaign did not do as written.
+  amendments A7 to A9 (2026-11-12) record what the 2-GPU campaign did not do as written, and
+  A10 fixes how the 4-GPU session runs §8 and §9.
 - **Freeze rule:** this file is frozen before the first run of the campaign (§10). The test
   session ran on 2026-11-11 under the draft, as §10 intends: it checks the path, and its numbers
   are not results ([`TEST-SESSION.md`](TEST-SESSION.md)). The draft said "before the first paid
@@ -264,3 +265,11 @@ is stated before any result is published.
 | A7 | Not implemented as written: the 30 s warm-up (§6.2; the first measured step, 0.125 req/s, came right after the server start); provenance in every result (§2: vLLM version, KV-cache size and server flags are in the server logs, driver, PCIe generation and vLLM version in the node setup log, the image by tag; the image digest and CUDA version were not recorded); per-token times (§6.5: first and last token only, so TPOT is a per-request mean); SLURM jobs (§6: the matrix ran as one `campaign run --chain` process, see [ADR 0003](adr/0003-campaign-runs-as-one-chained-process.md)) | No warm-up effect is visible (on TP2 × RAG the 0.125 and 0.25 req/s steps have the same TTFT p95, 1.32 and 1.33 s). Before the 4-GPU session, the bench is to run the warm-up and record provenance automatically; until then, these gaps hold for every run |
 | A8 | The code fixed each target's capacity when that target's bisection ended, so steps measured later for looser targets did not count for stricter ones: 12 of the 32 base capacities in the run files are below the highest step that met them. The realized arrival rate also differs from the nominal rate by up to about 20 % (Poisson arrivals over 180 s) | Every capacity is recomputed from the steps of the run files as §4 defines it (highest rate whose step meets the SLO), and the realized rate is shown next to it. The lever phase picked its unit from the faulty values: EP2, by tie-break; with the recomputed values TP2 is the best unit at 2 s (0.53 against 0.5 req/s). The levers were measured on EP2 and are reported as such |
 | A9 | Resolution and noise: two bisection steps resolve a capacity to a quarter of a ladder interval, and the repeats (§6.6) show that a step at the same nominal rate can pass or fail from one repetition to the next | Capacity differences between units, and lever gains, smaller than one ladder step or than the spread of the repeats, are reported as not resolved. This applies to H2 ("beyond the repeat range", already in its criterion) and to H3 (+20 % is finer than the lever ladders can resolve) |
+
+### Before the 4-GPU session (2026-11-12)
+
+Written before any 4-GPU measurement, to fix how §8 and §9 are run where the text leaves it open.
+
+| ID | Decision | Why |
+|---|---|---|
+| A10 | **§8 (H4):** on one 4 × A40 node, one TP2 unit on GPUs 0-1 and then two TP2 units (GPUs 0-1 and 2-3) behind nginx round robin, RAG profile, same procedure (warm-up, ladder, bisection). H4 compares the two capacities at T = 2 s, the reference target of §5.2, and states the resolution (A9). **§9 (H5):** 200 PIAF questions drawn with seed 0; prompt "context, question, answer in a few words with the words of the context" through the chat endpoint, temperature 0, at most 32 tokens; exact match and token F1 after lower-casing and removing punctuation and French articles; NVFP4 on 2 GPUs against FP8 on 4 GPUs. **Dropped:** the FP8 capacity point of §8, for the budget (9.94 USD of credit left, the session without it costs about 6.5 USD). Warm-up and automatic provenance, promised in A7, are now in the bench | The frozen text names the comparisons but not the target of H4, the prompt or the normalisation of H5; fixing them before measuring keeps them from being chosen after seeing the numbers |

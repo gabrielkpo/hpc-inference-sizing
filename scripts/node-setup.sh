@@ -10,7 +10,11 @@ set -euo pipefail
 
 REPO_URL=${REPO_URL:-https://github.com/gabrielkpo/hpc-inference-sizing.git}
 REPO_DIR=${REPO_DIR:-$HOME/hpc-inference-sizing}
-MODEL=${MODEL:-mistralai/Mistral-Small-4-119B-2603-NVFP4}
+# checkpoints to fetch, space-separated; the 4-GPU session adds the FP8 one:
+#   MODELS="mistralai/Mistral-Small-4-119B-2603-NVFP4 mistralai/Mistral-Small-4-119B-2603"
+MODELS=${MODELS:-mistralai/Mistral-Small-4-119B-2603-NVFP4}
+# extra system packages: the 4-GPU session needs nginx (two units behind a balancer)
+PACKAGES=${PACKAGES:-}
 
 step() { printf '\n== %s (%s)\n' "$1" "$(date -u +%H:%M:%S)"; }
 
@@ -21,8 +25,13 @@ python3 -c 'import vllm; print("vllm", vllm.__version__)' || echo "WARNING: vllm
 df -h "$HOME" | tail -1
 
 step "tools"
-if ! command -v git >/dev/null; then
-  apt-get update -q && DEBIAN_FRONTEND=noninteractive apt-get install -y -q git
+missing=""
+for pkg in git $PACKAGES; do
+  command -v "$pkg" >/dev/null || missing="$missing $pkg"
+done
+if [ -n "$missing" ]; then
+  # shellcheck disable=SC2086
+  apt-get update -q && DEBIAN_FRONTEND=noninteractive apt-get install -y -q $missing
 fi
 if ! command -v uv >/dev/null; then
   # pip may refuse a system install (PEP 668): fall back to the official installer, on PATH
@@ -45,15 +54,18 @@ uv run python -c 'from hpc_inference_sizing.bench import data
 data.load_piaf(); data.MistralTokenizer(); print("PIAF and tokenizer ok")'
 
 step "weights"
-# About 76 GB. vLLM would fetch them on the first start; fetching them here shows the
-# download speed and fails early if the disk is too small.
-if command -v hf >/dev/null; then
-  hf download "$MODEL" >/dev/null
-else
-  uvx --from huggingface_hub hf download "$MODEL" >/dev/null
-fi
+# NVFP4 71 GB, FP8 121 GB. vLLM would fetch them on the first start; fetching them here shows
+# the download speed and fails early if the disk is too small.
+for model in $MODELS; do
+  if command -v hf >/dev/null; then
+    hf download "$model" >/dev/null
+  else
+    uvx --from huggingface_hub hf download "$model" >/dev/null
+  fi
+  echo "fetched $model"
+done
 du -sh "${HF_HOME:-$HOME/.cache/huggingface}" | tail -1
 df -h "$HOME" | tail -1
 
 step "ready"
-echo "next: cd $REPO_DIR && uv run hpc-sizing campaign run --matrix campaign/test-session.toml"
+echo "next: cd $REPO_DIR && uv run hpc-sizing campaign run --matrix campaign/<matrix>.toml"
