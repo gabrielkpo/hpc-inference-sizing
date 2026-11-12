@@ -1,0 +1,2729 @@
+{
+ "targets_s": [
+  1.0,
+  1.5,
+  2.0,
+  3.0
+ ],
+ "tpot_bound_s": 0.06666666666666667,
+ "runs": [
+  {
+   "run_id": "dp_ep-chat",
+   "unit": "dp_ep",
+   "profile": "chat",
+   "server_flags": "--data-parallel-size 2 --enable-expert-parallel",
+   "cold_start_s": 147.2,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 183456,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.1476,
+     "ttft_p95": 0.1769,
+     "tpot_p50": 0.0137,
+     "tpot_p95": 0.0164,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.1554,
+     "ttft_p95": 0.2012,
+     "tpot_p50": 0.0155,
+     "tpot_p95": 0.018,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.1604,
+     "ttft_p95": 0.1782,
+     "tpot_p50": 0.0182,
+     "tpot_p95": 0.0245,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.1706,
+     "ttft_p95": 0.2462,
+     "tpot_p50": 0.0256,
+     "tpot_p95": 0.0345,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 2.0,
+     "n_requests": 336,
+     "n_errors": 0,
+     "ttft_p50": 0.2167,
+     "ttft_p95": 0.3046,
+     "tpot_p50": 0.055,
+     "tpot_p95": 0.0617,
+     "achieved": 1.8667
+    },
+    {
+     "rate": 4.0,
+     "n_requests": 675,
+     "n_errors": 0,
+     "ttft_p50": 0.2933,
+     "ttft_p95": 0.4062,
+     "tpot_p50": 0.0887,
+     "tpot_p95": 0.0922,
+     "achieved": 3.75
+    },
+    {
+     "rate": 3.0,
+     "n_requests": 533,
+     "n_errors": 0,
+     "ttft_p50": 0.2698,
+     "ttft_p95": 0.3729,
+     "tpot_p50": 0.0783,
+     "tpot_p95": 0.0827,
+     "achieved": 2.9611
+    },
+    {
+     "rate": 2.5,
+     "n_requests": 431,
+     "n_errors": 0,
+     "ttft_p50": 0.2413,
+     "ttft_p95": 0.3333,
+     "tpot_p50": 0.0648,
+     "tpot_p95": 0.0736,
+     "achieved": 2.3944
+    },
+    {
+     "rate": 2.25,
+     "n_requests": 409,
+     "n_errors": 0,
+     "ttft_p50": 0.2337,
+     "ttft_p95": 0.3236,
+     "tpot_p50": 0.0645,
+     "tpot_p95": 0.069,
+     "achieved": 2.2722
+    },
+    {
+     "rate": 2.125,
+     "n_requests": 382,
+     "n_errors": 0,
+     "ttft_p50": 0.2303,
+     "ttft_p95": 0.3285,
+     "tpot_p50": 0.0611,
+     "tpot_p95": 0.0665,
+     "achieved": 2.1222
+    },
+    {
+     "rate": 2.1875,
+     "n_requests": 404,
+     "n_errors": 0,
+     "ttft_p50": 0.2334,
+     "ttft_p95": 0.3338,
+     "tpot_p50": 0.0633,
+     "tpot_p95": 0.0686,
+     "achieved": 2.2444
+    },
+    {
+     "rate": 2.15625,
+     "n_requests": 378,
+     "n_errors": 0,
+     "ttft_p50": 0.2254,
+     "ttft_p95": 0.3141,
+     "tpot_p50": 0.0584,
+     "tpot_p95": 0.065,
+     "achieved": 2.1
+    },
+    {
+     "rate": 2.171875,
+     "n_requests": 371,
+     "n_errors": 0,
+     "ttft_p50": 0.2264,
+     "ttft_p95": 0.3316,
+     "tpot_p50": 0.0586,
+     "tpot_p95": 0.0665,
+     "achieved": 2.0611
+    },
+    {
+     "rate": 2.1796875,
+     "n_requests": 400,
+     "n_errors": 0,
+     "ttft_p50": 0.2348,
+     "ttft_p95": 0.3464,
+     "tpot_p50": 0.0627,
+     "tpot_p95": 0.0705,
+     "achieved": 2.2222
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": 2.171875,
+     "achieved": 2.0611,
+     "next_fail": 2.1796875,
+     "broke_on": "TPOT"
+    },
+    "1.5": {
+     "capacity": 2.171875,
+     "achieved": 2.0611,
+     "next_fail": 2.1796875,
+     "broke_on": "TPOT"
+    },
+    "2": {
+     "capacity": 2.171875,
+     "achieved": 2.0611,
+     "next_fail": 2.1796875,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 2.171875,
+     "achieved": 2.0611,
+     "next_fail": 2.1796875,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "dp_ep-rag",
+   "unit": "dp_ep",
+   "profile": "rag",
+   "server_flags": "--data-parallel-size 2 --enable-expert-parallel",
+   "cold_start_s": 176.0,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 183456,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.9576,
+     "ttft_p95": 1.4393,
+     "tpot_p50": 0.0166,
+     "tpot_p95": 0.0218,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.9599,
+     "ttft_p95": 1.4639,
+     "tpot_p50": 0.0227,
+     "tpot_p95": 0.0317,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.975,
+     "ttft_p95": 2.0344,
+     "tpot_p50": 0.0312,
+     "tpot_p95": 0.0526,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.8387,
+     "ttft_p95": 10.1439,
+     "tpot_p50": 0.1017,
+     "tpot_p95": 0.122,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.9623,
+     "ttft_p95": 1.51,
+     "tpot_p50": 0.0259,
+     "tpot_p95": 0.0419,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.3125,
+     "n_requests": 62,
+     "n_errors": 0,
+     "ttft_p50": 0.9653,
+     "ttft_p95": 1.6705,
+     "tpot_p50": 0.0267,
+     "tpot_p95": 0.0381,
+     "achieved": 0.3444
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 69,
+     "n_errors": 0,
+     "ttft_p50": 0.9673,
+     "ttft_p95": 1.4429,
+     "tpot_p50": 0.0239,
+     "tpot_p95": 0.0451,
+     "achieved": 0.3833
+    },
+    {
+     "rate": 0.46875,
+     "n_requests": 87,
+     "n_errors": 0,
+     "ttft_p50": 1.0601,
+     "ttft_p95": 1.5737,
+     "tpot_p50": 0.0471,
+     "tpot_p95": 0.0739,
+     "achieved": 0.4833
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 122,
+     "n_errors": 0,
+     "ttft_p50": 1.1959,
+     "ttft_p95": 2.2623,
+     "tpot_p50": 0.0748,
+     "tpot_p95": 0.0973,
+     "achieved": 0.6778
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 110,
+     "n_errors": 0,
+     "ttft_p50": 1.1187,
+     "ttft_p95": 2.0704,
+     "tpot_p50": 0.0527,
+     "tpot_p95": 0.083,
+     "achieved": 0.6111
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.4375,
+     "achieved": 0.3833,
+     "next_fail": 0.46875,
+     "broke_on": "TTFT+TPOT"
+    },
+    "2": {
+     "capacity": 0.4375,
+     "achieved": 0.3833,
+     "next_fail": 0.46875,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep-chat",
+   "unit": "ep",
+   "profile": "chat",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel",
+   "cold_start_s": 133.0,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.1208,
+     "ttft_p95": 0.1359,
+     "tpot_p50": 0.0104,
+     "tpot_p95": 0.0134,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.1266,
+     "ttft_p95": 0.1808,
+     "tpot_p50": 0.0121,
+     "tpot_p95": 0.0146,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.131,
+     "ttft_p95": 0.152,
+     "tpot_p50": 0.0141,
+     "tpot_p95": 0.0206,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.1408,
+     "ttft_p95": 0.1921,
+     "tpot_p50": 0.0206,
+     "tpot_p95": 0.0297,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 2.0,
+     "n_requests": 336,
+     "n_errors": 0,
+     "ttft_p50": 0.1943,
+     "ttft_p95": 0.2693,
+     "tpot_p50": 0.0482,
+     "tpot_p95": 0.0542,
+     "achieved": 1.8667
+    },
+    {
+     "rate": 4.0,
+     "n_requests": 675,
+     "n_errors": 0,
+     "ttft_p50": 0.286,
+     "ttft_p95": 0.3886,
+     "tpot_p50": 0.0841,
+     "tpot_p95": 0.0872,
+     "achieved": 3.75
+    },
+    {
+     "rate": 3.0,
+     "n_requests": 533,
+     "n_errors": 0,
+     "ttft_p50": 0.2524,
+     "ttft_p95": 0.3338,
+     "tpot_p50": 0.0721,
+     "tpot_p95": 0.0775,
+     "achieved": 2.9611
+    },
+    {
+     "rate": 2.5,
+     "n_requests": 431,
+     "n_errors": 0,
+     "ttft_p50": 0.2157,
+     "ttft_p95": 0.3096,
+     "tpot_p50": 0.0577,
+     "tpot_p95": 0.0671,
+     "achieved": 2.3944
+    },
+    {
+     "rate": 2.25,
+     "n_requests": 409,
+     "n_errors": 0,
+     "ttft_p50": 0.2099,
+     "ttft_p95": 0.293,
+     "tpot_p50": 0.0574,
+     "tpot_p95": 0.0618,
+     "achieved": 2.2722
+    },
+    {
+     "rate": 2.375,
+     "n_requests": 411,
+     "n_errors": 0,
+     "ttft_p50": 0.2143,
+     "ttft_p95": 0.3131,
+     "tpot_p50": 0.056,
+     "tpot_p95": 0.0647,
+     "achieved": 2.2833
+    },
+    {
+     "rate": 2.4375,
+     "n_requests": 431,
+     "n_errors": 0,
+     "ttft_p50": 0.2151,
+     "ttft_p95": 0.3248,
+     "tpot_p50": 0.0579,
+     "tpot_p95": 0.0633,
+     "achieved": 2.3944
+    },
+    {
+     "rate": 2.46875,
+     "n_requests": 451,
+     "n_errors": 0,
+     "ttft_p50": 0.2253,
+     "ttft_p95": 0.3293,
+     "tpot_p50": 0.0623,
+     "tpot_p95": 0.0676,
+     "achieved": 2.5056
+    },
+    {
+     "rate": 2.453125,
+     "n_requests": 464,
+     "n_errors": 0,
+     "ttft_p50": 0.2338,
+     "ttft_p95": 0.3425,
+     "tpot_p50": 0.0643,
+     "tpot_p95": 0.0694,
+     "achieved": 2.5778
+    },
+    {
+     "rate": 2.4453125,
+     "n_requests": 424,
+     "n_errors": 0,
+     "ttft_p50": 0.2193,
+     "ttft_p95": 0.3063,
+     "tpot_p50": 0.0587,
+     "tpot_p95": 0.063,
+     "achieved": 2.3556
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": 2.4453125,
+     "achieved": 2.3556,
+     "next_fail": 2.453125,
+     "broke_on": "TPOT"
+    },
+    "1.5": {
+     "capacity": 2.4453125,
+     "achieved": 2.3556,
+     "next_fail": 2.453125,
+     "broke_on": "TPOT"
+    },
+    "2": {
+     "capacity": 2.4453125,
+     "achieved": 2.3556,
+     "next_fail": 2.453125,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 2.4453125,
+     "achieved": 2.3556,
+     "next_fail": 2.453125,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep-rag",
+   "unit": "ep",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel",
+   "cold_start_s": 167.6,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.7896,
+     "ttft_p95": 1.324,
+     "tpot_p50": 0.0121,
+     "tpot_p95": 0.0171,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.7984,
+     "ttft_p95": 1.315,
+     "tpot_p50": 0.0173,
+     "tpot_p95": 0.0233,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.81,
+     "ttft_p95": 1.9589,
+     "tpot_p50": 0.0249,
+     "tpot_p95": 0.0459,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.3688,
+     "ttft_p95": 3.5451,
+     "tpot_p50": 0.087,
+     "tpot_p95": 0.1365,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.8048,
+     "ttft_p95": 1.3943,
+     "tpot_p50": 0.0199,
+     "tpot_p95": 0.0318,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8632,
+     "ttft_p95": 1.9443,
+     "tpot_p50": 0.031,
+     "tpot_p95": 0.0482,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.1047,
+     "ttft_p95": 2.3642,
+     "tpot_p50": 0.0447,
+     "tpot_p95": 0.0656,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 0.8803,
+     "ttft_p95": 1.7424,
+     "tpot_p50": 0.0361,
+     "tpot_p95": 0.071,
+     "achieved": 0.6056
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 133,
+     "n_errors": 0,
+     "ttft_p50": 0.9828,
+     "ttft_p95": 2.1681,
+     "tpot_p50": 0.0556,
+     "tpot_p95": 0.0765,
+     "achieved": 0.7389
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 129,
+     "n_errors": 0,
+     "ttft_p50": 1.185,
+     "ttft_p95": 3.1018,
+     "tpot_p50": 0.0606,
+     "tpot_p95": 0.0849,
+     "achieved": 0.7167
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.8125,
+     "broke_on": "TTFT+TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep_batch16384-rag",
+   "unit": "ep_batch16384",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-batched-tokens 16384",
+   "cold_start_s": 200.6,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 161104,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.655,
+     "ttft_p95": 1.1067,
+     "tpot_p50": 0.012,
+     "tpot_p95": 0.0166,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.6579,
+     "ttft_p95": 1.1786,
+     "tpot_p50": 0.0162,
+     "tpot_p95": 0.0218,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.6683,
+     "ttft_p95": 1.5565,
+     "tpot_p50": 0.0225,
+     "tpot_p95": 0.036,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.0728,
+     "ttft_p95": 6.8056,
+     "tpot_p50": 0.0735,
+     "tpot_p95": 0.0972,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.66,
+     "ttft_p95": 1.1849,
+     "tpot_p50": 0.0184,
+     "tpot_p95": 0.0277,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.6744,
+     "ttft_p95": 1.6977,
+     "tpot_p50": 0.027,
+     "tpot_p95": 0.0424,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 0.7371,
+     "ttft_p95": 1.8221,
+     "tpot_p50": 0.0375,
+     "tpot_p95": 0.0561,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.7497,
+     "ttft_p95": 2.9763,
+     "tpot_p50": 0.0659,
+     "tpot_p95": 0.0962,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 157,
+     "n_errors": 0,
+     "ttft_p50": 0.7477,
+     "ttft_p95": 2.4403,
+     "tpot_p50": 0.074,
+     "tpot_p95": 0.0924,
+     "achieved": 0.8722
+    },
+    {
+     "rate": 0.78125,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.9615,
+     "ttft_p95": 2.6824,
+     "tpot_p50": 0.0588,
+     "tpot_p95": 0.0902,
+     "achieved": 0.8222
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.78125,
+     "broke_on": "TTFT+TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.78125,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep_batch2048-rag",
+   "unit": "ep_batch2048",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-batched-tokens 2048",
+   "cold_start_s": 145.2,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.8,
+     "ttft_p95": 1.315,
+     "tpot_p50": 0.0121,
+     "tpot_p95": 0.0177,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.7969,
+     "ttft_p95": 1.3207,
+     "tpot_p50": 0.0173,
+     "tpot_p95": 0.0233,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.8099,
+     "ttft_p95": 1.9639,
+     "tpot_p50": 0.0247,
+     "tpot_p95": 0.0458,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.3619,
+     "ttft_p95": 3.5336,
+     "tpot_p50": 0.0862,
+     "tpot_p95": 0.1359,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.8031,
+     "ttft_p95": 1.395,
+     "tpot_p50": 0.0194,
+     "tpot_p95": 0.0317,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8694,
+     "ttft_p95": 1.9459,
+     "tpot_p50": 0.0309,
+     "tpot_p95": 0.0483,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.0984,
+     "ttft_p95": 2.3489,
+     "tpot_p50": 0.0448,
+     "tpot_p95": 0.0655,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 0.8697,
+     "ttft_p95": 1.7466,
+     "tpot_p50": 0.0358,
+     "tpot_p95": 0.0708,
+     "achieved": 0.6056
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 133,
+     "n_errors": 0,
+     "ttft_p50": 0.9723,
+     "ttft_p95": 2.1712,
+     "tpot_p50": 0.056,
+     "tpot_p95": 0.0764,
+     "achieved": 0.7389
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 129,
+     "n_errors": 0,
+     "ttft_p50": 1.1731,
+     "ttft_p95": 3.1023,
+     "tpot_p50": 0.0604,
+     "tpot_p95": 0.0849,
+     "achieved": 0.7167
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.8125,
+     "broke_on": "TTFT+TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep_batch8192-rag",
+   "unit": "ep_batch8192",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-batched-tokens 8192",
+   "cold_start_s": 176.0,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 211984,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.6575,
+     "ttft_p95": 1.1065,
+     "tpot_p50": 0.0121,
+     "tpot_p95": 0.0165,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.6571,
+     "ttft_p95": 1.0002,
+     "tpot_p50": 0.0162,
+     "tpot_p95": 0.0218,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.6674,
+     "ttft_p95": 1.5273,
+     "tpot_p50": 0.0226,
+     "tpot_p95": 0.0367,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.0281,
+     "ttft_p95": 2.2897,
+     "tpot_p50": 0.0743,
+     "tpot_p95": 0.1144,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.6622,
+     "ttft_p95": 1.1918,
+     "tpot_p50": 0.0184,
+     "tpot_p95": 0.0279,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.6758,
+     "ttft_p95": 1.4965,
+     "tpot_p50": 0.0271,
+     "tpot_p95": 0.0429,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 0.7294,
+     "ttft_p95": 1.7873,
+     "tpot_p50": 0.0378,
+     "tpot_p95": 0.0561,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.7407,
+     "ttft_p95": 2.864,
+     "tpot_p50": 0.0666,
+     "tpot_p95": 0.0979,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 157,
+     "n_errors": 0,
+     "ttft_p50": 0.7549,
+     "ttft_p95": 1.9747,
+     "tpot_p50": 0.076,
+     "tpot_p95": 0.0957,
+     "achieved": 0.8722
+    },
+    {
+     "rate": 0.78125,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.9963,
+     "ttft_p95": 2.2984,
+     "tpot_p50": 0.0597,
+     "tpot_p95": 0.093,
+     "achieved": 0.8222
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.4375,
+     "achieved": 0.5444,
+     "next_fail": 0.5,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.78125,
+     "broke_on": "TTFT+TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.78125,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep_combo-rag",
+   "unit": "ep_combo",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-batched-tokens 8192",
+   "cold_start_s": 141.1,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 210896,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.6553,
+     "ttft_p95": 1.11,
+     "tpot_p50": 0.0121,
+     "tpot_p95": 0.0166,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.6575,
+     "ttft_p95": 1.006,
+     "tpot_p50": 0.0162,
+     "tpot_p95": 0.0218,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.6689,
+     "ttft_p95": 1.5355,
+     "tpot_p50": 0.0227,
+     "tpot_p95": 0.0364,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.0596,
+     "ttft_p95": 2.2988,
+     "tpot_p50": 0.0747,
+     "tpot_p95": 0.1152,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.6599,
+     "ttft_p95": 1.1874,
+     "tpot_p50": 0.0185,
+     "tpot_p95": 0.0278,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.6741,
+     "ttft_p95": 1.4896,
+     "tpot_p50": 0.0271,
+     "tpot_p95": 0.0428,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 0.7417,
+     "ttft_p95": 1.7952,
+     "tpot_p50": 0.0377,
+     "tpot_p95": 0.0562,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.7722,
+     "ttft_p95": 2.8647,
+     "tpot_p50": 0.0662,
+     "tpot_p95": 0.0976,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 157,
+     "n_errors": 0,
+     "ttft_p50": 0.7356,
+     "ttft_p95": 1.9809,
+     "tpot_p50": 0.0748,
+     "tpot_p95": 0.0941,
+     "achieved": 0.8722
+    },
+    {
+     "rate": 0.78125,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.0156,
+     "ttft_p95": 2.2863,
+     "tpot_p50": 0.0586,
+     "tpot_p95": 0.0927,
+     "achieved": 0.8222
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.4375,
+     "achieved": 0.5444,
+     "next_fail": 0.5,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.78125,
+     "broke_on": "TTFT+TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.78125,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep_noprefix-rag",
+   "unit": "ep_noprefix",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --no-enable-prefix-caching",
+   "cold_start_s": 133.0,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.8882,
+     "ttft_p95": 1.5665,
+     "tpot_p50": 0.0122,
+     "tpot_p95": 0.0184,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.8988,
+     "ttft_p95": 1.652,
+     "tpot_p50": 0.0179,
+     "tpot_p95": 0.0265,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.9155,
+     "ttft_p95": 2.4117,
+     "tpot_p50": 0.027,
+     "tpot_p95": 0.0588,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 4.1395,
+     "ttft_p95": 14.4399,
+     "tpot_p50": 0.1379,
+     "tpot_p95": 0.1459,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.9065,
+     "ttft_p95": 1.6563,
+     "tpot_p50": 0.0209,
+     "tpot_p95": 0.0386,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.9381,
+     "ttft_p95": 2.3559,
+     "tpot_p50": 0.0374,
+     "tpot_p95": 0.0593,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.4682,
+     "ttft_p95": 3.4155,
+     "tpot_p50": 0.0603,
+     "tpot_p95": 0.0924,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 1.1454,
+     "ttft_p95": 2.2488,
+     "tpot_p50": 0.0468,
+     "tpot_p95": 0.0888,
+     "achieved": 0.6056
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "2": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "3": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep_seqs128-rag",
+   "unit": "ep_seqs128",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-seqs 128",
+   "cold_start_s": 163.7,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 250480,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.7965,
+     "ttft_p95": 1.3199,
+     "tpot_p50": 0.0121,
+     "tpot_p95": 0.0169,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.7966,
+     "ttft_p95": 1.3202,
+     "tpot_p50": 0.0172,
+     "tpot_p95": 0.0233,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.8072,
+     "ttft_p95": 1.9602,
+     "tpot_p50": 0.0247,
+     "tpot_p95": 0.0456,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.3606,
+     "ttft_p95": 3.5314,
+     "tpot_p50": 0.0861,
+     "tpot_p95": 0.1357,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.802,
+     "ttft_p95": 1.3946,
+     "tpot_p50": 0.0192,
+     "tpot_p95": 0.0317,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8641,
+     "ttft_p95": 1.9716,
+     "tpot_p50": 0.0308,
+     "tpot_p95": 0.048,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.1068,
+     "ttft_p95": 2.358,
+     "tpot_p50": 0.0447,
+     "tpot_p95": 0.0658,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 0.8715,
+     "ttft_p95": 1.747,
+     "tpot_p50": 0.0362,
+     "tpot_p95": 0.0705,
+     "achieved": 0.6056
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 133,
+     "n_errors": 0,
+     "ttft_p50": 0.978,
+     "ttft_p95": 2.1466,
+     "tpot_p50": 0.0548,
+     "tpot_p95": 0.0755,
+     "achieved": 0.7389
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 129,
+     "n_errors": 0,
+     "ttft_p50": 1.1811,
+     "ttft_p95": 3.0479,
+     "tpot_p50": 0.0603,
+     "tpot_p95": 0.0845,
+     "achieved": 0.7167
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.8125,
+     "broke_on": "TTFT+TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep_seqs32-rag",
+   "unit": "ep_seqs32",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-seqs 32",
+   "cold_start_s": 153.4,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 268768,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.7996,
+     "ttft_p95": 1.3187,
+     "tpot_p50": 0.0121,
+     "tpot_p95": 0.017,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.7988,
+     "ttft_p95": 1.3265,
+     "tpot_p50": 0.0173,
+     "tpot_p95": 0.0234,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.8112,
+     "ttft_p95": 1.9667,
+     "tpot_p50": 0.0248,
+     "tpot_p95": 0.0459,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.61,
+     "ttft_p95": 9.3018,
+     "tpot_p50": 0.0863,
+     "tpot_p95": 0.111,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.8013,
+     "ttft_p95": 1.3915,
+     "tpot_p50": 0.0195,
+     "tpot_p95": 0.0317,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8671,
+     "ttft_p95": 1.9616,
+     "tpot_p50": 0.031,
+     "tpot_p95": 0.0483,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.0309,
+     "ttft_p95": 2.3495,
+     "tpot_p50": 0.0442,
+     "tpot_p95": 0.0656,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 0.8687,
+     "ttft_p95": 1.7532,
+     "tpot_p50": 0.0362,
+     "tpot_p95": 0.071,
+     "achieved": 0.6056
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 133,
+     "n_errors": 0,
+     "ttft_p50": 0.9794,
+     "ttft_p95": 2.1001,
+     "tpot_p50": 0.0549,
+     "tpot_p95": 0.0742,
+     "achieved": 0.7389
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 129,
+     "n_errors": 0,
+     "ttft_p50": 1.1807,
+     "ttft_p95": 3.1121,
+     "tpot_p50": 0.0604,
+     "tpot_p95": 0.0847,
+     "achieved": 0.7167
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.8125,
+     "broke_on": "TTFT+TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "ep_seqs64-rag",
+   "unit": "ep_seqs64",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-seqs 64",
+   "cold_start_s": 153.5,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 262304,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.7934,
+     "ttft_p95": 1.3192,
+     "tpot_p50": 0.0121,
+     "tpot_p95": 0.017,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.7981,
+     "ttft_p95": 1.322,
+     "tpot_p50": 0.0173,
+     "tpot_p95": 0.0234,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.811,
+     "ttft_p95": 1.9729,
+     "tpot_p50": 0.0248,
+     "tpot_p95": 0.0461,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.3538,
+     "ttft_p95": 3.5396,
+     "tpot_p50": 0.0859,
+     "tpot_p95": 0.136,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.8009,
+     "ttft_p95": 1.3965,
+     "tpot_p50": 0.0195,
+     "tpot_p95": 0.0319,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8655,
+     "ttft_p95": 1.9717,
+     "tpot_p50": 0.0307,
+     "tpot_p95": 0.0483,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.0975,
+     "ttft_p95": 2.3545,
+     "tpot_p50": 0.0448,
+     "tpot_p95": 0.0657,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 0.9012,
+     "ttft_p95": 1.7445,
+     "tpot_p50": 0.0363,
+     "tpot_p95": 0.0713,
+     "achieved": 0.6056
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 133,
+     "n_errors": 0,
+     "ttft_p50": 0.979,
+     "ttft_p95": 2.1117,
+     "tpot_p50": 0.0548,
+     "tpot_p95": 0.0746,
+     "achieved": 0.7389
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 129,
+     "n_errors": 0,
+     "ttft_p50": 1.1796,
+     "ttft_p95": 3.0516,
+     "tpot_p50": 0.0608,
+     "tpot_p95": 0.0844,
+     "achieved": 0.7167
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.8125,
+     "broke_on": "TTFT+TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "pp-chat",
+   "unit": "pp",
+   "profile": "chat",
+   "server_flags": "--pipeline-parallel-size 2",
+   "cold_start_s": 126.9,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 451440,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.1723,
+     "ttft_p95": 0.1822,
+     "tpot_p50": 0.0141,
+     "tpot_p95": 0.0167,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.1761,
+     "ttft_p95": 0.2295,
+     "tpot_p50": 0.0164,
+     "tpot_p95": 0.0192,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.1805,
+     "ttft_p95": 0.2093,
+     "tpot_p50": 0.0195,
+     "tpot_p95": 0.0261,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.1895,
+     "ttft_p95": 0.2837,
+     "tpot_p50": 0.0301,
+     "tpot_p95": 0.0424,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 2.0,
+     "n_requests": 336,
+     "n_errors": 0,
+     "ttft_p50": 0.255,
+     "ttft_p95": 0.3624,
+     "tpot_p50": 0.0889,
+     "tpot_p95": 0.0974,
+     "achieved": 1.8667
+    },
+    {
+     "rate": 1.5,
+     "n_requests": 249,
+     "n_errors": 0,
+     "ttft_p50": 0.2173,
+     "ttft_p95": 0.3363,
+     "tpot_p50": 0.0545,
+     "tpot_p95": 0.0644,
+     "achieved": 1.3833
+    },
+    {
+     "rate": 1.75,
+     "n_requests": 336,
+     "n_errors": 0,
+     "ttft_p50": 0.2524,
+     "ttft_p95": 0.3833,
+     "tpot_p50": 0.0862,
+     "tpot_p95": 0.0953,
+     "achieved": 1.8667
+    },
+    {
+     "rate": 1.625,
+     "n_requests": 299,
+     "n_errors": 0,
+     "ttft_p50": 0.2383,
+     "ttft_p95": 0.3718,
+     "tpot_p50": 0.0749,
+     "tpot_p95": 0.0824,
+     "achieved": 1.6611
+    },
+    {
+     "rate": 1.5625,
+     "n_requests": 251,
+     "n_errors": 0,
+     "ttft_p50": 0.2182,
+     "ttft_p95": 0.3349,
+     "tpot_p50": 0.0571,
+     "tpot_p95": 0.066,
+     "achieved": 1.3944
+    },
+    {
+     "rate": 1.59375,
+     "n_requests": 295,
+     "n_errors": 0,
+     "ttft_p50": 0.2381,
+     "ttft_p95": 0.3526,
+     "tpot_p50": 0.0729,
+     "tpot_p95": 0.0833,
+     "achieved": 1.6389
+    },
+    {
+     "rate": 1.578125,
+     "n_requests": 275,
+     "n_errors": 0,
+     "ttft_p50": 0.2244,
+     "ttft_p95": 0.3424,
+     "tpot_p50": 0.064,
+     "tpot_p95": 0.0751,
+     "achieved": 1.5278
+    },
+    {
+     "rate": 1.5703125,
+     "n_requests": 274,
+     "n_errors": 0,
+     "ttft_p50": 0.2296,
+     "ttft_p95": 0.342,
+     "tpot_p50": 0.0662,
+     "tpot_p95": 0.0767,
+     "achieved": 1.5222
+    },
+    {
+     "rate": 1.56640625,
+     "n_requests": 268,
+     "n_errors": 0,
+     "ttft_p50": 0.2236,
+     "ttft_p95": 0.3479,
+     "tpot_p50": 0.0632,
+     "tpot_p95": 0.0743,
+     "achieved": 1.4889
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": 1.5625,
+     "achieved": 1.3944,
+     "next_fail": 1.56640625,
+     "broke_on": "TPOT"
+    },
+    "1.5": {
+     "capacity": 1.5625,
+     "achieved": 1.3944,
+     "next_fail": 1.56640625,
+     "broke_on": "TPOT"
+    },
+    "2": {
+     "capacity": 1.5625,
+     "achieved": 1.3944,
+     "next_fail": 1.56640625,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 1.5625,
+     "achieved": 1.3944,
+     "next_fail": 1.56640625,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "pp-rag",
+   "unit": "pp",
+   "profile": "rag",
+   "server_flags": "--pipeline-parallel-size 2",
+   "cold_start_s": 141.2,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 451808,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.777,
+     "ttft_p95": 1.2492,
+     "tpot_p50": 0.0168,
+     "tpot_p95": 0.0222,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.8408,
+     "ttft_p95": 1.2433,
+     "tpot_p50": 0.0226,
+     "tpot_p95": 0.0304,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.8456,
+     "ttft_p95": 1.7888,
+     "tpot_p50": 0.0308,
+     "tpot_p95": 0.0526,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.4034,
+     "ttft_p95": 2.8114,
+     "tpot_p50": 0.105,
+     "tpot_p95": 0.1679,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.8385,
+     "ttft_p95": 1.4409,
+     "tpot_p50": 0.0255,
+     "tpot_p95": 0.0421,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8573,
+     "ttft_p95": 1.6838,
+     "tpot_p50": 0.0437,
+     "tpot_p95": 0.0601,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.0755,
+     "ttft_p95": 2.1823,
+     "tpot_p50": 0.0613,
+     "tpot_p95": 0.0908,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 0.8728,
+     "ttft_p95": 1.6232,
+     "tpot_p50": 0.0511,
+     "tpot_p95": 0.0893,
+     "achieved": 0.6056
+    },
+    {
+     "rate": 0.5625,
+     "n_requests": 107,
+     "n_errors": 0,
+     "ttft_p50": 0.8699,
+     "ttft_p95": 2.001,
+     "tpot_p50": 0.0456,
+     "tpot_p95": 0.104,
+     "achieved": 0.5944
+    },
+    {
+     "rate": 0.53125,
+     "n_requests": 102,
+     "n_errors": 0,
+     "ttft_p50": 0.8665,
+     "ttft_p95": 1.8721,
+     "tpot_p50": 0.0473,
+     "tpot_p95": 0.0725,
+     "achieved": 0.5667
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.53125,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.53125,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "repeat_ep-rag",
+   "unit": "repeat_ep",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel",
+   "cold_start_s": 139.0,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 0.375,
+     "n_requests": 64,
+     "n_errors": 0,
+     "ttft_p50": 0.8152,
+     "ttft_p95": 1.5015,
+     "tpot_p50": 0.0206,
+     "tpot_p95": 0.0342,
+     "achieved": 0.3556
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8261,
+     "ttft_p95": 1.6758,
+     "tpot_p50": 0.0315,
+     "tpot_p95": 0.0468,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 118,
+     "n_errors": 0,
+     "ttft_p50": 1.0138,
+     "ttft_p95": 2.5481,
+     "tpot_p50": 0.0487,
+     "tpot_p95": 0.0761,
+     "achieved": 0.6556
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 68,
+     "n_errors": 0,
+     "ttft_p50": 0.8215,
+     "ttft_p95": 1.5938,
+     "tpot_p50": 0.0203,
+     "tpot_p95": 0.0444,
+     "achieved": 0.3778
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8608,
+     "ttft_p95": 2.5104,
+     "tpot_p50": 0.0298,
+     "tpot_p95": 0.0765,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 137,
+     "n_errors": 0,
+     "ttft_p50": 1.2302,
+     "ttft_p95": 2.6328,
+     "tpot_p50": 0.0603,
+     "tpot_p95": 0.0933,
+     "achieved": 0.7611
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 64,
+     "n_errors": 0,
+     "ttft_p50": 0.8051,
+     "ttft_p95": 1.9079,
+     "tpot_p50": 0.0202,
+     "tpot_p95": 0.0375,
+     "achieved": 0.3556
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 103,
+     "n_errors": 0,
+     "ttft_p50": 0.9551,
+     "ttft_p95": 2.4065,
+     "tpot_p50": 0.042,
+     "tpot_p95": 0.0857,
+     "achieved": 0.5722
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 122,
+     "n_errors": 0,
+     "ttft_p50": 0.9377,
+     "ttft_p95": 2.0346,
+     "tpot_p50": 0.0518,
+     "tpot_p95": 0.0748,
+     "achieved": 0.6778
+    }
+   ],
+   "mode": "repeat",
+   "repeat_pass": {
+    "1": {
+     "0.375": [
+      false,
+      false,
+      false
+     ],
+     "0.5": [
+      false,
+      false,
+      false
+     ],
+     "0.75": [
+      false,
+      false,
+      false
+     ]
+    },
+    "1.5": {
+     "0.375": [
+      false,
+      false,
+      false
+     ],
+     "0.5": [
+      false,
+      false,
+      false
+     ],
+     "0.75": [
+      false,
+      false,
+      false
+     ]
+    },
+    "2": {
+     "0.375": [
+      true,
+      true,
+      true
+     ],
+     "0.5": [
+      true,
+      false,
+      false
+     ],
+     "0.75": [
+      false,
+      false,
+      false
+     ]
+    },
+    "3": {
+     "0.375": [
+      true,
+      true,
+      true
+     ],
+     "0.5": [
+      true,
+      false,
+      false
+     ],
+     "0.75": [
+      false,
+      false,
+      false
+     ]
+    }
+   }
+  },
+  {
+   "run_id": "repeat_tp-chat",
+   "unit": "repeat_tp",
+   "profile": "chat",
+   "server_flags": "--tensor-parallel-size 2",
+   "cold_start_s": 141.0,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 2.5,
+     "n_requests": 415,
+     "n_errors": 0,
+     "ttft_p50": 0.2025,
+     "ttft_p95": 0.2918,
+     "tpot_p50": 0.0521,
+     "tpot_p95": 0.0585,
+     "achieved": 2.3056
+    },
+    {
+     "rate": 2.5625,
+     "n_requests": 469,
+     "n_errors": 0,
+     "ttft_p50": 0.2234,
+     "ttft_p95": 0.3095,
+     "tpot_p50": 0.0614,
+     "tpot_p95": 0.0684,
+     "achieved": 2.6056
+    },
+    {
+     "rate": 2.578125,
+     "n_requests": 422,
+     "n_errors": 0,
+     "ttft_p50": 0.2096,
+     "ttft_p95": 0.3052,
+     "tpot_p50": 0.0552,
+     "tpot_p95": 0.064,
+     "achieved": 2.3444
+    },
+    {
+     "rate": 2.5,
+     "n_requests": 435,
+     "n_errors": 0,
+     "ttft_p50": 0.2088,
+     "ttft_p95": 0.3171,
+     "tpot_p50": 0.0551,
+     "tpot_p95": 0.0659,
+     "achieved": 2.4167
+    },
+    {
+     "rate": 2.5625,
+     "n_requests": 461,
+     "n_errors": 0,
+     "ttft_p50": 0.2177,
+     "ttft_p95": 0.3017,
+     "tpot_p50": 0.0602,
+     "tpot_p95": 0.0672,
+     "achieved": 2.5611
+    },
+    {
+     "rate": 2.578125,
+     "n_requests": 477,
+     "n_errors": 0,
+     "ttft_p50": 0.221,
+     "ttft_p95": 0.3312,
+     "tpot_p50": 0.0615,
+     "tpot_p95": 0.0649,
+     "achieved": 2.65
+    },
+    {
+     "rate": 2.5,
+     "n_requests": 436,
+     "n_errors": 0,
+     "ttft_p50": 0.2071,
+     "ttft_p95": 0.2975,
+     "tpot_p50": 0.0536,
+     "tpot_p95": 0.0645,
+     "achieved": 2.4222
+    },
+    {
+     "rate": 2.5625,
+     "n_requests": 445,
+     "n_errors": 0,
+     "ttft_p50": 0.215,
+     "ttft_p95": 0.3124,
+     "tpot_p50": 0.0574,
+     "tpot_p95": 0.0629,
+     "achieved": 2.4722
+    },
+    {
+     "rate": 2.578125,
+     "n_requests": 448,
+     "n_errors": 0,
+     "ttft_p50": 0.2131,
+     "ttft_p95": 0.3061,
+     "tpot_p50": 0.0592,
+     "tpot_p95": 0.0678,
+     "achieved": 2.4889
+    }
+   ],
+   "mode": "repeat",
+   "repeat_pass": {
+    "1": {
+     "2.5": [
+      true,
+      true,
+      true
+     ],
+     "2.5625": [
+      false,
+      false,
+      true
+     ],
+     "2.57812": [
+      true,
+      true,
+      false
+     ]
+    },
+    "1.5": {
+     "2.5": [
+      true,
+      true,
+      true
+     ],
+     "2.5625": [
+      false,
+      false,
+      true
+     ],
+     "2.57812": [
+      true,
+      true,
+      false
+     ]
+    },
+    "2": {
+     "2.5": [
+      true,
+      true,
+      true
+     ],
+     "2.5625": [
+      false,
+      false,
+      true
+     ],
+     "2.57812": [
+      true,
+      true,
+      false
+     ]
+    },
+    "3": {
+     "2.5": [
+      true,
+      true,
+      true
+     ],
+     "2.5625": [
+      false,
+      false,
+      true
+     ],
+     "2.57812": [
+      true,
+      true,
+      false
+     ]
+    }
+   }
+  },
+  {
+   "run_id": "tp-chat",
+   "unit": "tp",
+   "profile": "chat",
+   "server_flags": "--tensor-parallel-size 2",
+   "cold_start_s": 151.2,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.1251,
+     "ttft_p95": 0.1519,
+     "tpot_p50": 0.0095,
+     "tpot_p95": 0.0123,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.1248,
+     "ttft_p95": 0.1956,
+     "tpot_p50": 0.0109,
+     "tpot_p95": 0.013,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.1276,
+     "ttft_p95": 0.1373,
+     "tpot_p50": 0.0125,
+     "tpot_p95": 0.0186,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.1371,
+     "ttft_p95": 0.1896,
+     "tpot_p50": 0.0182,
+     "tpot_p95": 0.0269,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 2.0,
+     "n_requests": 336,
+     "n_errors": 0,
+     "ttft_p50": 0.1856,
+     "ttft_p95": 0.2593,
+     "tpot_p50": 0.0439,
+     "tpot_p95": 0.0507,
+     "achieved": 1.8667
+    },
+    {
+     "rate": 4.0,
+     "n_requests": 675,
+     "n_errors": 0,
+     "ttft_p50": 0.2791,
+     "ttft_p95": 0.3778,
+     "tpot_p50": 0.0816,
+     "tpot_p95": 0.0846,
+     "achieved": 3.75
+    },
+    {
+     "rate": 3.0,
+     "n_requests": 533,
+     "n_errors": 0,
+     "ttft_p50": 0.241,
+     "ttft_p95": 0.3275,
+     "tpot_p50": 0.0687,
+     "tpot_p95": 0.0748,
+     "achieved": 2.9611
+    },
+    {
+     "rate": 2.5,
+     "n_requests": 431,
+     "n_errors": 0,
+     "ttft_p50": 0.2058,
+     "ttft_p95": 0.2944,
+     "tpot_p50": 0.0541,
+     "tpot_p95": 0.0642,
+     "achieved": 2.3944
+    },
+    {
+     "rate": 2.75,
+     "n_requests": 487,
+     "n_errors": 0,
+     "ttft_p50": 0.2225,
+     "ttft_p95": 0.3077,
+     "tpot_p50": 0.0635,
+     "tpot_p95": 0.0674,
+     "achieved": 2.7056
+    },
+    {
+     "rate": 2.625,
+     "n_requests": 495,
+     "n_errors": 0,
+     "ttft_p50": 0.2268,
+     "ttft_p95": 0.3283,
+     "tpot_p50": 0.0637,
+     "tpot_p95": 0.0692,
+     "achieved": 2.75
+    },
+    {
+     "rate": 2.5625,
+     "n_requests": 456,
+     "n_errors": 0,
+     "ttft_p50": 0.2241,
+     "ttft_p95": 0.319,
+     "tpot_p50": 0.0589,
+     "tpot_p95": 0.0644,
+     "achieved": 2.5333
+    },
+    {
+     "rate": 2.59375,
+     "n_requests": 502,
+     "n_errors": 0,
+     "ttft_p50": 0.2309,
+     "ttft_p95": 0.3187,
+     "tpot_p50": 0.0649,
+     "tpot_p95": 0.0707,
+     "achieved": 2.7889
+    },
+    {
+     "rate": 2.578125,
+     "n_requests": 449,
+     "n_errors": 0,
+     "ttft_p50": 0.2192,
+     "ttft_p95": 0.3253,
+     "tpot_p50": 0.0574,
+     "tpot_p95": 0.0662,
+     "achieved": 2.4944
+    },
+    {
+     "rate": 2.5859375,
+     "n_requests": 474,
+     "n_errors": 0,
+     "ttft_p50": 0.2245,
+     "ttft_p95": 0.3218,
+     "tpot_p50": 0.0617,
+     "tpot_p95": 0.0694,
+     "achieved": 2.6333
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": 2.578125,
+     "achieved": 2.4944,
+     "next_fail": 2.5859375,
+     "broke_on": "TPOT"
+    },
+    "1.5": {
+     "capacity": 2.578125,
+     "achieved": 2.4944,
+     "next_fail": 2.5859375,
+     "broke_on": "TPOT"
+    },
+    "2": {
+     "capacity": 2.578125,
+     "achieved": 2.4944,
+     "next_fail": 2.5859375,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 2.578125,
+     "achieved": 2.4944,
+     "next_fail": 2.5859375,
+     "broke_on": "TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "tp-rag",
+   "unit": "tp",
+   "profile": "rag",
+   "server_flags": "--tensor-parallel-size 2",
+   "cold_start_s": 186.1,
+   "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.7969,
+     "ttft_p95": 1.3228,
+     "tpot_p50": 0.0111,
+     "tpot_p95": 0.0158,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.7969,
+     "ttft_p95": 1.3278,
+     "tpot_p50": 0.0152,
+     "tpot_p95": 0.0217,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.8668,
+     "ttft_p95": 1.9905,
+     "tpot_p50": 0.024,
+     "tpot_p95": 0.044,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.6331,
+     "ttft_p95": 4.1997,
+     "tpot_p50": 0.0913,
+     "tpot_p95": 0.1463,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.852,
+     "ttft_p95": 1.452,
+     "tpot_p50": 0.0195,
+     "tpot_p95": 0.0306,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8903,
+     "ttft_p95": 1.9458,
+     "tpot_p50": 0.0294,
+     "tpot_p95": 0.0463,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.2776,
+     "ttft_p95": 2.5971,
+     "tpot_p50": 0.0451,
+     "tpot_p95": 0.0738,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 1.0257,
+     "ttft_p95": 1.8806,
+     "tpot_p50": 0.0367,
+     "tpot_p95": 0.0785,
+     "achieved": 0.6056
+    },
+    {
+     "rate": 0.5625,
+     "n_requests": 107,
+     "n_errors": 0,
+     "ttft_p50": 0.8874,
+     "ttft_p95": 2.0817,
+     "tpot_p50": 0.0305,
+     "tpot_p95": 0.073,
+     "achieved": 0.5944
+    },
+    {
+     "rate": 0.53125,
+     "n_requests": 102,
+     "n_errors": 0,
+     "ttft_p50": 0.8505,
+     "ttft_p95": 1.7707,
+     "tpot_p50": 0.0302,
+     "tpot_p95": 0.0563,
+     "achieved": 0.5667
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.53125,
+     "achieved": 0.5667,
+     "next_fail": 0.5625,
+     "broke_on": "TTFT+TPOT"
+    },
+    "3": {
+     "capacity": 0.53125,
+     "achieved": 0.5667,
+     "next_fail": 0.5625,
+     "broke_on": "TPOT"
+    }
+   }
+  }
+ ],
+ "plans": {
+  "plan-combo": {
+   "best_unit": "ep",
+   "baseline_capacity": 0.5,
+   "target_s": 2.0,
+   "chosen": {
+    "max_num_batched_tokens": {
+     "flags": "--max-num-batched-tokens 8192",
+     "capacity": 0.75
+    }
+   },
+   "runs": [
+    "ep_combo-rag"
+   ]
+  },
+  "plan-levers": {
+   "best_unit": "ep",
+   "baseline_capacity": 0.5,
+   "target_s": 2.0,
+   "start_rate": 0.125,
+   "runs": [
+    "ep_seqs32-rag",
+    "ep_seqs64-rag",
+    "ep_seqs128-rag",
+    "ep_batch2048-rag",
+    "ep_batch8192-rag",
+    "ep_batch16384-rag",
+    "ep_noprefix-rag"
+   ]
+  },
+  "plan-repeats": {
+   "repeat": 3,
+   "runs": {
+    "repeat_ep-rag": {
+     "unit": "ep",
+     "rates": [
+      0.375,
+      0.5,
+      0.75
+     ]
+    },
+    "repeat_tp-chat": {
+     "unit": "tp",
+     "rates": [
+      2.5,
+      2.5625,
+      2.578125
+     ]
+    }
+   }
+  }
+ }
+}
