@@ -1,0 +1,49 @@
+# 4-GPU session, protocol §8 and §9 with amendment A10, on one 4 x A40 node:
+# - one-rag: one TP2 unit on GPUs 0-1 (the baseline of H4, measured on the same node)
+# - two-rag: two TP2 units (GPUs 0-1 and 2-3) behind nginx round robin (H4)
+# - qnvfp4-rag: PIAF answer quality of NVFP4 on 2 GPUs (H5)
+# - qfp8-rag: PIAF answer quality of FP8 on 4 GPUs (H5 reference)
+# Run on the node: uv run hpc-sizing campaign run --matrix campaign/a40-x4.toml
+
+name = "a40-x4"
+results_dir = "results/a40-x4"
+model = "mistralai/Mistral-Small-4-119B-2603-NVFP4"
+profiles = ["rag"]
+targets_s = [1.0, 1.5, 2.0, 3.0]
+step_duration_s = 180
+min_requests = 20
+start_rate = 0.125
+max_rate = 64
+bisect_steps = 2
+warmup_s = 30
+run_list = ["one-rag", "two-rag", "qnvfp4-rag", "qfp8-rag"]
+quality = ["qnvfp4-rag", "qfp8-rag"]
+quality_n = 200
+sync_command = ""
+
+[server]
+url = "http://127.0.0.1:8000"
+served_model = "small4"
+health_timeout_s = 2400
+command = "{flags}"  # each unit gives its whole command
+
+[units.one]
+flags = """env CUDA_VISIBLE_DEVICES=0,1 vllm serve mistralai/Mistral-Small-4-119B-2603-NVFP4 \
+  --host 127.0.0.1 --port 8000 --served-model-name small4 --tokenizer-mode mistral \
+  --config-format mistral --load-format mistral --attention-backend TRITON_MLA \
+  --max-model-len 8192 --gpu-memory-utilization 0.90 --tensor-parallel-size 2"""
+
+[units.two]
+flags = "bash scripts/serve-two-units.sh mistralai/Mistral-Small-4-119B-2603-NVFP4"
+
+[units.qnvfp4]
+flags = """env CUDA_VISIBLE_DEVICES=0,1 vllm serve mistralai/Mistral-Small-4-119B-2603-NVFP4 \
+  --host 127.0.0.1 --port 8000 --served-model-name small4 --tokenizer-mode mistral \
+  --config-format mistral --load-format mistral --attention-backend TRITON_MLA \
+  --max-model-len 8192 --gpu-memory-utilization 0.90 --tensor-parallel-size 2"""
+
+[units.qfp8]
+flags = """vllm serve mistralai/Mistral-Small-4-119B-2603 \
+  --host 127.0.0.1 --port 8000 --served-model-name small4 --tokenizer-mode mistral \
+  --config-format mistral --load-format mistral --attention-backend TRITON_MLA \
+  --max-model-len 8192 --gpu-memory-utilization 0.90 --tensor-parallel-size 4"""

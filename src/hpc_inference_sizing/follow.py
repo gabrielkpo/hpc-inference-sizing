@@ -166,6 +166,9 @@ def capacities(results_dir: Path, run_id: str) -> str | None:
     """'1 s: unreachable, 3 s: 0.5' from a run file, numbers only; None if not readable yet."""
     try:
         doc = json.loads((results_dir / f"{run_id}.json").read_text())
+        if "quality" in doc:  # answer quality (§9)
+            q = doc["quality"]
+            return f"PIAF exact match {float(q['exact_match']):g}, F1 {float(q['f1']):g}"
         if "sweep" not in doc:  # a repeat run: fixed rates, no capacity search
             return f"{len(doc['steps']):d} repeat steps"
         caps = doc["sweep"]["capacity_rps"]

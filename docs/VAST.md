@@ -159,6 +159,26 @@ about 15 min). A run lasts up to about 45 minutes, so the campaign's caps sit ab
 below the guard's (12 h, and 17 USD minus the 1 USD reserve) once the setup is counted: the
 last run ends and is copied before the guard would act.
 
+## 4-GPU session (protocol §8 and §9, amendment A10)
+
+Same tooling as the campaign day, on a 4 × A40 node with 250 GB of disk (NVFP4 71 GB and FP8
+121 GB), matrix [`campaign/a40-x4.toml`](../campaign/a40-x4.toml): one TP2 unit, two TP2 units
+behind nginx ([`scripts/serve-two-units.sh`](../scripts/serve-two-units.sh)), then PIAF quality of
+NVFP4 (2 GPUs) and FP8 (4 GPUs). About 2 h at 3 USD/h.
+
+```bash
+$V offers --gpu A40 --num-gpus 4 --disk 250
+$V rent --offer ID --disk 250 --max-price 3.3 --max-hours 3 --budget-usd 9 --no-guard --yes
+scripts/detached.sh runs/guard-x4.log uv run --env-file .env hpc-sizing vast guard INSTANCE \
+    --max-hours 3 --budget-usd 9 --reserve-usd 0.5
+ssh -p PORT root@HOST 'curl -fsSL https://raw.githubusercontent.com/gabrielkpo/hpc-inference-sizing/main/scripts/node-setup.sh -o node-setup.sh && { MODELS="mistralai/Mistral-Small-4-119B-2603-NVFP4 mistralai/Mistral-Small-4-119B-2603" PACKAGES=nginx nohup bash node-setup.sh > node-setup.log 2>&1 < /dev/null & }'
+ssh -p PORT root@HOST 'cd hpc-inference-sizing && { nohup uv run hpc-sizing campaign run \
+  --matrix campaign/a40-x4.toml --max-hours 2.5 --budget-usd 7.5 --price-per-hour PRICE \
+  --meta gpu=4xA40 > ../campaign.log 2>&1 < /dev/null & }'
+scripts/detached.sh runs/follow-x4.log uv run --env-file .env hpc-sizing campaign follow \
+    --matrix campaign/a40-x4.toml --instance INSTANCE
+```
+
 ## Prices seen on 2026-11-11 (public offers, disk of 150 GB included)
 
 | Offer | USD/h | Note |

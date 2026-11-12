@@ -50,6 +50,8 @@ class Matrix:
     sync_command: str = ""
     model: str = ""
     warmup_s: float = 30.0  # protocol §6.2: unmeasured load before the first step
+    quality: tuple[str, ...] = ()  # runs that score answer quality (§9) instead of a sweep
+    quality_n: int = 200
     run_list: tuple[str, ...] | None = None  # explicit runs instead of every (unit, profile)
     fixed_rates: dict[str, list[float]] = field(default_factory=dict)  # run -> rates (repeats)
     repeat: int = 1  # times each fixed rate is measured
@@ -250,6 +252,50 @@ def step_line(s, matrix: Matrix) -> str:
     )
 
 
+def _quality_run(matrix, run_id, unit, command, cold_start_s, provenance, meta, log) -> bool:
+    """Protocol §9: score answer quality on PIAF against the server just started."""
+    from datetime import UTC, datetime
+
+    from hpc_inference_sizing import quality
+    from hpc_inference_sizing.bench.runner import git_commit
+
+    try:
+        result = asyncio.run(
+            quality.evaluate(
+                matrix.server_url, matrix.served_model, quality.load_questions(matrix.quality_n)
+            )
+        )
+    except Exception as err:  # a crash must not end the campaign on paid time
+        failure = {"run_id": run_id, "unit": unit, "stage": "quality", "error": f"{err}"}
+        (matrix.results_dir / f"{run_id}.failed.json").write_text(json.dumps(failure, indent=1))
+        log(f"[{run_id}] FAILED (quality): {err}")
+        return False
+    doc = {
+        "metadata": {
+            "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
+            "git_commit": git_commit(),
+            "campaign": matrix.name,
+            "run_id": run_id,
+            "unit": unit,
+            "profile": "quality",
+            "mode": "quality",
+            "server_flags": matrix.units[unit],
+            "server_command": shlex.join(command) if command else "external",
+            "cold_start_s": round(cold_start_s, 1),
+            "protocol_version": PROTOCOL_VERSION,
+            **provenance,
+            **meta,
+        },
+        "quality": result,
+    }
+    path = matrix.results_dir / f"{run_id}.json"
+    tmp = path.with_suffix(".json.part")
+    tmp.write_text(json.dumps(doc, indent=1))
+    tmp.rename(path)
+    log(f"[{run_id}] done; PIAF exact match {result['exact_match']}, F1 {result['f1']}")
+    return True
+
+
 def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[str], None]) -> bool:
     """One run; True if a result was written, False if the unit failed to start."""
     from hpc_inference_sizing.bench.data import MistralTokenizer, load_piaf
@@ -301,6 +347,8 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
 
         fixed = matrix.fixed_rates.get(run_id)
         provenance = server_provenance(matrix.server_url, log_path if command else None)
+        if run_id in matrix.quality:
+            return _quality_run(matrix, run_id, unit, command, cold_start_s, provenance, meta, log)
         try:
             workload = Workload(load_piaf(), MistralTokenizer(), PROFILES[profile], seed=0)
             bench = Bench(
