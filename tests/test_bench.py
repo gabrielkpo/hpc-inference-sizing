@@ -276,3 +276,20 @@ def test_a_step_records_the_rate_actually_sent():
     s = StepSummary(1.0, 180, 148, 0, 1.0, 2.0, 0.05, 0.1, 100.0)
     assert s.achieved_rate == pytest.approx(0.822, abs=0.001)
     assert s.to_dict()["achieved_rate"] == pytest.approx(0.822, abs=0.001)
+
+
+def test_the_warm_up_loads_the_server_but_records_nothing():
+    server = FakeServer(first_delay=0.0, token_delay=0.0)
+    bench = Bench(
+        "http://fake",
+        "m",
+        Workload(ROWS, CharTokenizer(), Profile("chat", 20, 2), 0),
+        step_duration_s=0.2,
+        min_requests=1,
+        scrape_interval_s=0.05,
+        transport=server.transport,
+    )
+    sent = asyncio.run(bench.warm_up(50, 0.2))
+    assert sent > 0 and bench.steps == []
+    asyncio.run(bench.step(50))
+    assert len(bench.steps) == 1  # the first measured step keeps seed index 0

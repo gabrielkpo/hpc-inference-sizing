@@ -82,6 +82,29 @@ class Bench:
         )
         return summary
 
+    async def warm_up(self, rate: float, duration_s: float) -> int:
+        """Protocol §6.2: load the server at a low rate before measuring; nothing is recorded.
+        Returns the number of requests sent. Measured steps keep their seeds (the seed of a
+        step is its index among recorded steps); their prompts come after the warm-up's."""
+        if duration_s <= 0:
+            return 0
+        first = self._next_index
+        n = len(poisson_arrivals(rate, duration_s, self.seed - 1))
+        prompts = [self.workload.prompt(first + i)[0] for i in range(n)]
+        records = await run_step(
+            self.base_url,
+            self.model,
+            lambda i: prompts[i - first],
+            self.workload.profile.output_tokens,
+            rate,
+            duration_s,
+            seed=self.seed - 1,
+            first_index=first,
+            transport=self.transport,
+        )
+        self._next_index += len(records)
+        return len(records)
+
     async def sweep(self, targets_s: list[float], **kw) -> SweepResult:
         return await sweep(self.step, targets_s, **kw)
 
