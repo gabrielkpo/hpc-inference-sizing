@@ -130,6 +130,13 @@ def wait_healthy(url: str, timeout_s: float, proc: subprocess.Popen | None) -> f
     raise RuntimeError(f"server not ready after {timeout_s:.0f} s")
 
 
+def _answers(url: str) -> bool:
+    try:
+        return httpx.get(f"{url}/health", timeout=2).status_code == 200
+    except httpx.HTTPError:
+        return False
+
+
 def stop_server(proc: subprocess.Popen | None) -> None:
     """Stop the server and every process it started (vLLM workers hold GPU memory).
 
@@ -237,6 +244,11 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
         return False
 
     try:
+        if command and _answers(matrix.server_url):
+            # a server left by a killed run would be measured under this unit's name
+            return record_failure(
+                "start", RuntimeError(f"a server already answers on {matrix.server_url}; stop it")
+            )
         if command:
             log_path.parent.mkdir(parents=True, exist_ok=True)
             log(f"[{run_id}] starting: {shlex.join(command)}")
@@ -249,6 +261,8 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
                 )
         try:
             cold_start_s = wait_healthy(matrix.server_url, matrix.health_timeout_s, proc)
+            if proc is not None and proc.poll() is not None:
+                raise RuntimeError(f"server exited with code {proc.returncode} after /health")
         except RuntimeError as err:
             return record_failure("start", err)
         log(f"[{run_id}] server ready after {cold_start_s:.0f} s")

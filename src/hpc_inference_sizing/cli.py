@@ -137,6 +137,11 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         print(f"failed ({len(st.failed)}): {' '.join(st.failed)}")
         print(f"pending ({len(st.pending)}): {' '.join(st.pending)}")
         return
+    # `kill` (SIGTERM) on the campaign must stop its vLLM server too: exit through the
+    # `finally` that stops it, instead of leaving it on the GPUs for the next run to measure
+    import signal
+
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
     try:
         limits = Limits(
             args.max_hours,

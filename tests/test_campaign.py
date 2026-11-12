@@ -229,3 +229,28 @@ def test_step_line_says_which_targets_a_step_meets(tmp_path):
     )
     slow = StepSummary(1.0, 60, 61, 0, 2.2, 3.5, 0.11, 0.158, 265.0)
     assert campaign.step_line(slow, m).endswith("meets no target")
+
+
+def test_a_server_already_on_the_port_is_not_measured_under_a_new_name(tmp_path):
+    import threading
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+    class Health(BaseHTTPRequestHandler):
+        def do_GET(self):  # noqa: N802
+            self.send_response(200)
+            self.end_headers()
+
+        def log_message(self, *args):
+            pass
+
+    leftover = ThreadingHTTPServer(("127.0.0.1", 0), Health)
+    threading.Thread(target=leftover.serve_forever, daemon=True).start()
+    try:
+        m = write_matrix(
+            tmp_path, command="sleep 30", url=f"http://127.0.0.1:{leftover.server_port}"
+        )
+        assert run_one(m, "tp-rag", {}, log=lambda _: None) is False
+    finally:
+        leftover.shutdown()
+    failure = json.loads((m.results_dir / "tp-rag.failed.json").read_text())
+    assert failure["stage"] == "start" and "already answers" in failure["error"]
