@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import io
 import json
+import re
 import shlex
 import subprocess
 import tarfile
@@ -32,6 +33,14 @@ from typing import Protocol
 
 from hpc_inference_sizing.campaign import Matrix, status
 from hpc_inference_sizing.vast import VastClient, VastError, _listed, destroy_with_retries
+
+# The only files taken from the node: run files, failure records, plans, the campaign clock and
+# server logs, with plain names. Anything else in the archive is skipped, so the third-party
+# host cannot plant or overwrite other files in the results folder.
+ALLOWED_MEMBER = re.compile(
+    r"(\./)?([A-Za-z0-9_+-]+(\.failed)?\.json|plan-[a-z]+\.json|campaign-clock\.json"
+    r"|logs/[A-Za-z0-9_+-]+\.server\.log)"
+)
 
 # The brackets keep pgrep from matching the shell that runs it (its command line holds the
 # pattern, not a match of it). With SLURM, a queued or running array task also counts, so the
@@ -85,11 +94,16 @@ class SshRemote:
         out = self._ssh(f"test -d {remote} && tar czf - -C {remote} .", capture_output=True)
         if out.returncode != 0:
             raise OSError(f"copy from the node failed: {out.stderr.decode()[-200:].strip()}")
-        # The host is a third party: the "data" filter refuses absolute paths, "..", links
-        # leaving the folder and special files.
+        # The host is a third party: only allow-listed regular files are extracted, and the
+        # "data" filter still refuses absolute paths, ".." and special files.
         try:
             with tarfile.open(fileobj=io.BytesIO(out.stdout), mode="r:gz") as archive:
-                archive.extractall(local_dir, filter="data")
+                wanted = [
+                    m
+                    for m in archive.getmembers()
+                    if m.isfile() and ALLOWED_MEMBER.fullmatch(m.name)
+                ]
+                archive.extractall(local_dir, members=wanted, filter="data")
         except (tarfile.TarError, OSError) as err:
             raise OSError(f"unpacking the results failed: {err}") from err
 
@@ -193,6 +207,7 @@ def follow(
     failures = 0
 
     def event(kind: str, message: str) -> None:
+        message = plain(message, 300)  # parts come from the node (names, ssh errors): plain text
         log(f"follow: {message}")
         if events_path is not None:
             events_path.parent.mkdir(parents=True, exist_ok=True)
