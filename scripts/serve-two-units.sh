@@ -12,11 +12,15 @@ common=(--host 127.0.0.1 --served-model-name small4 --tokenizer-mode mistral --c
   --gpu-memory-utilization 0.90 --tensor-parallel-size 2 "$@")
 
 CUDA_VISIBLE_DEVICES=0,1 vllm serve "$model" --port 8001 "${common[@]}" &
+first=$!
 CUDA_VISIBLE_DEVICES=2,3 vllm serve "$model" --port 8002 "${common[@]}" &
+second=$!
 trap 'kill 0' EXIT
 
 for port in 8001 8002; do
   until curl -sf "http://127.0.0.1:$port/health" >/dev/null; do
+    # a unit that died at start would leave this loop waiting until the runner's timeout
+    { kill -0 "$first" && kill -0 "$second"; } 2>/dev/null || { echo "a vLLM unit exited during startup" >&2; exit 1; }
     sleep 5
   done
 done

@@ -252,7 +252,9 @@ def step_line(s, matrix: Matrix) -> str:
     )
 
 
-def _quality_run(matrix, run_id, unit, command, cold_start_s, provenance, meta, log) -> bool:
+def _quality_run(
+    matrix, run_id, unit, command, cold_start_s, provenance, meta, log, record_failure
+) -> bool:
     """Protocol §9: score answer quality on PIAF against the server just started."""
     from datetime import UTC, datetime
 
@@ -266,10 +268,7 @@ def _quality_run(matrix, run_id, unit, command, cold_start_s, provenance, meta, 
             )
         )
     except Exception as err:  # a crash must not end the campaign on paid time
-        failure = {"run_id": run_id, "unit": unit, "stage": "quality", "error": f"{err}"}
-        (matrix.results_dir / f"{run_id}.failed.json").write_text(json.dumps(failure, indent=1))
-        log(f"[{run_id}] FAILED (quality): {err}")
-        return False
+        return record_failure("quality", err)
     doc = {
         "metadata": {
             "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -292,7 +291,10 @@ def _quality_run(matrix, run_id, unit, command, cold_start_s, provenance, meta, 
     tmp = path.with_suffix(".json.part")
     tmp.write_text(json.dumps(doc, indent=1))
     tmp.rename(path)
-    log(f"[{run_id}] done; PIAF exact match {result['exact_match']}, F1 {result['f1']}")
+    log(
+        f"[{run_id}] done; PIAF exact match {result['exact_match']}, F1 {result['f1']}, "
+        f"{result['truncated']} answers cut at max_tokens"
+    )
     return True
 
 
@@ -348,7 +350,9 @@ def run_one(matrix: Matrix, run_id: str, meta: dict[str, str], log: Callable[[st
         fixed = matrix.fixed_rates.get(run_id)
         provenance = server_provenance(matrix.server_url, log_path if command else None)
         if run_id in matrix.quality:
-            return _quality_run(matrix, run_id, unit, command, cold_start_s, provenance, meta, log)
+            return _quality_run(
+                matrix, run_id, unit, command, cold_start_s, provenance, meta, log, record_failure
+            )
         try:
             workload = Workload(load_piaf(), MistralTokenizer(), PROFILES[profile], seed=0)
             bench = Bench(

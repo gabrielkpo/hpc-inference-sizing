@@ -83,7 +83,7 @@ def summarize_run(path: Path, targets_s: list[float]) -> dict:
             "mode": "quality",
             "server_flags": meta["server_flags"],
             "git_commit": meta.get("git_commit"),
-            "quality": {"n": q["n"], "exact_match": q["exact_match"], "f1": q["f1"]},
+            "quality": {k: q.get(k) for k in ("n", "exact_match", "f1", "truncated")},
         }
     steps = [s["summary"] for s in doc["steps"]]
     run = {

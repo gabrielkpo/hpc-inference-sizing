@@ -80,10 +80,12 @@ async def _ask(client: httpx.AsyncClient, url: str, model: str, row: dict, limit
             },
         )
         resp.raise_for_status()
-        answer = resp.json()["choices"][0]["message"]["content"].strip()
+        choice = resp.json()["choices"][0]
+        answer = (choice["message"].get("content") or "").strip()  # null: scored as empty
     return {
         "id": row["id"],
         "prediction": answer,
+        "truncated": choice.get("finish_reason") == "length",
         "references": row["answers"],
         "em": exact_match(answer, row["answers"]),
         "f1": f1(answer, row["answers"]),
@@ -105,5 +107,6 @@ async def evaluate(
         "n": n,
         "exact_match": round(100 * sum(a["em"] for a in answers) / n, 2),
         "f1": round(100 * sum(a["f1"] for a in answers) / n, 2),
+        "truncated": sum(a["truncated"] for a in answers),  # cut at max_tokens
         "answers": answers,
     }
