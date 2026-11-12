@@ -1,6 +1,7 @@
 # Measurement protocol
 
-- **Status: frozen, version 1.0, 2026-11-11**, by the pull request `docs: freeze protocol`.
+- **Status: frozen, version 1.0, 2026-11-11**, by the pull request `docs: freeze protocol`;
+  amendments A7 to A9 (2026-11-12) record what the 2-GPU campaign did not do as written.
 - **Freeze rule:** this file is frozen before the first run of the campaign (§10). The test
   session ran on 2026-11-11 under the draft, as §10 intends: it checks the path, and its numbers
   are not results ([`TEST-SESSION.md`](TEST-SESSION.md)). The draft said "before the first paid
@@ -250,3 +251,16 @@ before any campaign run.
 | A4 | Budget table at the prices seen on 2026-11-11, bandwidth added; the 20 € cap acts as a stop rule; the 4-GPU node needs ≥ 200 GB of disk | *After the test session.* 2 × A40 cost 1.35 $/h, not 1.07; bandwidth is billed on top. The owner adds credit; the cut order of §10 is unchanged |
 | A5 | The 2-GPU matrix runs in one session on one host | Enforces the one-host rule; splitting risks losing the host between sessions |
 | A6 | Values marked *(proposed)* in the draft are kept unchanged (§3.2, §5.2, §6 apart from A3, §7 apart from A3, §9); the output-length check of §3.1 is marked done | The test session gave no reason to change them |
+
+### After the 2-GPU campaign (2026-11-12)
+
+The 2-GPU matrix ran on 2026-11-11 and 12 under version 1.0. An audit of the repository and the
+run files then found the deviations below. None of them is fixed by rerunning: each is recorded
+here, and the analysis says where it matters. The measurements are not changed; how they are read
+is stated before any result is published.
+
+| ID | Deviation | What it changes |
+|---|---|---|
+| A7 | Not implemented as written: the 30 s warm-up (§6.2; the first measured step, 0.125 req/s, came right after the server start); provenance in every result (§2: vLLM version, KV-cache size and server flags are in the server logs, driver, PCIe generation and vLLM version in the node setup log, the image by tag; the image digest and CUDA version were not recorded); per-token times (§6.5: first and last token only, so TPOT is a per-request mean); SLURM jobs (§6: the matrix ran as one `campaign run --chain` process, see [ADR 0003](adr/0003-campaign-runs-as-one-chained-process.md)) | No warm-up effect is visible (on TP2 × RAG the 0.125 and 0.25 req/s steps have the same TTFT p95, 1.32 and 1.33 s). Before the 4-GPU session, the bench is to run the warm-up and record provenance automatically; until then, these gaps hold for every run |
+| A8 | The code fixed each target's capacity when that target's bisection ended, so steps measured later for looser targets did not count for stricter ones: 12 of the 32 base capacities in the run files are below the highest step that met them. The realized arrival rate also differs from the nominal rate by up to about 20 % (Poisson arrivals over 180 s) | Every capacity is recomputed from the steps of the run files as §4 defines it (highest rate whose step meets the SLO), and the realized rate is shown next to it. The lever phase picked its unit from the faulty values: EP2, by tie-break; with the recomputed values TP2 is the best unit at 2 s (0.53 against 0.5 req/s). The levers were measured on EP2 and are reported as such |
+| A9 | Resolution and noise: two bisection steps resolve a capacity to a quarter of a ladder interval, and the repeats (§6.6) show that a step at the same nominal rate can pass or fail from one repetition to the next | Capacity differences between units, and lever gains, smaller than one ladder step or than the spread of the repeats, are reported as not resolved. This applies to H2 ("beyond the repeat range", already in its criterion) and to H3 (+20 % is finer than the lever ladders can resolve) |

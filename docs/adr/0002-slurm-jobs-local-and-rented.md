@@ -1,6 +1,7 @@
 # ADR 0002: the campaign runs as SLURM jobs, locally and on the rented node
 
-- Status: accepted (2026-10-27)
+- Status: accepted (2026-10-27); the rented-node part is superseded by
+  [ADR 0003](0003-campaign-runs-as-one-chained-process.md) (2026-11-12)
 - Decided by: the project owner
 
 ## Context

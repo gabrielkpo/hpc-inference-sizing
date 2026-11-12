@@ -7,9 +7,10 @@ Size the GPU fleet that serves an open-weight LLM for a client, from **measureme
 multi-GPU hardware**: how many GPUs a latency target needs, and what latency a fixed GPU budget
 gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on a rented 2-GPU node.
 
-> **Status: step 2 of 7 done, no GPU measurement yet, expect breaking changes.** The memory
-> model and its predictions are in [`docs/MEMORY.md`](docs/MEMORY.md); the measurement protocol
-> will be frozen before the first paid GPU run. See [Status / Roadmap](#status--roadmap).
+> **Status: step 6 of 7 in progress.** The protocol was frozen on 2026-11-11
+> ([`docs/PROTOCOL.md`](docs/PROTOCOL.md), with dated amendments). The 2-GPU campaign ran on
+> 2026-11-11 and 12 (18 runs, no error, 13.81 USD); its analysis and the sizing tool are not
+> published yet. See [Status / Roadmap](#status--roadmap).
 
 ## Why
 
@@ -30,24 +31,23 @@ target**.
 
 ## How it works
 
-Measurement path. Dashed boxes are designed in [`docs/PROTOCOL.md`](docs/PROTOCOL.md) and not
-built yet.
+Measurement path. Dashed boxes are not built yet.
 
 ```mermaid
 flowchart LR
-    P["docs/PROTOCOL.md<br/>(frozen before paid runs)"] --> J["SLURM job<br/>one load step"]
+    P["docs/PROTOCOL.md<br/>(frozen before the campaign)"] --> J["Campaign runner<br/>one run per unit x profile"]
     J --> W["Load generator<br/>RAG / chat profiles,<br/>Poisson arrivals"]
     W --> V["vLLM unit on 2 GPUs<br/>TP2 / EP2 / PP2 / DP2+EP"]
     V --> C["Streaming client<br/>TTFT, TPOT, errors"]
     V --> M["/metrics scraper<br/>queue, KV cache"]
     C --> S{"SLO met?<br/>TTFT p95, TPOT p95,<br/>0 errors"}
     S -->|yes| J
-    S -->|no| R[("results/<br/>capacity per unit")]
+    S -->|no| R[("Run files<br/>capacity per unit")]
     M --> R
     R --> T["Sizing tool<br/>GPUs, latency, cost"]
 
     classDef planned stroke-dasharray: 5 5
-    class J,W,V,C,M,S,R,T planned
+    class T planned
 ```
 
 Campaign lifecycle: nothing is rented until the same jobs have run locally.
@@ -55,11 +55,11 @@ Campaign lifecycle: nothing is rented until the same jobs have run locally.
 ```mermaid
 flowchart LR
     L["Local dry run<br/>SLURM in Docker,<br/>small model on CPU"] --> F["Protocol freeze<br/>(pull request)"]
-    F --> TS["Test session<br/>2 GPUs, 15 min"]
-    TS -->|model starts| CA["Campaign<br/>2 GPUs, ~9 h"]
+    F --> TS["Test session<br/>2 GPUs, 45 min"]
+    TS -->|model starts| CA["Campaign<br/>2 GPUs, ~11 h"]
     TS -->|fails on Ampere| STOP["Stop, destroy,<br/>owner decides"]
     CA --> X["Scaling + quality<br/>4 GPUs, ~2 h"]
-    CA --> D["Instance destroyed,<br/>results pushed"]
+    CA --> D["Instance destroyed,<br/>results copied off"]
     X --> D
 ```
 
@@ -69,18 +69,21 @@ flowchart LR
   70.8 GB of NVFP4 weights do not fit on one 48 GB card, so multi-GPU is required rather than
   optional. The cost: FP4 runs through weight-only fallback kernels on Ampere, untested end to end
   for this model. See [ADR 0001](docs/adr/0001-mistral-small-4-on-two-a40.md).
-- **2 × A40 on Vast.ai rather than H100s or a managed cluster**: about 1 $/h for 96 GB of GPU
-  memory on one PCIe 4.0 node keeps the whole study under 20 €. The numbers will not match an
+- **2 × A40 on Vast.ai rather than H100s or a managed cluster**: 1.2 to 1.5 $/h for 96 GB of GPU
+  memory on one PCIe 4.0 node keeps the whole study near 20 € (about 23 USD planned). The numbers will not match an
   H100 node; the method and the trade-offs will.
 - **Capacity under an SLO rather than peak throughput**: a client buys latency, not tokens per
   second. Peak throughput is reached with queues no user would accept.
 - **Measure one unit, extrapolate, then check on 4 GPUs** rather than measuring every fleet size:
   the budget allows one 4-GPU check, which is where the extrapolation is most likely to break.
-- **SLURM jobs on a single node** rather than a plain script: the same `sbatch` files run on a
-  local Docker cluster first and on the rented node next, so the dry run tests the real path.
-  See [ADR 0002](docs/adr/0002-slurm-jobs-local-and-rented.md).
-- **Protocol frozen before the first paid run**: hypotheses and pass criteria are written first,
-  and refuted hypotheses are published like confirmed ones.
+- **SLURM for the local dry run, one chained process on the rented node**: the campaign runner
+  and its job array ran first on a local SLURM cluster in Docker; on the rented node the matrix
+  runs as one `campaign run --chain` process, because the levers and repeats depend on earlier
+  runs. See [ADR 0002](docs/adr/0002-slurm-jobs-local-and-rented.md) and
+  [ADR 0003](docs/adr/0003-campaign-runs-as-one-chained-process.md).
+- **Protocol frozen before the campaign**: hypotheses and pass criteria are written first,
+  deviations found later are dated amendments, and refuted hypotheses are published like
+  confirmed ones.
 
 ## Example
 
@@ -107,7 +110,7 @@ Price of latency TTFT 3 s: <GPUs>   2 s: <GPUs>   1.5 s: <GPUs>   1 s: <GPUs or 
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model; see [`docs/BENCH.md`](docs/BENCH.md) | done |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved; see [`docs/CAMPAIGN.md`](docs/CAMPAIGN.md) | done |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed; rental driver with guard and backstop, see [`docs/VAST.md`](docs/VAST.md) | done on 2026-11-11: the four units start on Ampere, 1.22 USD; see [`docs/TEST-SESSION.md`](docs/TEST-SESSION.md) |
-| 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | planned |
+| 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | 2-GPU matrix run on 2026-11-11 and 12 (18 runs, 13.81 USD), analysis to publish; 4-GPU planned |
 | 7 Sizing and report | Sizing tool, price-of-latency curve, results in this README | planned |
 
 **Evaluation plan.** Six hypotheses with pass criteria written before any run (thresholds
@@ -133,7 +136,7 @@ uv run pytest
 uv run hpc-sizing memory --gpu a40 --gpus 2 --split pp   # predicted KV-cache capacity
 ```
 
-GPU runs will read `VAST_API_KEY` and `HF_TOKEN` from the environment (see `.env.example`).
+GPU runs read `VAST_API_KEY` (and `HF_TOKEN` if needed) from the environment (see `.env.example`).
 
 ## Project structure
 
@@ -147,7 +150,7 @@ GPU runs will read `VAST_API_KEY` and `HF_TOKEN` from the environment (see `.env
 | `docs/TEST-SESSION.md` | What the test session checked and found (path checks, not results) |
 | `campaign/` | Campaign matrices: the 2 x A40 campaign, the test session and two dry runs |
 | `slurm/` | Local SLURM cluster (Docker), job array scripts, single-node setup for the rented node |
-| `docs/adr/` | Decision records: model and hardware, SLURM on one node |
+| `docs/adr/` | Decision records: model and hardware, SLURM locally, the chained campaign on the rented node |
 | `src/hpc_inference_sizing/` | Python package: memory calculator (`memory.py`), measurement bench (`bench/`), campaign runner (`campaign.py`), follow from the laptop (`follow.py`), Vast.ai driver (`vast.py`), `hpc-sizing` command; sizing tool to come |
 | `src/hpc_inference_sizing/data/` | Measured component sizes of the checkpoints |
 | `scripts/measure_checkpoint.py` | Reads the safetensors headers of a Hugging Face checkpoint (no weights downloaded) |
