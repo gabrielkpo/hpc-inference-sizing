@@ -1,14 +1,5 @@
 # Results: the 2-GPU campaign (2 × A40)
 
-The 2-GPU matrix of the protocol (§5) ran on 2026-11-11 and 12 on one Vast.ai node (2 × NVIDIA
-A40, PCIe 4.0, vLLM 0.32.0, Mistral Small 4 NVFP4): 18 runs, no error, 11.1 h, 13.81 USD. It ran
-under protocol v1.0; amendments A7 to A9 ([`PROTOCOL.md`](PROTOCOL.md#12-amendments)) state what
-it did not do as written. The 4-GPU part (H4, H5) has not run.
-
-Every number below comes from [`results/a40-x2.json`](results/a40-x2.json), a summary of the raw
-run files (15-40 MB each, kept out of Git) made by
-`hpc-sizing results summarize --dir results/a40-x2 --out docs/results/a40-x2.json`.
-
 ## For decision-makers
 
 **The question.** Two organisations want to run an AI assistant on their own graphics cards
@@ -71,6 +62,15 @@ question answered from documents the assistant reads first. *Unit*: one copy of 
 running on two cards; a fleet is a number of units.
 
 ## Technical details
+
+The 2-GPU matrix of the protocol (§5) ran on 2026-11-11 and 12 on one Vast.ai node (2 × NVIDIA
+A40, PCIe 4.0, vLLM 0.32.0, Mistral Small 4 NVFP4): 18 runs, no error, 11.1 h, 13.81 USD. It ran
+under protocol v1.0; amendments A7 to A9 ([`PROTOCOL.md`](PROTOCOL.md#12-amendments)) state what
+it did not do as written. The 4-GPU part (H4, H5) has not run.
+
+Every number below comes from [`results/a40-x2.json`](results/a40-x2.json), a summary of the raw
+run files (15-40 MB each, kept out of Git) made by
+`hpc-sizing results summarize --dir results/a40-x2 --out docs/results/a40-x2.json`.
 
 ### How to read the numbers
 
