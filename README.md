@@ -65,8 +65,8 @@ flowchart LR
 
 - **Mistral Small 4 rather than Mistral Small 3.2 (24B dense)**: it is the current model, and its
   70.8 GB of NVFP4 weights do not fit on one 48 GB card, so multi-GPU is required rather than
-  optional. The cost: FP4 runs through weight-only fallback kernels on Ampere, untested end to end
-  for this model. See [ADR 0001](docs/adr/0001-mistral-small-4-on-two-a40.md).
+  optional. The cost: FP4 runs through weight-only fallback kernels on Ampere; the test session
+  checked that all four splits start there before the campaign. See [ADR 0001](docs/adr/0001-mistral-small-4-on-two-a40.md).
 - **2 × A40 on Vast.ai rather than H100s or a managed cluster**: 1.2 to 1.5 $/h for 96 GB of GPU
   memory on one PCIe 4.0 node kept the whole study at about 24 USD of rented time. The numbers will not match an
   H100 node; the method and the trade-offs will.
@@ -177,8 +177,8 @@ gitleaks scans the full history on every pull request.
 - **One GPU class, one host.** A40s over PCIe 4.0; results do not transfer as numbers to H100 or
   B200 nodes with NVLink.
 - **Ampere has no FP4 tensor cores.** NVFP4 runs weight-only through Marlin kernels, slower than
-  on Blackwell. If the model does not start on Ampere, the fallback (Blackwell GPUs, reduced
-  matrix) is decided by the owner, not by a script.
+  on Blackwell, which likely raises the prefill time behind the 1 s results; newer GPUs would
+  give other numbers.
 - **Synthetic traffic.** Poisson arrivals with fixed lengths are smoother than real peaks.
 - **Single node.** Units on separate machines, smart routing and autoscaling are out of scope;
   only two units behind one balancer were measured.
