@@ -55,12 +55,15 @@ data.load_piaf(); data.MistralTokenizer(); print("PIAF and tokenizer ok")'
 
 step "weights"
 # NVFP4 71 GB, FP8 121 GB. vLLM would fetch them on the first start; fetching them here shows
-# the download speed and fails early if the disk is too small.
+# the download speed and fails early if the disk is too small. Only the Mistral format that
+# `--load-format mistral` reads (consolidated-*, params.json, tekken.json): the FP8 repository
+# also holds the same weights in the Hugging Face format (model-*, another 121 GB), which once
+# filled a 250 GB disk.
 for model in $MODELS; do
   if command -v hf >/dev/null; then
-    hf download "$model" >/dev/null
+    hf download "$model" --exclude "model*" >/dev/null
   else
-    uvx --from huggingface_hub hf download "$model" >/dev/null
+    uvx --from huggingface_hub hf download "$model" --exclude "model*" >/dev/null
   fi
   echo "fetched $model"
 done
