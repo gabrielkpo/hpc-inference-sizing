@@ -1,0 +1,344 @@
+{
+ "targets_s": [
+  1.0,
+  1.5,
+  2.0,
+  3.0
+ ],
+ "tpot_bound_s": 0.06666666666666667,
+ "runs": [
+  {
+   "run_id": "one-rag",
+   "unit": "one",
+   "profile": "rag",
+   "server_flags": "env CUDA_VISIBLE_DEVICES=0,1 vllm serve mistralai/Mistral-Small-4-119B-2603-NVFP4 --host 127.0.0.1 --port 8000 --served-model-name small4 --tokenizer-mode mistral --config-format mistral --load-format mistral --attention-backend TRITON_MLA --max-model-len 8192 --gpu-memory-utilization 0.90 --tensor-parallel-size 2",
+   "cold_start_s": 202.1,
+   "git_commit": "a27ee27b310ac7d970dd14cfe4bd171638ad90cb",
+   "kv_cache_tokens": 237280,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.7793,
+     "ttft_p95": 1.3098,
+     "tpot_p50": 0.011,
+     "tpot_p95": 0.0158,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.794,
+     "ttft_p95": 1.2425,
+     "tpot_p50": 0.0152,
+     "tpot_p95": 0.0217,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.8051,
+     "ttft_p95": 1.972,
+     "tpot_p50": 0.0224,
+     "tpot_p95": 0.0441,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 1.3541,
+     "ttft_p95": 3.4773,
+     "tpot_p50": 0.0817,
+     "tpot_p95": 0.133,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 0.375,
+     "n_requests": 59,
+     "n_errors": 0,
+     "ttft_p50": 0.7966,
+     "ttft_p95": 1.3616,
+     "tpot_p50": 0.0174,
+     "tpot_p95": 0.0292,
+     "achieved": 0.3278
+    },
+    {
+     "rate": 0.4375,
+     "n_requests": 98,
+     "n_errors": 0,
+     "ttft_p50": 0.8425,
+     "ttft_p95": 1.9304,
+     "tpot_p50": 0.0271,
+     "tpot_p95": 0.0455,
+     "achieved": 0.5444
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 124,
+     "n_errors": 0,
+     "ttft_p50": 1.0226,
+     "ttft_p95": 2.3386,
+     "tpot_p50": 0.0405,
+     "tpot_p95": 0.06,
+     "achieved": 0.6889
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 109,
+     "n_errors": 0,
+     "ttft_p50": 0.875,
+     "ttft_p95": 1.6187,
+     "tpot_p50": 0.0323,
+     "tpot_p95": 0.068,
+     "achieved": 0.6056
+    },
+    {
+     "rate": 0.875,
+     "n_requests": 133,
+     "n_errors": 0,
+     "ttft_p50": 0.981,
+     "ttft_p95": 2.0591,
+     "tpot_p50": 0.0485,
+     "tpot_p95": 0.0674,
+     "achieved": 0.7389
+    },
+    {
+     "rate": 0.8125,
+     "n_requests": 129,
+     "n_errors": 0,
+     "ttft_p50": 1.1471,
+     "ttft_p95": 3.0337,
+     "tpot_p50": 0.0549,
+     "tpot_p95": 0.0783,
+     "achieved": 0.7167
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": null,
+     "achieved": null,
+     "next_fail": null,
+     "broke_on": null
+    },
+    "1.5": {
+     "capacity": 0.375,
+     "achieved": 0.3278,
+     "next_fail": 0.4375,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 0.75,
+     "achieved": 0.6889,
+     "next_fail": 0.8125,
+     "broke_on": "TTFT+TPOT"
+    }
+   }
+  },
+  {
+   "run_id": "qfp8-rag",
+   "unit": "qfp8",
+   "profile": "quality",
+   "mode": "quality",
+   "server_flags": "vllm serve mistralai/Mistral-Small-4-119B-2603 --host 127.0.0.1 --port 8000 --served-model-name small4 --tokenizer-mode mistral --config-format mistral --load-format mistral --attention-backend TRITON_MLA --max-model-len 8192 --gpu-memory-utilization 0.90 --tensor-parallel-size 4",
+   "git_commit": "a27ee27b310ac7d970dd14cfe4bd171638ad90cb",
+   "quality": {
+    "n": 200,
+    "exact_match": 34.0,
+    "f1": 65.87,
+    "truncated": 30
+   }
+  },
+  {
+   "run_id": "qnvfp4-rag",
+   "unit": "qnvfp4",
+   "profile": "quality",
+   "mode": "quality",
+   "server_flags": "env CUDA_VISIBLE_DEVICES=0,1 vllm serve mistralai/Mistral-Small-4-119B-2603-NVFP4 --host 127.0.0.1 --port 8000 --served-model-name small4 --tokenizer-mode mistral --config-format mistral --load-format mistral --attention-backend TRITON_MLA --max-model-len 8192 --gpu-memory-utilization 0.90 --tensor-parallel-size 2",
+   "git_commit": "a27ee27b310ac7d970dd14cfe4bd171638ad90cb",
+   "quality": {
+    "n": 200,
+    "exact_match": 36.0,
+    "f1": 66.29,
+    "truncated": 26
+   }
+  },
+  {
+   "run_id": "two-rag",
+   "unit": "two",
+   "profile": "rag",
+   "server_flags": "bash scripts/serve-two-units.sh mistralai/Mistral-Small-4-119B-2603-NVFP4",
+   "cold_start_s": 282.7,
+   "git_commit": "a27ee27b310ac7d970dd14cfe4bd171638ad90cb",
+   "kv_cache_tokens": 474560,
+   "steps": [
+    {
+     "rate": 0.125,
+     "n_requests": 22,
+     "n_errors": 0,
+     "ttft_p50": 0.784,
+     "ttft_p95": 0.7935,
+     "tpot_p50": 0.0098,
+     "tpot_p95": 0.0134,
+     "achieved": 0.1222
+    },
+    {
+     "rate": 0.25,
+     "n_requests": 44,
+     "n_errors": 0,
+     "ttft_p50": 0.7846,
+     "ttft_p95": 0.8034,
+     "tpot_p50": 0.0108,
+     "tpot_p95": 0.0156,
+     "achieved": 0.2444
+    },
+    {
+     "rate": 0.5,
+     "n_requests": 84,
+     "n_errors": 0,
+     "ttft_p50": 0.794,
+     "ttft_p95": 0.98,
+     "tpot_p50": 0.0133,
+     "tpot_p95": 0.0188,
+     "achieved": 0.4667
+    },
+    {
+     "rate": 1.0,
+     "n_requests": 148,
+     "n_errors": 0,
+     "ttft_p50": 0.8022,
+     "ttft_p95": 1.1723,
+     "tpot_p50": 0.0203,
+     "tpot_p95": 0.0364,
+     "achieved": 0.8222
+    },
+    {
+     "rate": 2.0,
+     "n_requests": 336,
+     "n_errors": 0,
+     "ttft_p50": 1.1598,
+     "ttft_p95": 3.5179,
+     "tpot_p50": 0.1185,
+     "tpot_p95": 0.1452,
+     "achieved": 1.8667
+    },
+    {
+     "rate": 0.75,
+     "n_requests": 137,
+     "n_errors": 0,
+     "ttft_p50": 0.8009,
+     "ttft_p95": 1.3032,
+     "tpot_p50": 0.019,
+     "tpot_p95": 0.0282,
+     "achieved": 0.7611
+    },
+    {
+     "rate": 0.625,
+     "n_requests": 122,
+     "n_errors": 0,
+     "ttft_p50": 0.7996,
+     "ttft_p95": 1.2434,
+     "tpot_p50": 0.016,
+     "tpot_p95": 0.0289,
+     "achieved": 0.6778
+    },
+    {
+     "rate": 1.5,
+     "n_requests": 255,
+     "n_errors": 0,
+     "ttft_p50": 0.9336,
+     "ttft_p95": 1.7636,
+     "tpot_p50": 0.0505,
+     "tpot_p95": 0.1003,
+     "achieved": 1.4167
+    },
+    {
+     "rate": 1.25,
+     "n_requests": 216,
+     "n_errors": 0,
+     "ttft_p50": 0.8195,
+     "ttft_p95": 1.2701,
+     "tpot_p50": 0.0326,
+     "tpot_p95": 0.044,
+     "achieved": 1.2
+    },
+    {
+     "rate": 1.375,
+     "n_requests": 227,
+     "n_errors": 0,
+     "ttft_p50": 0.8248,
+     "ttft_p95": 1.3527,
+     "tpot_p50": 0.032,
+     "tpot_p95": 0.0636,
+     "achieved": 1.2611
+    },
+    {
+     "rate": 1.4375,
+     "n_requests": 244,
+     "n_errors": 0,
+     "ttft_p50": 0.8329,
+     "ttft_p95": 1.4229,
+     "tpot_p50": 0.0387,
+     "tpot_p95": 0.0679,
+     "achieved": 1.3556
+    },
+    {
+     "rate": 1.40625,
+     "n_requests": 263,
+     "n_errors": 0,
+     "ttft_p50": 0.8474,
+     "ttft_p95": 1.739,
+     "tpot_p50": 0.0464,
+     "tpot_p95": 0.067,
+     "achieved": 1.4611
+    },
+    {
+     "rate": 1.390625,
+     "n_requests": 254,
+     "n_errors": 0,
+     "ttft_p50": 0.8471,
+     "ttft_p95": 1.7581,
+     "tpot_p50": 0.0444,
+     "tpot_p95": 0.0636,
+     "achieved": 1.4111
+    }
+   ],
+   "capacity": {
+    "1": {
+     "capacity": 0.5,
+     "achieved": 0.4667,
+     "next_fail": 0.625,
+     "broke_on": "TTFT"
+    },
+    "1.5": {
+     "capacity": 1.375,
+     "achieved": 1.2611,
+     "next_fail": 1.390625,
+     "broke_on": "TTFT"
+    },
+    "2": {
+     "capacity": 1.390625,
+     "achieved": 1.4111,
+     "next_fail": 1.40625,
+     "broke_on": "TPOT"
+    },
+    "3": {
+     "capacity": 1.390625,
+     "achieved": 1.4111,
+     "next_fail": 1.40625,
+     "broke_on": "TPOT"
+    }
+   }
+  }
+ ],
+ "plans": {}
+}

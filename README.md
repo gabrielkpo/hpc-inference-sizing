@@ -5,13 +5,13 @@
 
 Size the GPU fleet that serves an open-weight LLM for a client, from **measurements on real
 multi-GPU hardware**: how many GPUs a latency target needs, and what latency a fixed GPU budget
-gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on a rented 2-GPU node.
+gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on rented 2- and 4-GPU nodes.
 
-> **Status: step 6 of 7 in progress.** The protocol was frozen on 2026-11-11
+> **Status: measurements done, step 7 of 7 in progress.** The protocol was frozen on 2026-11-11
 > ([`docs/PROTOCOL.md`](docs/PROTOCOL.md), with dated amendments). The 2-GPU campaign ran on
-> 2026-11-11 and 12 (18 runs, no error, 13.81 USD); its results are in
-> [`docs/RESULTS.md`](docs/RESULTS.md). The sizing tool answers both clients from them; the 4-GPU part is not done yet. See
-> [Status / Roadmap](#status--roadmap).
+> 2026-11-11 and 12 (18 runs, no error, 13.81 USD) and the 4-GPU session on 2026-11-12 (4 runs,
+> 7.13 USD); the results are in [`docs/RESULTS.md`](docs/RESULTS.md), and the sizing tool answers
+> both clients from them. See [Status / Roadmap](#status--roadmap).
 
 ## Why
 
@@ -103,8 +103,11 @@ GPUs needed (optimistic)   108 for 2,000 active users (28.6 req/s), 48,092 USD a
 GPUs needed (prudent)   160 for 2,000 active users (29.9 req/s), 71,248 USD a month at 0.61 USD per GPU-hour
 ```
 
-The same question with `--target 1` answers "Unreachable", and `--gpus 8` turns it around (how
-many users a fixed fleet serves). See [`docs/RESULTS.md`](docs/RESULTS.md).
+The same question with `--target 1` answers "Unreachable" for one 2-GPU unit, and `--gpus 8`
+turns it around (how many users a fixed fleet serves). The 4-GPU session showed that the tool is
+prudent: two units behind a round-robin balancer held 2.2 to 2.8 times one unit, reached 1 s,
+and the compressed NVFP4 model answered PIAF questions as well as FP8 (single runs). See
+[`docs/RESULTS.md`](docs/RESULTS.md).
 
 ## Status / Roadmap
 
@@ -115,8 +118,8 @@ many users a fixed fleet serves). See [`docs/RESULTS.md`](docs/RESULTS.md).
 | 3 Bench | Load generator, streaming client, SLO sweep, `/metrics` scraper, tested against a small local model; see [`docs/BENCH.md`](docs/BENCH.md) | done |
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved; see [`docs/CAMPAIGN.md`](docs/CAMPAIGN.md) | done |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed; rental driver with guard and backstop, see [`docs/VAST.md`](docs/VAST.md) | done on 2026-11-11: the four units start on Ampere, 1.22 USD; see [`docs/TEST-SESSION.md`](docs/TEST-SESSION.md) |
-| 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | 2-GPU matrix done (18 runs, 13.81 USD), results in [`docs/RESULTS.md`](docs/RESULTS.md); 4-GPU planned |
-| 7 Sizing and report | Sizing tool (`hpc-sizing size`), results for decision-makers and engineers | sizing tool and 2-GPU results done; README final with the 4-GPU decision |
+| 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | done: 2-GPU matrix (18 runs, 13.81 USD) and 4-GPU session (4 runs, 7.13 USD), results in [`docs/RESULTS.md`](docs/RESULTS.md) |
+| 7 Sizing and report | Sizing tool (`hpc-sizing size`), results for decision-makers and engineers | sizing tool and results done; final README |
 
 **Evaluation plan.** Six hypotheses with pass criteria written before any run (thresholds
 frozen with the protocol on 2026-11-11)
@@ -181,7 +184,9 @@ gitleaks scans the full history on every pull request.
   matrix) is decided by the owner, not by a script.
 - **Synthetic traffic.** Poisson arrivals with fixed lengths are smoother than real peaks.
 - **Single node.** Units on separate machines, smart routing and autoscaling are out of scope;
-  a written section will cover when several machines are worth it.
+  only two units behind one balancer were measured.
+- **Single runs on 4 GPUs.** The balancer gain and the cost of 1 s rest on one run each; the
+  2-GPU capacities carry the repeat range.
 
 ## Development
 
