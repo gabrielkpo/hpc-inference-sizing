@@ -7,7 +7,7 @@ Size the GPU fleet that serves an open-weight LLM for a client, from **measureme
 multi-GPU hardware**: how many GPUs a latency target needs, and what latency a fixed GPU budget
 gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on rented 2- and 4-GPU nodes.
 
-> **Status: measurements done, step 7 of 7 in progress.** The protocol was frozen on 2026-11-11
+> **Status: done (v0.3.0, 2026-11-13).** The protocol was frozen on 2026-11-11
 > ([`docs/PROTOCOL.md`](docs/PROTOCOL.md), with dated amendments). The 2-GPU campaign ran on
 > 2026-11-11 and 12 (18 runs, no error, 13.81 USD) and the 4-GPU session on 2026-11-12 (4 runs,
 > 7.13 USD); the results are in [`docs/RESULTS.md`](docs/RESULTS.md), and the sizing tool answers
@@ -32,7 +32,7 @@ target**.
 
 ## How it works
 
-Measurement path. Dashed boxes are not built yet.
+Measurement path.
 
 ```mermaid
 flowchart LR
@@ -46,9 +46,6 @@ flowchart LR
     S -->|no| R[("Run files<br/>capacity per unit")]
     M --> R
     R --> T["Sizing tool<br/>GPUs, latency, cost"]
-
-    classDef planned stroke-dasharray: 5 5
-    class T planned
 ```
 
 Campaign lifecycle: nothing is rented until the same jobs have run locally.
@@ -68,10 +65,10 @@ flowchart LR
 
 - **Mistral Small 4 rather than Mistral Small 3.2 (24B dense)**: it is the current model, and its
   70.8 GB of NVFP4 weights do not fit on one 48 GB card, so multi-GPU is required rather than
-  optional. The cost: FP4 runs through weight-only fallback kernels on Ampere, untested end to end
-  for this model. See [ADR 0001](docs/adr/0001-mistral-small-4-on-two-a40.md).
+  optional. The cost: FP4 runs through weight-only fallback kernels on Ampere; the test session
+  checked that all four splits start there before the campaign. See [ADR 0001](docs/adr/0001-mistral-small-4-on-two-a40.md).
 - **2 × A40 on Vast.ai rather than H100s or a managed cluster**: 1.2 to 1.5 $/h for 96 GB of GPU
-  memory on one PCIe 4.0 node keeps the whole study near 20 € (about 23 USD planned). The numbers will not match an
+  memory on one PCIe 4.0 node kept the whole study at about 24 USD of rented time. The numbers will not match an
   H100 node; the method and the trade-offs will.
 - **Capacity under an SLO rather than peak throughput**: a client buys latency, not tokens per
   second. Peak throughput is reached with queues no user would accept.
@@ -119,7 +116,7 @@ and the compressed NVFP4 model answered PIAF questions as well as FP8 (single ru
 | 4 Local dry run | SLURM cluster in Docker, campaign jobs, resume, results saved; see [`docs/CAMPAIGN.md`](docs/CAMPAIGN.md) | done |
 | 5 Test session | Model starts on 2 × A40, one short ladder, instance destroyed; rental driver with guard and backstop, see [`docs/VAST.md`](docs/VAST.md) | done on 2026-11-11: the four units start on Ampere, 1.22 USD; see [`docs/TEST-SESSION.md`](docs/TEST-SESSION.md) |
 | 6 Campaign | 2-GPU matrix, then 4-GPU scaling and quality check | done: 2-GPU matrix (18 runs, 13.81 USD) and 4-GPU session (4 runs, 7.13 USD), results in [`docs/RESULTS.md`](docs/RESULTS.md) |
-| 7 Sizing and report | Sizing tool (`hpc-sizing size`), results for decision-makers and engineers | sizing tool and results done; final README |
+| 7 Sizing and report | Sizing tool (`hpc-sizing size`), results for decision-makers and engineers | done: sizing tool, results for decision-makers and engineers, release v0.3.0 |
 
 **Evaluation plan.** Six hypotheses with pass criteria written before any run (thresholds
 frozen with the protocol on 2026-11-11)
@@ -180,8 +177,8 @@ gitleaks scans the full history on every pull request.
 - **One GPU class, one host.** A40s over PCIe 4.0; results do not transfer as numbers to H100 or
   B200 nodes with NVLink.
 - **Ampere has no FP4 tensor cores.** NVFP4 runs weight-only through Marlin kernels, slower than
-  on Blackwell. If the model does not start on Ampere, the fallback (Blackwell GPUs, reduced
-  matrix) is decided by the owner, not by a script.
+  on Blackwell, which likely raises the prefill time behind the 1 s results; newer GPUs would
+  give other numbers.
 - **Synthetic traffic.** Poisson arrivals with fixed lengths are smoother than real peaks.
 - **Single node.** Units on separate machines, smart routing and autoscaling are out of scope;
   only two units behind one balancer were measured.
