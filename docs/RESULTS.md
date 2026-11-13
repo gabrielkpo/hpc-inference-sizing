@@ -14,9 +14,9 @@ rent), ran Mistral Small 4 on them, and sent them traffic shaped like real use: 
 documents (the assistant first reads a few pages, about 4,500 words with its instructions, then
 answers) and plain chat (short questions). We raised the traffic step by step until answers
 became too slow, with hundreds to thousands of test requests per configuration, for about 24 USD
-of rented time in all, test runs and failed attempts included. A last session on four cards checked two assumptions the answers rest on:
-that adding machines adds capacity, and that the compressed version of the model answers as well
-as the full one.
+of rented time in all, test runs and failed attempts included. A last session on four cards
+checked two assumptions the answers rest on: that adding machines adds capacity, and that the
+compressed version of the model answers as well as the full one.
 
 **The answers.**
 
@@ -27,12 +27,14 @@ as the full one.
   for the same service, but that was measured once and is not yet a figure to budget on.
 - **Starting to answer in under one second is possible, but it costs about three times as much as
   two seconds on the same setup:** about 250 cards (110,000 USD a month) against 80, measured
-  once on copies behind a dispatcher. Reading the documents takes about 0.8 seconds; on a single copy of the model,
-  questions that arrive together wait for each other and push the slowest past one second. A
-  dispatcher sends them to different copies.
+  once on copies behind a dispatcher. Reading the documents takes about 0.8 seconds; on a single
+  copy of the model, questions that arrive together wait for each other and push the slowest
+  past one second. A dispatcher sends them to different copies.
 - **For the defence ministry, 8 cards serve about 100 to 150 people at once asking questions on
   documents, or about 750 to 800 people chatting.** The same fleet serves five times more people if they
   chat than if they work on documents.
+- **The compressed version of the model answers as well as the full one** on 200 questions in
+  French: the cheaper version, which fits on half the cards, loses nothing measurable.
 
 **What drives the bill, in order.**
 
@@ -44,9 +46,6 @@ as the full one.
    about a quarter of the capacity); a second setting looks able to cut the fleet by about a
    third, but was measured once and needs confirming.
 
-- **The compressed version of the model answers as well as the full one** on 200 questions in
-  French: the cheaper version, which fits on half the cards, loses nothing measurable.
-
 **What we recommend.**
 
 1. Agree with the future users on an acceptable wait: within 2 seconds is realistic on this
@@ -57,11 +56,11 @@ as the full one.
    buying them: this study shows that a few days of measurement on rented cards cost tens of
    dollars, against a fleet costing tens of thousands a month.
 
-**How sure we are.** Solid: the effect of document length, what limits the assistant, and that
-the compressed model answers as well (all well above the measurement noise). Measured once, so to
-be confirmed: the gain from a dispatcher and the cost of one second. Not settled: which of the
-four ways of spreading the model over the two cards is best, and the exact gain from settings
-(the differences are as small as the noise).
+**How sure we are.** Solid: the effect of document length and what limits the assistant (well above
+the measurement noise), and that the compressed model answers as well (the gap is far inside the
+margin set in advance). Measured once, so to be confirmed: the gain from a dispatcher and the cost
+of one second. Not settled: which of the four ways of spreading the model over the two cards is
+best, and the exact gain from settings (the differences are as small as the noise).
 
 **Six words used below.** *First-token time (TTFT)*: how long before the first word of the
 answer appears. *Time per output token (TPOT)*: how long each following word takes. *p95*: the
@@ -205,7 +204,7 @@ the campaign (30 s warm-up, ladder, two bisection steps):
 
 The single unit reproduces the campaign's TP2 on another host (0.5 against 0.531 req/s at 2 s).
 At T = 2 s the pair holds 2.8 times the capacity of one unit; with the resolution (the single
-unit's 0.625 req/s step failed on TPOT p95 by 1 ms, 68 against 67 ms), the ratio lies between
+unit's 0.625 req/s step failed on TPOT p95 by 1.3 ms, 68.0 against 66.7 ms), the ratio lies between
 2.2 and 2.8, above the 1.8 of H4 either way. More than double is what queueing predicts: TTFT
 p95 is set by requests that arrive while another is being prefilled, and round robin both halves
 the load per unit and makes each unit's arrivals more regular than a Poisson stream (every other
@@ -280,11 +279,11 @@ These are single runs, with two units behind the balancer; a fleet would put mor
 one balancer, which queueing says helps further but nobody measured here. They show the direction
 and the size of the effect, not a figure to budget on before repeats.
 
-Reading: the prudent RAG capacity is the same at 2 s and 3 s, because 0.5 req/s passed one repeat
-in three at both targets; the optimistic gap between 2 s and 3 s rests on a step that did not
-reproduce. Between 1.5 and 3 s the fleet changes within the noise; 1 s needs
-units behind a balancer and about three times the GPUs of 2 s. If `max_num_batched_tokens` 8,192 holds up when repeated, the fleet
-shrinks by about a third. A fixed fleet sized on chat is overwhelmed by RAG use: the mix of
+Reading: the prudent RAG capacity is the same at 2 s and 3 s, because 0.5 req/s passed one repeat in
+three at both targets; the optimistic gap between 2 s and 3 s rests on a step that did not
+reproduce. Between 1.5 and 3 s the fleet changes within the noise; 1 s needs units behind a balancer
+and about three times the GPUs of 2 s. If `max_num_batched_tokens` 8,192 holds up when repeated, the
+fleet shrinks by about a third. A fixed fleet sized on chat is overwhelmed by RAG use: the mix of
 request lengths is the first thing to agree on with a client.
 
 ### Limits
