@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/gabrielkpo/hpc-inference-sizing/compare/v0.3.0...v0.3.1) (2026-11-13)
+
+
+### Documentation
+
+* mark the project as done in the README ([#33](https://github.com/gabrielkpo/hpc-inference-sizing/issues/33)) ([76a5144](https://github.com/gabrielkpo/hpc-inference-sizing/commit/76a5144543c41f1a1bb4095ff3aa2e15a02d7b25))
+
 ## [0.3.0](https://github.com/gabrielkpo/hpc-inference-sizing/compare/v0.2.0...v0.3.0) (2026-11-13)
 
 
