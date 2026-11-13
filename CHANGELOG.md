@@ -1,5 +1,34 @@
 # Changelog
 
+## [0.3.0](https://github.com/gabrielkpo/hpc-inference-sizing/compare/v0.2.0...v0.3.0) (2026-11-13)
+
+
+### Features
+
+* alert first on a stall or a campaign that never starts, destroy after a grace period ([#20](https://github.com/gabrielkpo/hpc-inference-sizing/issues/20)) ([e2170cd](https://github.com/gabrielkpo/hpc-inference-sizing/commit/e2170cd3d69fa031d5af10cd8a486550f93de2d4))
+* chain the levers, the best combination and the repeats after the base matrix ([#18](https://github.com/gabrielkpo/hpc-inference-sizing/issues/18)) ([618ab9b](https://github.com/gabrielkpo/hpc-inference-sizing/commit/618ab9b25e6991bfc88eef31c6cd9208fac4e26d))
+* destroy the node when the campaign never starts or stalls ([#19](https://github.com/gabrielkpo/hpc-inference-sizing/issues/19)) ([44430d1](https://github.com/gabrielkpo/hpc-inference-sizing/commit/44430d17441ffddc29af6937d1e35980e71006fa))
+* follow a long campaign from the laptop and end the rental when it is done ([#16](https://github.com/gabrielkpo/hpc-inference-sizing/issues/16)) ([75f722a](https://github.com/gabrielkpo/hpc-inference-sizing/commit/75f722a68d6af930477848f7000e9156e8412d2c))
+* prepare the 4-GPU session: two units behind nginx and PIAF quality runs ([#30](https://github.com/gabrielkpo/hpc-inference-sizing/issues/30)) ([a27ee27](https://github.com/gabrielkpo/hpc-inference-sizing/commit/a27ee27b310ac7d970dd14cfe4bd171638ad90cb))
+* sizing tool answering both clients from the measured capacities ([#28](https://github.com/gabrielkpo/hpc-inference-sizing/issues/28)) ([74beae8](https://github.com/gabrielkpo/hpc-inference-sizing/commit/74beae8114802de9956369437c80ec7ac89141e6))
+* summarize the campaign's run files and publish the 2-GPU results ([#26](https://github.com/gabrielkpo/hpc-inference-sizing/issues/26)) ([a61f66a](https://github.com/gabrielkpo/hpc-inference-sizing/commit/a61f66aa7392f6514134c4c3687a1ad81bd56250))
+* unmeasured warm-up and automatic provenance in every run ([#29](https://github.com/gabrielkpo/hpc-inference-sizing/issues/29)) ([b5098ba](https://github.com/gabrielkpo/hpc-inference-sizing/commit/b5098bae8030e636885ebf05469aa7dbc97ad5e5))
+
+
+### Bug Fixes
+
+* fetch only the Mistral-format weights in the node setup ([#32](https://github.com/gabrielkpo/hpc-inference-sizing/issues/32)) ([c0eba3b](https://github.com/gabrielkpo/hpc-inference-sizing/commit/c0eba3bd5fe0a1213b14fb6233a6d95bbd3a55a7))
+* never measure a leftover server under a new unit's name ([#24](https://github.com/gabrielkpo/hpc-inference-sizing/issues/24)) ([b86b0d3](https://github.com/gabrielkpo/hpc-inference-sizing/commit/b86b0d33c459f63f5f93c786ca28e23a536a1893))
+* read each target's capacity from every measured step and record the rate actually sent ([#22](https://github.com/gabrielkpo/hpc-inference-sizing/issues/22)) ([a3fe741](https://github.com/gabrielkpo/hpc-inference-sizing/commit/a3fe74103a18b4f10e3a0ece3e7855f9977b6257))
+* take only expected files from the node and keep events out of its reach ([#23](https://github.com/gabrielkpo/hpc-inference-sizing/issues/23)) ([539440a](https://github.com/gabrielkpo/hpc-inference-sizing/commit/539440ad8c40bd2ba72ebc586b8a99f21c445c43))
+
+
+### Documentation
+
+* add a plain-language page for decision-makers to the results ([#27](https://github.com/gabrielkpo/hpc-inference-sizing/issues/27)) ([69c29d6](https://github.com/gabrielkpo/hpc-inference-sizing/commit/69c29d6e57e79e87c70d3356e6f59bd907a52c82))
+* publish the 4-GPU session: two units behind a balancer and NVFP4 quality ([#31](https://github.com/gabrielkpo/hpc-inference-sizing/issues/31)) ([03617ce](https://github.com/gabrielkpo/hpc-inference-sizing/commit/03617ce99e67757a86c593235374bf4e9c6fbbaf))
+* record the campaign's deviations from the frozen protocol and refresh the README ([#25](https://github.com/gabrielkpo/hpc-inference-sizing/issues/25)) ([0a375bc](https://github.com/gabrielkpo/hpc-inference-sizing/commit/0a375bcdfb89facc0d52bb1d007e4fcf6b786a79))
+
 ## [0.2.0](https://github.com/gabrielkpo/hpc-inference-sizing/compare/v0.1.0...v0.2.0) (2026-11-11)
 
 
