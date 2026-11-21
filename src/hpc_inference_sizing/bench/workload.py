@@ -127,7 +127,8 @@ class Workload:
 def poisson_arrivals(rate: float, duration_s: float, seed: int) -> list[float]:
     """Send times (seconds from the step start) of a Poisson process of `rate` requests/s."""
     rng = random.Random(f"arrivals:{seed}:{rate}")
-    t, times = 0.0, []
+    t = 0.0
+    times: list[float] = []
     while True:
         t += rng.expovariate(rate)
         if t >= duration_s:
