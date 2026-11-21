@@ -170,8 +170,8 @@ def summarize_run(path: Path, targets_s: list[float]) -> dict:
         rows = [
             {
                 "id": _checked(a["id"], IDENT, "question id"),
-                "em": a["em"],
-                "f1": round(a["f1"], 4),
+                "em": float(a["em"]),
+                "f1": round(float(a["f1"]), 4),
                 "truncated": bool(a["truncated"]),
             }
             for a in q.get("answers", [])
@@ -183,7 +183,12 @@ def summarize_run(path: Path, targets_s: list[float]) -> dict:
             "server_flags": _command(meta["server_flags"]),
             "git_commit": _checked(meta.get("git_commit"), COMMIT, "git commit"),
             **_provenance(meta),
-            "quality": {k: q.get(k) for k in ("n", "exact_match", "f1", "truncated")},
+            "quality": {
+                "n": int(q["n"]),
+                "exact_match": float(q["exact_match"]),
+                "f1": float(q["f1"]),
+                "truncated": int(q.get("truncated", 0)),
+            },
             "questions": rows,  # scores per question, for paired comparisons (no answer text)
         }
     steps = [s["summary"] for s in doc["steps"]]
@@ -191,7 +196,7 @@ def summarize_run(path: Path, targets_s: list[float]) -> dict:
         **head,
         "profile": _checked(meta["profile"], IDENT, "profile"),
         "server_flags": _command(meta["server_flags"]),
-        "cold_start_s": meta.get("cold_start_s"),
+        "cold_start_s": float(meta["cold_start_s"]) if "cold_start_s" in meta else None,
         "git_commit": _checked(meta.get("git_commit"), COMMIT, "git commit"),
         **_provenance(meta),
         "kv_cache_tokens": kv_cache_tokens(path.parent / "logs" / f"{meta['run_id']}.server.log"),
