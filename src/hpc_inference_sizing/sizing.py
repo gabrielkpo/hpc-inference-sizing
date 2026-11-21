@@ -148,9 +148,8 @@ def report(
     if cap.optimistic is None:
         lines.append(
             f"Unreachable with these units ({', '.join(units)}): none met this target at any "
-            "measured load, so adding more of them does not reach it. Other layouts may "
-            "(4 GPUs behind a load balancer: --summary docs/results/a40-x4.json --units two "
-            "--gpus-per-unit 4)"
+            "measured load, so adding more of them does not reach it; another layout may "
+            "(--units, --gpus-per-unit)"
         )
         return "\n".join(lines)
     points = [("optimistic", cap.optimistic)] + ([("prudent", cap.prudent)] if cap.prudent else [])
