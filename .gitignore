@@ -13,6 +13,11 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
 .DS_Store
-# local VibeWise learning notes (personal, never published)
+# local notes
 .vibe-wise/
