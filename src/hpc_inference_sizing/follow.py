@@ -131,7 +131,12 @@ class SshRemote:
         if out.returncode != 0:
             raise OSError(f"cannot read the campaign log age: {out.stderr.decode()[-200:]}")
         answer = out.stdout.decode().strip()
-        return None if answer == "none" else float(answer)
+        if answer == "none":
+            return None
+        try:
+            return float(answer)
+        except ValueError:
+            raise OSError("the node gave a log age that is not a number") from None
 
 
 @dataclass
@@ -252,9 +257,18 @@ def follow(
                 failures = 0
             except Exception as err:  # noqa: BLE001 - detached: a surprise must not end it
                 failures += 1
-                log(f"follow: node unreachable ({err}); attempt {failures}")
+                # the error may quote the node (ssh stderr): kept in the log, marked untrusted,
+                # never in an event, which gets a fixed text
+                log(
+                    f"follow: node unreachable ({type(err).__name__}); attempt {failures}; "
+                    f"untrusted node text: {plain(str(err))[-200:]}"
+                )
                 if failures == 3:
-                    event("unreachable", f"node unreachable 3 times in a row: {err}")
+                    event(
+                        "unreachable",
+                        f"node unreachable 3 times in a row ({type(err).__name__}); "
+                        "details in the follow log",
+                    )
             else:
                 seen_running = seen_running or running
                 st = status(matrix)
@@ -274,7 +288,7 @@ def follow(
                     f"follow: {len(done) + len(failed)} runs copied ({len(failed)} failed; base "
                     f"{len(st.done) + len(st.failed)}/{len(matrix.run_ids())}), "
                     f"campaign {'running' if running else 'stopped'}"
-                    f"; node: {last[-160:]}"
+                    f"; untrusted node text: {last[-160:]}"
                 )
                 stopped_looks = 0 if running else stopped_looks + 1
                 waited = clock() - started_at
