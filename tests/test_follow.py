@@ -183,7 +183,7 @@ def test_node_text_in_an_error_never_reaches_an_event(tmp_path):
     assert "unreachable" in text and ".env" not in text and "OSError" in text
 
 
-def test_ssh_remote_refuses_a_log_age_that_is_not_a_number(tmp_path, fake_ssh, monkeypatch):
+def test_ssh_remote_refuses_a_log_age_that_is_not_a_number(monkeypatch):
     remote = SshRemote("node", 22, "repo")
     monkeypatch.setattr(
         remote,
