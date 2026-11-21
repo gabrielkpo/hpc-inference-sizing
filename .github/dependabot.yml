@@ -19,3 +19,9 @@ updates:
     groups:
       actions:
         patterns: ["*"]
+  - package-ecosystem: docker
+    directory: /slurm
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
