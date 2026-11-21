@@ -64,8 +64,9 @@ compressed version of the model answers as well as the full one.
 of five, far larger than the run-to-run spread). Supported, with a stated uncertainty: that the
 compressed model answers as well (difference +0.4 F1 point, 95 % interval −1.8 to +2.7, against a
 loss of 2 allowed in advance). Measured once, so to be confirmed: the gain from a dispatcher and
-the cost of one second (its test passed by 2 %). Not settled: which of the four ways of spreading the model over the two cards is
-best, and the exact gain from settings (the differences are as small as the noise).
+the cost of one second (its test passed by 2 %). Not settled: which of the four ways of spreading
+the model over the two cards is best, and the exact gain from settings (the differences are as
+small as the noise).
 
 **Six words used below.** *First-token time (TTFT)*: how long before the first word of the
 answer appears. *Time per output token (TPOT)*: how long each following word takes. *p95*: the
@@ -116,14 +117,15 @@ Costs per session are in [`results/costs.json`](results/costs.json).
 
 1. **A first token in under 1 s is out of reach for one 2-GPU unit on 6,100-token RAG prompts,
    but not for units behind a balancer.** Reading the prompt (prefill, FP4 weights computed in 16
-   bits on A40s) takes 0.78 to 0.80 s (TTFT p50 at 0.125 req/s) on TP2, EP2, PP2 and the 4-GPU units, 0.96 s
-   on DP2+EP. The p95 is higher, 1.25 to 1.44 s on every unit (22 requests in that step, the same
-   arrival sequence in every run), because even near idle some requests arrive while another is being read and
-   wait: in the first step of the 4-GPU session, the two requests above 1 s are among those that
-   arrived with another in flight. Two units behind round robin send those requests to different
-   units; the same arrivals then stay under 0.8 s, and the pair holds 0.5 req/s at T = 1 s (4-GPU
-   session below; one run, passed at 0.98 s). Shorter prompts also get there (the chat profile, 500 tokens, has a
-   TTFT p95 of 0.14 to 0.18 s), as would GPUs with native low-precision compute.
+   bits on A40s) takes 0.78 to 0.80 s (TTFT p50 at 0.125 req/s) on TP2, EP2, PP2 and the 4-GPU
+   units, 0.96 s on DP2+EP. The p95 is higher, 1.25 to 1.44 s on every unit (22 requests in that
+   step, the same arrival sequence in every run), because even near idle some requests arrive
+   while another is being read and wait: in the first step of the 4-GPU session, the two requests
+   above 1 s are among those that arrived with another in flight. Two units behind round robin
+   send those requests to different units; the same arrivals then stay under 0.8 s, and the pair
+   holds 0.5 req/s at T = 1 s (4-GPU session below; one run, passed at 0.98 s). Shorter prompts
+   also get there (the chat profile, 500 tokens, has a TTFT p95 of 0.14 to 0.18 s), as would GPUs
+   with native low-precision compute.
 2. **Prompt length decides capacity far more than how the model is split.** A 2-GPU unit serves
    about 2.5 req/s of chat but about 0.375 to 0.5 req/s of RAG at T = 2 s: a factor of five for
    twelve times more prompt tokens.
@@ -255,8 +257,8 @@ NVFP4 is 0.4 F1 point above FP8. Paired over the same 200 questions (bootstrap, 
 resamples, seed 0), the difference is +0.42 F1 point with a 95 % interval of −1.83 to +2.74, and
 +2.0 exact-match points with an interval of −1.0 to +5.0 (`hpc-sizing results quality-diff`).
 The lower bound stays above the −2 that H5 allows, by 0.2 point: no loss is measurable at this
-sample size, which cannot exclude a loss of nearly 2 points. The low exact match is a style effect, the same for both: the model answers in a
-sentence, often with bold ("Jim rentre dans une **église**." for the reference "église"), and 13
+sample size, which cannot exclude a loss of nearly 2 points. The low exact match is a style
+effect, the same for both: the model answers in a sentence, often with bold ("Jim rentre dans une **église**." for the reference "église"), and 13
 to 15 % of the answers are cut at 32 tokens. F1 counts the overlapping words and is the fairer of
 the two scores. The scores per question are in the summary; the answers themselves stay in the
 raw run files.
@@ -315,15 +317,16 @@ same formula, one run, R at that capacity), with
 | Defence, 8 GPUs, RAG, 2 s: active users | | about 135 | about 206 (two pairs) |
 
 The 1 s pair figure rests on a step that passed by 20 ms: one step lower (0.25 req/s per pair)
-would give about 500 GPUs. These are single runs, with two units behind the balancer; a fleet would put more units behind
-one balancer, which queueing says helps further but nobody measured here. They show the direction
+would give about 500 GPUs. These are single runs, with two units behind the balancer; a fleet
+would put more units behind one balancer, which queueing says helps further but nobody measured
+here. They show the direction
 and the size of the effect, not a figure to budget on before repeats.
 
 Reading: the prudent RAG capacity is the same at 2 s and 3 s, because 0.5 req/s passed one repeat in
 three at both targets; the optimistic gap between 2 s and 3 s rests on a step that did not
-reproduce. Between 1.5 and 3 s the fleet changes within the noise; 1 s needs units behind a balancer
-and three to six times the GPUs of 2 s. If `max_num_batched_tokens` 8,192 holds up when repeated, the
-fleet shrinks by about a third. A fixed fleet sized on chat is overwhelmed by RAG use: the mix of
+reproduce. Between 1.5 and 3 s the fleet changes within the noise; 1 s needs units behind a
+balancer and three to six times the GPUs of 2 s. If `max_num_batched_tokens` 8,192 holds up when
+repeated, the fleet shrinks by about a third. A fixed fleet sized on chat is overwhelmed by RAG use: the mix of
 request lengths is the first thing to agree on with a client.
 
 ### Limits
