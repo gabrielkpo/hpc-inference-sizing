@@ -10,8 +10,9 @@ gives. Model: Mistral Small 4 (MoE, 119B parameters), served with vLLM on rented
 
 > **Status: done.** The protocol was frozen on 2026-11-11 ([`docs/PROTOCOL.md`](docs/PROTOCOL.md),
 > deviations as dated amendments A1 to A11). The 2-GPU campaign (18 runs) and the 4-GPU session
-> (4 runs) ran on 2026-11-11 to 13 for 24.25 USD in all; the results are in
-> [`docs/RESULTS.md`](docs/RESULTS.md) and summarized [below](#results).
+> (4 runs) ran on 2026-11-11 to 13; the whole study, test session and two failed attempts
+> included, cost 24.25 USD. Results in [`docs/RESULTS.md`](docs/RESULTS.md), summarized
+> [below](#results).
 
 ## Why
 
