@@ -4,8 +4,8 @@
 models/
 data/raw/
 /runs/
-# raw campaign output: run files of 15-40 MB each, server logs, events; published as a
-# small summary and release assets, never committed as they are
+# raw campaign output: run files of 15-40 MB each, server logs, events; never committed.
+# The versioned summaries in docs/results/ list the sha256 of every raw file they read.
 /results/
 # python
 __pycache__/
