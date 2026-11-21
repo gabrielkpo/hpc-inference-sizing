@@ -169,12 +169,11 @@ node only. API keys live in the environment; gitleaks scans the full history.
 ```bash
 uv sync --locked --group dev
 uv run pre-commit install      # ruff (through uv), gitleaks and a 10 MB file limit on every commit
-uv run ruff check . && uv run ruff format --check . && uv run pytest
+uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest --cov
 ```
 
-Every change is a reviewed pull request with a Conventional Commits title, merged by squash into
-a protected `main`. CI runs ruff, pytest, a full-history gitleaks scan, CodeQL and a PR title
-check; release-please cuts the releases.
+Every change is a reviewed pull request, squash-merged into a protected `main`. CI runs these
+commands (coverage above 85 %), a full-history gitleaks scan, CodeQL and a PR title check.
 
 ## License
 
