@@ -25,16 +25,20 @@ compressed version of the model answers as well as the full one.
   is honest: on rented cards, the same test does not give exactly the same result twice. Copies
   of the model placed behind a dispatcher did better still in the four-card test, about 80 cards
   for the same service, but that was measured once and is not yet a figure to budget on.
-- **Starting to answer in under one second is possible, but it costs about three times as much as
-  two seconds on the same setup:** about 250 cards (110,000 USD a month) against 80, measured
-  once on copies behind a dispatcher. Reading the documents takes about 0.8 seconds; on a single
+- **Starting to answer in under one second is possible, but it costs three to six times as much
+  as two seconds on the same setup:** between about 250 and 500 cards (110,000 to 220,000 USD a
+  month) against 80, measured once on copies behind a dispatcher. The test that sets the lower
+  figure passed with almost no room (0.98 s against the 1 s limit, on 84 requests); a slightly
+  worse draw would have doubled it. Reading the documents takes about 0.8 seconds; on a single
   copy of the model, questions that arrive together wait for each other and push the slowest
   past one second. A dispatcher sends them to different copies.
 - **For the defence ministry, 8 cards serve about 100 to 150 people at once asking questions on
-  documents, or about 750 to 800 people chatting.** The same fleet serves five times more people if they
-  chat than if they work on documents.
-- **The compressed version of the model answers as well as the full one** on 200 questions in
-  French: the cheaper version, which fits on half the cards, loses nothing measurable.
+  documents, or about 750 to 800 people chatting.** The same fleet serves five to eight times more
+  people if they chat than if they work on documents.
+- **The compressed version of the model answers about as well as the full one** on 200 questions
+  in French: the cheaper version, which fits on half the cards, scores 0.4 point higher, and
+  the uncertainty of that difference (from 1.8 points lower to 2.7 points higher) stays inside
+  the 2-point loss allowed in advance, though close to its edge.
 
 **What drives the bill, in order.**
 
@@ -49,18 +53,20 @@ compressed version of the model answers as well as the full one.
 **What we recommend.**
 
 1. Agree with the future users on an acceptable wait: within 2 seconds is realistic on this
-   hardware; under 1 second roughly triples the bill.
+   hardware; under 1 second multiplies the bill by three to six.
 2. Measure what share of the questions will be about documents: it moves the fleet size more
    than any technical choice.
 3. Budget a range, not a single figure, and confirm it on the cards you intend to buy before
    buying them: this study shows that a few days of measurement on rented cards cost tens of
    dollars, against a fleet costing tens of thousands a month.
 
-**How sure we are.** Solid: the effect of document length and what limits the assistant (well above
-the measurement noise), and that the compressed model answers as well (the gap is far inside the
-margin set in advance). Measured once, so to be confirmed: the gain from a dispatcher and the cost
-of one second. Not settled: which of the four ways of spreading the model over the two cards is
-best, and the exact gain from settings (the differences are as small as the noise).
+**How sure we are.** Solid: the effect of document length and what limits the assistant (a factor
+of five, far larger than the run-to-run spread). Supported, with a stated uncertainty: that the
+compressed model answers as well (difference +0.4 F1 point, 95 % interval −1.8 to +2.7, against a
+loss of 2 allowed in advance). Measured once, so to be confirmed: the gain from a dispatcher and
+the cost of one second (its test passed by 2 %). Not settled: which of the four ways of spreading
+the model over the two cards is best, and the exact gain from settings (the differences are as
+small as the noise).
 
 **Six words used below.** *First-token time (TTFT)*: how long before the first word of the
 answer appears. *Time per output token (TPOT)*: how long each following word takes. *p95*: the
@@ -80,16 +86,26 @@ downloads; two earlier attempts on other hosts cost 2.09 USD without a measureme
 offline during setup, one rental was stopped before the runs).
 
 Every number below comes from [`results/a40-x2.json`](results/a40-x2.json), a summary of the raw
-run files (15-40 MB each, kept out of Git) made by
+run files made by
 `hpc-sizing results summarize --dir results/a40-x2 --out docs/results/a40-x2.json`, and for the
-4-GPU session from [`results/a40-x4.json`](results/a40-x4.json), made the same way.
+4-GPU session from [`results/a40-x4.json`](results/a40-x4.json), made the same way. The raw files
+(15-40 MB each, 347 MB in all) are not published; each summary lists the size and sha256 of every
+raw file it was built from (`sources`), so a copy of them can be checked against it. The summaries
+also carry each run's recorded provenance and, for the quality runs, the scores per question.
+Costs per session are in [`results/costs.json`](results/costs.json).
 
 ### How to read the numbers
 
 - **Capacity** of a unit at target T: the highest arrival rate whose 3-minute step met the SLO
   (TTFT p95 ≤ T, TPOT p95 ≤ 67 ms, no error), read from every step of the run (§4, A8). Rates
   are nominal; the rate actually sent in that step is shown in brackets. Arrivals are random, so
-  the two differ by up to about 20 %.
+  the two differ, from −18 % to +24 % over all steps. The sizing uses the nominal rates; with the
+  rates actually sent it would give 154 instead of 136 GPUs at 1.5 s, 102 instead of 108 at 2 s,
+  and 268 instead of 248 for the pairs at 1 s: the correction goes both ways.
+- **Margin and non-monotone cells.** Capacity is the highest passing step (§4). Each summary
+  gives the margin of that step to both bounds and the lowest step that failed. A star (\*) marks a
+  capacity above a lower step that failed the same target: there, pass or fail is noise and the
+  capacity reads high.
 - **Resolution.** A capacity is located between its last passing and first failing step, a
   quarter of a ladder interval apart: 0.5 and 0.53 req/s are the same number at this resolution.
 - **Same arrivals in every sweep.** The arrivals of a step are drawn with a seed set by the
@@ -101,13 +117,15 @@ run files (15-40 MB each, kept out of Git) made by
 
 1. **A first token in under 1 s is out of reach for one 2-GPU unit on 6,100-token RAG prompts,
    but not for units behind a balancer.** Reading the prompt (prefill, FP4 weights computed in 16
-   bits on A40s) takes about 0.78 s (TTFT p50 at 0.125 req/s). The p95 is higher, 1.25 to 1.44 s
-   on every unit, because even near idle some requests arrive while another is being read and
-   wait: in the first step of the 4-GPU session, the two requests above 1 s are among those that
-   arrived with another in flight. Two units behind round robin send those requests to different
-   units; the same arrivals then stay under 0.8 s, and the pair holds 0.5 req/s at T = 1 s (4-GPU
-   session below; one run). Shorter prompts also get there (the chat profile, 500 tokens, has a
-   TTFT p95 of 0.14 to 0.18 s), as would GPUs with native low-precision compute.
+   bits on A40s) takes 0.78 to 0.80 s (TTFT p50 at 0.125 req/s) on TP2, EP2, PP2 and the 4-GPU
+   units, 0.96 s on DP2+EP. The p95 is higher, 1.25 to 1.44 s on every unit (22 requests in that
+   step, the same arrival sequence in every run), because even near idle some requests arrive
+   while another is being read and wait: in the first step of the 4-GPU session, the two requests
+   above 1 s are among those that arrived with another in flight. Two units behind round robin
+   send those requests to different units; the same arrivals then stay under 0.8 s, and the pair
+   holds 0.5 req/s at T = 1 s (4-GPU session below; one run, passed at 0.98 s). Shorter prompts
+   also get there (the chat profile, 500 tokens, has a TTFT p95 of 0.14 to 0.18 s), as would GPUs
+   with native low-precision compute.
 2. **Prompt length decides capacity far more than how the model is split.** A 2-GPU unit serves
    about 2.5 req/s of chat but about 0.375 to 0.5 req/s of RAG at T = 2 s: a factor of five for
    twelve times more prompt tokens.
@@ -133,9 +151,14 @@ RAG profile (6,100 input and 300 output tokens):
 | Unit | T = 1 s | T = 1.5 s | T = 2 s | T = 3 s | First failure above the 3 s capacity | KV cache (tokens) | Cold start (s) |
 |---|---|---|---|---|---|---|---|
 | TP2 | unreachable | 0.375 (0.33) | 0.531 (0.57) | 0.531 (0.57) | TPOT at 0.5625 | 237,280 | 186 |
-| EP2 | unreachable | 0.375 (0.33) | 0.5 (0.47) | 0.75 (0.69) | TTFT and TPOT at 0.8125 | 237,280 | 168 |
+| EP2 | unreachable | 0.375 (0.33) | 0.5 (0.47) | 0.75\* (0.69) | TTFT and TPOT at 0.8125 | 237,280 | 168 |
 | PP2 | unreachable | 0.375 (0.33) | 0.5 (0.47) | 0.5 (0.47) | TPOT at 0.531 | 451,808 | 141 |
-| DP2+EP | unreachable | 0.4375 (0.38) | 0.4375 (0.38) | 0.5 (0.47) | TPOT at 0.625 | 183,456 | 176 |
+| DP2+EP | unreachable | 0.4375\* (0.38) | 0.4375 (0.38) | 0.5\* (0.47) | TPOT at 0.625 | 183,456 | 176 |
+
+\* A lower step failed the same target. DP2+EP at 1.5 s: 0.3125 and 0.375 req/s failed (TTFT p95
+1.67 and 1.51 s; the 0.4375 step passed at 1.44 s but was sent at 0.38 req/s, the 0.3125 step at
+0.34). DP2+EP at 3 s: 0.46875 failed (TPOT p95 73.9 ms). EP2 at 3 s: 0.625 failed (TPOT p95
+71 ms); this 0.75 also failed all three repeats below.
 
 Chat profile (500 input and 300 output tokens). TTFT never binds, so all four targets give the
 same capacity, set by TPOT:
@@ -175,13 +198,15 @@ the recomputed values TP2 is ahead at 2 s by less than the resolution (A8).
 
 | EP2 + lever | T = 1.5 s | T = 2 s | T = 3 s | KV cache (tokens) |
 |---|---|---|---|---|
-| defaults | 0.375 (0.33) | 0.5 (0.47) | 0.75 (0.69) | 237,280 |
-| `max_num_seqs` 32 / 64 / 128 | 0.375 | 0.5 | 0.75 | 268,768 / 262,304 / 250,480 |
-| `max_num_batched_tokens` 2,048 | 0.375 (0.33) | 0.5 (0.47) | 0.75 (0.69) | 237,280 |
+| defaults | 0.375 (0.33) | 0.5 (0.47) | 0.75\* (0.69) | 237,280 |
+| `max_num_seqs` 32 / 64 / 128 | 0.375 | 0.5 | 0.75\* | 268,768 / 262,304 / 250,480 |
+| `max_num_batched_tokens` 2,048 | 0.375 (0.33) | 0.5 (0.47) | 0.75\* (0.69) | 237,280 |
 | `max_num_batched_tokens` 8,192 | 0.4375 (0.54) | 0.75 (0.69) | 0.75 (0.69) | 211,984 |
 | `max_num_batched_tokens` 16,384 | 0.375 (0.33) | 0.75 (0.69) | 0.75 (0.69) | 161,104 |
 | prefix caching off | unreachable | 0.375 (0.33) | 0.5 (0.47) | 237,280 |
 | best combination (8,192) | 0.4375 (0.54) | 0.75 (0.69) | 0.75 (0.69) | 210,896 |
+
+\* 0.625 req/s failed at 3 s (TPOT p95 about 71 ms), as in the base EP2 run.
 
 `max_num_batched_tokens` 2,048 gives exactly the defaults, so 2,048 is the default here. The KV
 cache moves with the levers, most likely because vLLM sizes its CUDA graphs and activation
@@ -199,8 +224,14 @@ the campaign (30 s warm-up, ladder, two bisection steps):
 
 | Setup | T = 1 s | T = 1.5 s | T = 2 s | T = 3 s | KV cache (tokens) | Cold start (s) |
 |---|---|---|---|---|---|---|
-| 1 unit, GPUs 0-1 | unreachable | 0.375 (0.33) | 0.5 (0.47) | 0.75 (0.69) | 237,280 | 202 |
+| 1 unit, GPUs 0-1 | unreachable | 0.375 (0.33) | 0.5 (0.47) | 0.75\* (0.69) | 237,280 | 202 |
 | 2 units, GPUs 0-1 and 2-3 | 0.5 (0.47) | 1.375 (1.26) | 1.39 (1.41) | 1.39 (1.41) | 2 × 237,280 | 283 |
+
+\* 0.625 req/s failed at 3 s (TPOT p95 68.0 ms).
+
+Two cells rest on a step that passed with little room, both on 84 requests: the pair at 1 s
+passed at a TTFT p95 of 0.98 s (20 ms under the target), the single unit at 2 s at 1.972 s
+(28 ms). With 84 requests the p95 sits between the fourth and fifth slowest request.
 
 The single unit reproduces the campaign's TP2 on another host (0.5 against 0.531 req/s at 2 s).
 At T = 2 s the pair holds 2.8 times the capacity of one unit; with the resolution (the single
@@ -209,7 +240,10 @@ unit's 0.625 req/s step failed on TPOT p95 by 1.3 ms, 68.0 against 66.7 ms), the
 p95 is set by requests that arrive while another is being prefilled, and round robin both halves
 the load per unit and makes each unit's arrivals more regular than a Poisson stream (every other
 arrival). TTFT p50 is the same in both setups (0.78 s at 0.125 req/s); only the tail moves. The
-gain should grow, not shrink, with more units behind one balancer, but only two were measured.
+ratio depends on the target: 3.7 at 1.5 s, 2.8 at 2 s, 1.85 at 3 s (where the single unit's
+0.75 is a starred cell). The gain should grow, not shrink, with more units behind one balancer,
+but only two were measured. The `/metrics` samples of the two-unit run alternate between the two
+servers behind nginx and are not used.
 
 **H5: answer quality of NVFP4 (2 GPUs) against FP8 (4 GPUs)**, 200 PIAF questions (seed 0),
 chat endpoint, temperature 0, at most 32 tokens, French normalisation (A10):
@@ -219,11 +253,15 @@ chat endpoint, temperature 0, at most 32 tokens, French normalisation (A10):
 | NVFP4, TP2 | 36.0 | 66.3 | 26 |
 | FP8, TP4 | 34.0 | 65.9 | 30 |
 
-NVFP4 is 0.4 F1 point above FP8, inside the noise of 200 questions and well within the 2 points
-H5 allows. The low exact match is a style effect, the same for both: the model answers in a
-sentence, often with bold ("Jim rentre dans une **église**." for the reference "église"), and 13
+NVFP4 is 0.4 F1 point above FP8. Paired over the same 200 questions (bootstrap, 10,000
+resamples, seed 0), the difference is +0.42 F1 point with a 95 % interval of −1.83 to +2.74, and
++2.0 exact-match points with an interval of −1.0 to +5.0 (`hpc-sizing results quality-diff`).
+The lower bound stays above the −2 that H5 allows, by 0.2 point: no loss is measurable at this
+sample size, which cannot exclude a loss of nearly 2 points. The low exact match is a style
+effect, the same for both: the model answers in a sentence, often with bold ("Jim rentre dans une **église**." for the reference "église"), and 13
 to 15 % of the answers are cut at 32 tokens. F1 counts the overlapping words and is the fairer of
-the two scores. Every answer is kept in the run files.
+the two scores. The scores per question are in the summary; the answers themselves stay in the
+raw run files.
 
 ### Memory model against vLLM (H6)
 
@@ -242,11 +280,11 @@ per GPU than its fixed 2 GiB overhead allows.
 
 | ID | Verdict | Why |
 |---|---|---|
-| H1 price of latency | **Not resolved on 2-GPU units; supported behind a balancer (one run)** | 1 s is unreachable for every 2-GPU unit, so H1 is judged at 1.5 s (A3). On single runs, the best unit needs 0.75 / 0.4375 = 1.7 times the GPUs at 1.5 s than at 3 s, above the 1.5 threshold, but the 0.75 req/s at 3 s it rests on failed all three repeats; with the robust 0.375 to 0.5 req/s the ratio falls to about 1.1-1.3. Two units behind round robin reach 1 s, and there the administration needs 248 GPUs at 1 s against 80 at 3 s, a ratio of 3.1, on one run of each |
+| H1 price of latency | **Not resolved on 2-GPU units; supported behind a balancer (one run)** | 1 s is unreachable for every 2-GPU unit, so H1 is judged at 1.5 s (A3). On single runs, the best unit needs 0.75 / 0.4375 = 1.7 times the GPUs at 1.5 s than at 3 s, above the 1.5 threshold, but both terms are starred cells (lower rates failed) and the 0.75 req/s at 3 s failed all three repeats; with the robust 0.375 to 0.5 req/s the ratio falls to about 1.1-1.3. Two units behind round robin reach 1 s: the administration needs about 248 GPUs at 1 s against 80 at 3 s, a ratio of 3.1, on one run of each; the 1 s step passed by 20 ms, and one step lower would give about 500 GPUs, a ratio of about 6 |
 | H2 best split depends on the target | **Not resolved; its mechanism refuted** | At 1.5 s TP2 is not ahead of the others (all within one step); at 3 s no split that avoids copying the cache beats TP2. The premise that cache space limits at loose targets is wrong here: TPOT limits everywhere |
 | H3 levers add ≥ 20 % | **Not resolved** | The one lever that moved (`max_num_batched_tokens` 8,192) gained one step at 2 s on a single run, inside the repeat spread; +20 % is finer than the lever ladders resolve (A9). Turning prefix caching off clearly lowers capacity |
-| H4 two units scale linearly | **Confirmed, beyond linear (one run)** | Two units behind round robin hold 2.2 to 2.8 times one unit at T = 2 s (criterion ≥ 1.8); queueing explains the excess. Extrapolating from one unit is therefore prudent, not optimistic |
-| H5 NVFP4 costs little quality | **Confirmed** | PIAF F1 66.3 for NVFP4 against 65.9 for FP8 (criterion: NVFP4 ≥ FP8 − 2) |
+| H4 two units scale linearly | **Confirmed, beyond linear (one run)** | Two units behind round robin hold 2.2 to 2.8 times one unit at T = 2 s (criterion ≥ 1.8); queueing explains the excess. At 1.5 s the ratio is 3.7, at 3 s 1.85. Extrapolating from one unit is prudent at 1.5 and 2 s, slightly optimistic at 3 s |
+| H5 NVFP4 costs little quality | **Confirmed** | PIAF F1 66.3 for NVFP4 against 65.9 for FP8 (criterion: NVFP4 ≥ FP8 − 2); paired difference +0.42, 95 % interval −1.83 to +2.74, so the criterion holds at the lower bound too, by 0.2 point |
 | H6 memory model within 10 % | **Refuted** | Three units within 5.3 %, DP2+EP off by 32.7 % |
 
 ### What it means for the two clients (sizing tool)
@@ -260,14 +298,17 @@ best single run of any unit; prudent, the highest rate a unit met in every repea
 | Question | Target | Optimistic | Prudent |
 |---|---|---|---|
 | Administration, 2,000 active agents, RAG: GPUs | 1 s | unreachable | unreachable |
-| | 1.5 s | 136 GPUs (DP2+EP 0.44 req/s) | unknown: no repeated rate met 1.5 s |
+| | 1.5 s | 136 GPUs (DP2+EP 0.44 req/s, a starred cell) | unknown: no repeated rate met 1.5 s |
 | | 2 s | 108 GPUs, 48,000 USD/month (TP2 0.53 req/s) | 160 GPUs, 71,000 USD/month (0.375 req/s) |
 | | 3 s | 72 GPUs (EP2 0.75 req/s, which failed 3 of 3 repeats) | 160 GPUs (0.375 req/s) |
 | Defence, 8 GPUs: active users | RAG, 2 s | about 148 | about 100 |
 | | chat, 2 s | about 798 | about 762 |
 
-The tool extrapolates from one unit, with no gain from balancing: H4 shows that this is prudent.
-Sized on the measured pair instead (4 GPUs per block, same formula, one run, R at that capacity):
+The tool extrapolates from one unit, with no gain from balancing: H4 shows that this is prudent
+at 1.5 and 2 s, slightly optimistic at 3 s. Sized on the measured pair instead (4 GPUs per block,
+same formula, one run, R at that capacity), with
+`hpc-sizing size --summary docs/results/a40-x4.json --units two --gpus-per-unit 4 --target 1 --users 2000`
+(and `--units one` for the single unit of this node):
 
 | Question | Target | One unit, this node | Pairs behind round robin |
 |---|---|---|---|
@@ -275,15 +316,17 @@ Sized on the measured pair instead (4 GPUs per block, same formula, one run, R a
 | | 2 s | 120 GPUs, 53,000 USD/month (0.5 req/s) | 80 GPUs, 36,000 USD/month (1.39 req/s per pair) |
 | Defence, 8 GPUs, RAG, 2 s: active users | | about 135 | about 206 (two pairs) |
 
-These are single runs, with two units behind the balancer; a fleet would put more units behind
-one balancer, which queueing says helps further but nobody measured here. They show the direction
+The 1 s pair figure rests on a step that passed by 20 ms: one step lower (0.25 req/s per pair)
+would give about 500 GPUs. These are single runs, with two units behind the balancer; a fleet
+would put more units behind one balancer, which queueing says helps further but nobody measured
+here. They show the direction
 and the size of the effect, not a figure to budget on before repeats.
 
 Reading: the prudent RAG capacity is the same at 2 s and 3 s, because 0.5 req/s passed one repeat in
 three at both targets; the optimistic gap between 2 s and 3 s rests on a step that did not
-reproduce. Between 1.5 and 3 s the fleet changes within the noise; 1 s needs units behind a balancer
-and about three times the GPUs of 2 s. If `max_num_batched_tokens` 8,192 holds up when repeated, the
-fleet shrinks by about a third. A fixed fleet sized on chat is overwhelmed by RAG use: the mix of
+reproduce. Between 1.5 and 3 s the fleet changes within the noise; 1 s needs units behind a
+balancer and three to six times the GPUs of 2 s. If `max_num_batched_tokens` 8,192 holds up when
+repeated, the fleet shrinks by about a third. A fixed fleet sized on chat is overwhelmed by RAG use: the mix of
 request lengths is the first thing to agree on with a client.
 
 ### Limits
@@ -297,7 +340,11 @@ request lengths is the first thing to agree on with a client.
 - Answer quality is one dataset (PIAF, extractive questions in French), 200 questions, short
   answers; it compares the two formats, not the model with others.
 - 2-GPU campaign: no warm-up step, provenance partly in logs, lever unit chosen with the faulty
-  values (A7, A8). The 4-GPU session has both warm-up and provenance in every run file.
+  values (A7, A8); it ran on the same host as the test session but another machine. The 4-GPU
+  session has the warm-up and part of the provenance in every run file: no image digest, CUDA
+  version, end time or weights revision (A11).
+- The raw run files are not published (see above); third parties can check them against the
+  sha256 in the summaries only if they obtain a copy.
 - 4-GPU session: the FP8 repository holds its weights twice (two formats, 121 GB each); the node
   setup fetched both and filled the disk, so the FP8 weights were fetched again by hand in the
   format vLLM loads, before any measurement. The campaign caps were lowered to fit the guard.

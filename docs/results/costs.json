@@ -1,0 +1,13 @@
+{
+ "currency": "USD",
+ "source": "provider account credit before and after each instance (rental time and bandwidth)",
+ "sessions": [
+  {"session": "test session, 2 x A40", "date": "2026-11-11", "billed": 1.22},
+  {"session": "2-GPU campaign, 2 x A40, 18 runs", "date": "2026-11-11/12", "billed": 13.81},
+  {"session": "4-GPU attempt, host offline during setup", "date": "2026-11-12", "billed": 0.55},
+  {"session": "4-GPU attempt, stopped before the runs", "date": "2026-11-12", "billed": 1.54},
+  {"session": "4-GPU session, 4 x A40, 4 runs", "date": "2026-11-12/13", "billed": 7.13}
+ ],
+ "total": 24.25,
+ "cap": {"amount": 20, "currency": "EUR", "usd_per_eur": 1.1127, "rate_date": "2026-11-11", "rate_source": "ECB reference rate"}
+}
