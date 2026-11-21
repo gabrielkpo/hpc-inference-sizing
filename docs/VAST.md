@@ -187,7 +187,13 @@ scripts/detached.sh runs/follow-x4.log uv run --env-file .env hpc-sizing campaig
 | 4 × A40, verified | 3.00 | one offer |
 
 Bandwidth is billed on top of these prices (about 0.2 USD for the test session, mostly the 70 GB
-of weights). The protocol budget (§10) assumed 1.07 USD/h for 2 × A40. At these prices the plan comes to about
-1.35 (test) + 14.2 (2-GPU campaign) + 6.0 (4-GPU, 2 h) ≈ 21.5 USD, above the 16 USD of the plan
-and close to the 20 EUR cap. Whether to cut the plan (fewer repeats or levers, per §10) is decided
-at the protocol freeze.
+of weights). The draft budget assumed 1.07 USD/h for 2 × A40. At these prices the plan came to about
+1.35 (test) + 14.2 (2-GPU campaign) + 6.0 (4-GPU, 2 h) ≈ 21.5 USD, above the 16 USD of the draft
+and close to the 20 EUR cap; the protocol freeze kept the plan with the cap as a stop rule (A4).
+The final spend, 24.25 USD, is in amendment A11.
+
+## Hugging Face token
+
+The runbooks download public weights without a token. `vast rent --pass-hf-token` copies
+`HF_TOKEN` into the instance's environment, where the host operator can read it: use it only for
+a gated model, with a fine-grained read-only token created for the rental and revoked after it.
