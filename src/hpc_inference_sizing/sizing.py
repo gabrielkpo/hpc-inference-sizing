@@ -1,7 +1,8 @@
 """The sizing tool: turn the measured capacities into the two clients' answers (protocol §3.2,
 §8), with a range rather than one number.
 
-For a target T and a profile, a 2-GPU unit has two capacities:
+For a target T and a profile, a serving unit (2 GPUs by default; `--units two --gpus-per-unit 4`
+sizes the 4-GPU pair behind a load balancer) has two capacities:
 - optimistic: the best capacity any unit reached in a single run (results summary);
 - prudent: the highest rate that met T in every repeat of that profile (§6.6), when repeats
   exist; otherwise the optimistic one is all we have, and the tool says so.
@@ -24,7 +25,7 @@ BASE_UNITS = ("tp", "ep", "pp", "dp_ep")  # the protocol's 2-GPU units (§5.1), 
 
 @dataclass(frozen=True)
 class Point:
-    """One capacity of a 2-GPU unit: requests per second and the response time there."""
+    """One capacity of a serving unit: requests per second and the response time there."""
 
     capacity: float
     response_s: float
@@ -55,11 +56,18 @@ def capacity(
     units: tuple[str, ...] = BASE_UNITS,
 ) -> Capacity:
     key = f"{target_s:g}"
+    measured = [f"{t:g}" for t in summary.get("targets_s", [])]
+    if measured and key not in measured:
+        raise ValueError(
+            f"target {key} s was not measured; this summary has {', '.join(measured)} s"
+        )
     base = [
         r
         for r in summary["runs"]
         if r["profile"] == profile and "capacity" in r and r["unit"] in units
     ]
+    if not base:
+        raise ValueError(f"no {profile} run of unit {', '.join(units)} in this summary")
     best = None
     for run in base:
         c = run["capacity"].get(key, {}).get("capacity")
@@ -86,6 +94,8 @@ def capacity(
             if prudent is not None and prudent.capacity >= rate:
                 continue  # several repeated units: keep the highest rate held every time
             steps = [s for s in run["steps"] if s["rate"] == rate]
+            if not steps:
+                continue  # a key that matches no step: nothing to measure the response time on
             r_s = sum(_response_s(s, output_tokens) for s in steps) / len(steps)
             prudent, note = Point(rate, r_s, f"{unit}, passed every repeat"), ""
         elif prudent is None:
@@ -99,13 +109,13 @@ def arrival_rate(users: int, response_s: float, think_s: float) -> float:
     return users / (response_s + think_s)
 
 
-def gpus_for(users: int, point: Point, think_s: float) -> int:
+def gpus_for(users: int, point: Point, think_s: float, gpus_per_unit: int = GPUS_PER_UNIT) -> int:
     units = math.ceil(arrival_rate(users, point.response_s, think_s) / point.capacity)
-    return units * GPUS_PER_UNIT
+    return units * gpus_per_unit
 
 
-def users_for(gpus: int, point: Point, think_s: float) -> int:
-    rate = (gpus // GPUS_PER_UNIT) * point.capacity
+def users_for(gpus: int, point: Point, think_s: float, gpus_per_unit: int = GPUS_PER_UNIT) -> int:
+    rate = (gpus // gpus_per_unit) * point.capacity
     return int(rate * (point.response_s + think_s))
 
 
@@ -121,16 +131,25 @@ def report(
     price_per_gpu_hour: float,
     users: int | None = None,
     gpus: int | None = None,
+    units: tuple[str, ...] = BASE_UNITS,
+    gpus_per_unit: int = GPUS_PER_UNIT,
 ) -> str:
-    cap = capacity(summary, profile, target_s)
+    if gpus_per_unit < 1 or think_s < 0 or price_per_gpu_hour < 0:
+        raise ValueError("GPUs per unit must be positive; think time and price cannot be negative")
+    if users is not None and users < 1:
+        raise ValueError("the user count must be positive")
+    if gpus is not None and gpus < gpus_per_unit:
+        raise ValueError(f"a fleet needs at least one unit of {gpus_per_unit} GPUs")
+    cap = capacity(summary, profile, target_s, units=units)
     lines = [
         f"Profile {profile}, first token within {target_s:g} s for 95 % of requests, "
         f"think time {think_s:g} s"
     ]
     if cap.optimistic is None:
         lines.append(
-            "Unreachable: no unit met this target at any measured load, so no number of "
-            "GPUs of this class reaches it"
+            f"Unreachable with these units ({', '.join(units)}): none met this target at any "
+            "measured load, so adding more of them does not reach it; another layout may "
+            "(--units, --gpus-per-unit)"
         )
         return "\n".join(lines)
     points = [("optimistic", cap.optimistic)] + ([("prudent", cap.prudent)] if cap.prudent else [])
@@ -139,14 +158,15 @@ def report(
         if name == "optimistic" and cap.optimistic_repeats:
             extra = f", {cap.optimistic_repeats}"
         lines.append(
-            f"Unit capacity ({name})  {p.capacity:.3g} req/s per 2 GPUs ({p.source}{extra}), "
+            f"Unit capacity ({name})  {p.capacity:.3g} req/s per {gpus_per_unit} GPUs "
+            f"({p.source}{extra}), "
             f"answer in {p.response_s:.1f} s"
         )
     if cap.prudent is None:
         lines.append(f"Prudent bound          unknown: {cap.prudent_note}")
     if users is not None:
         for name, p in points:
-            g = gpus_for(users, p, think_s)
+            g = gpus_for(users, p, think_s, gpus_per_unit)
             rate = arrival_rate(users, p.response_s, think_s)
             lines.append(
                 f"GPUs needed ({name})   {g} for {users:,} active users "
@@ -155,8 +175,6 @@ def report(
             )
     if gpus is not None:
         for name, p in points:
-            lines.append(
-                f"Users served ({name})  about {users_for(gpus, p, think_s):,} active "
-                f"users on {gpus} GPUs"
-            )
+            served = users_for(gpus, p, think_s, gpus_per_unit)
+            lines.append(f"Users served ({name})  about {served:,} active users on {gpus} GPUs")
     return "\n".join(lines)
