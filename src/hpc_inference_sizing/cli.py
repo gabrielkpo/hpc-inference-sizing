@@ -221,9 +221,12 @@ def _size(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
 
     if (args.users is None) == (args.gpus is None):
         parser.error("give either --users (how many GPUs?) or --gpus (how many users?)")
-    summary = json.loads(Path(args.summary).read_text())
-    print(
-        sizing.report(
+    try:
+        summary = json.loads(Path(args.summary).read_text())
+    except (OSError, ValueError) as err:
+        parser.error(f"cannot read the summary {args.summary}: {err}")
+    try:
+        text = sizing.report(
             summary,
             args.profile,
             args.target,
@@ -231,8 +234,12 @@ def _size(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
             args.price_per_gpu_hour,
             users=args.users,
             gpus=args.gpus,
+            units=tuple(args.units),
+            gpus_per_unit=args.gpus_per_unit,
         )
-    )
+    except ValueError as err:
+        parser.error(str(err))
+    print(text)
 
 
 def _vast(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
@@ -437,6 +444,10 @@ def main(argv: list[str] | None = None) -> None:
     size.add_argument("--users", type=int, help="active users at peak: how many GPUs?")
     size.add_argument("--gpus", type=int, help="fixed fleet: how many users?")
     size.add_argument("--think-time", type=float, default=60.0, help="seconds (protocol §3.2)")
+    size.add_argument(
+        "--units", nargs="+", default=["tp", "ep", "pp", "dp_ep"], help="units to size from"
+    )
+    size.add_argument("--gpus-per-unit", type=int, default=2, help="GPUs in one unit")
     size.add_argument(
         "--price-per-gpu-hour", type=float, default=0.61, help="USD; 2 x A40 at 1.216 USD/h"
     )
