@@ -15,6 +15,8 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
+from hpc_inference_sizing.analysis import rate_key
+
 HOURS_PER_MONTH = 730
 GPUS_PER_UNIT = 2
 BASE_UNITS = ("tp", "ep", "pp", "dp_ep")  # the protocol's 2-GPU units (§5.1), defaults only
@@ -74,7 +76,7 @@ def capacity(
             continue
         passes = run["repeat_pass"].get(key, {})
         if optimistic and run["unit"] == f"repeat_{optimistic.source}":
-            done = passes.get(f"{optimistic.capacity:g}")
+            done = passes.get(rate_key(optimistic.capacity))
             if done:
                 opt_repeats = f"passed {sum(done)} of {len(done)} repeats"
         always = [float(r) for r, results in passes.items() if results and all(results)]

@@ -110,3 +110,25 @@ async def evaluate(
         "truncated": sum(a["truncated"] for a in answers),  # cut at max_tokens
         "answers": answers,
     }
+
+
+def paired_bootstrap(
+    a: list[dict], b: list[dict], key: str = "f1", resamples: int = 10_000, seed: int = 0
+) -> dict:
+    """Difference of mean score A - B over the same questions (points out of 100), with a 95 %
+    paired bootstrap interval: questions are resampled with replacement, both models together."""
+    scores_b = {row["id"]: row[key] for row in b}
+    diffs = [row[key] - scores_b[row["id"]] for row in a if row["id"] in scores_b]
+    if not diffs:
+        raise ValueError("the two runs share no question")
+    rng = random.Random(seed)
+    n = len(diffs)
+    means = sorted(sum(rng.choices(diffs, k=n)) / n for _ in range(resamples))
+    return {
+        "n": n,
+        "diff": round(100 * sum(diffs) / n, 2),
+        "ci95": [
+            round(100 * means[int(0.025 * resamples)], 2),
+            round(100 * means[int(0.975 * resamples) - 1], 2),
+        ],
+    }

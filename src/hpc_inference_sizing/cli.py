@@ -178,11 +178,32 @@ def _campaign(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
     print(f"done {len(final.done)}, failed {len(final.failed)}, pending {len(final.pending)}")
 
 
-def _results(args: argparse.Namespace) -> None:
+def _quality_diff(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
+    import json
+
+    from hpc_inference_sizing.quality import paired_bootstrap
+
+    runs = {r["run_id"]: r for r in json.loads(Path(args.summary).read_text())["runs"]}
+    missing = [i for i in (args.a, args.b) if "questions" not in runs.get(i, {})]
+    if missing:
+        parser.error(f"no per-question scores for {', '.join(missing)} in {args.summary}")
+    for key, name in (("f1", "F1"), ("em", "exact match")):
+        d = paired_bootstrap(runs[args.a]["questions"], runs[args.b]["questions"], key)
+        lo, hi = d["ci95"]
+        print(
+            f"{name} {args.a} - {args.b}: {d['diff']:+.2f} points, 95 % CI {lo:+.2f} to {hi:+.2f} "
+            f"(paired bootstrap, {d['n']} questions, seed 0)"
+        )
+
+
+def _results(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     import json
 
     from hpc_inference_sizing import analysis
 
+    if args.action == "quality-diff":
+        _quality_diff(args, parser)
+        return
     summary = analysis.summarize_dir(Path(args.dir), args.targets)
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -404,6 +425,10 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--out", required=True, help="summary JSON (small, versioned)")
     p.add_argument("--targets", type=float, nargs="+", default=[1.0, 1.5, 2.0, 3.0])
     p.add_argument("--units", nargs="+", default=["tp", "ep", "pp", "dp_ep"], help="for tables")
+    p = ractions.add_parser("quality-diff", help="paired bootstrap of two quality runs (H5)")
+    p.add_argument("--summary", default="docs/results/a40-x4.json", help="results summary")
+    p.add_argument("--a", default="qnvfp4-rag", help="run id of the first model")
+    p.add_argument("--b", default="qfp8-rag", help="run id of the second model")
 
     size = sub.add_parser("size", help="GPUs for a user count, or users for a fleet")
     size.add_argument("--summary", default="docs/results/a40-x2.json", help="results summary")
@@ -460,7 +485,7 @@ def main(argv: list[str] | None = None) -> None:
     elif args.command == "campaign":
         _campaign(args, campaign)
     elif args.command == "results":
-        _results(args)
+        _results(args, results)
     elif args.command == "size":
         _size(args, size)
     else:
