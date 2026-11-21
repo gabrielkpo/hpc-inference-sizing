@@ -42,7 +42,7 @@ class Matrix:
     targets_s: list[float]
     step_duration_s: float = 180.0
     min_requests: int = 20
-    start_rate: float = 0.25
+    start_rate: float = 0.125  # protocol amendment A3
     max_rate: float = 64.0
     bisect_steps: int = 2
     tpot_bound_ms: float = 1000 / 15

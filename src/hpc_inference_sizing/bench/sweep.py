@@ -39,7 +39,7 @@ class SweepResult:
 async def sweep(
     step: StepFn,
     targets_s: list[float],
-    start_rate: float = 0.25,
+    start_rate: float = 0.125,  # protocol amendment A3
     max_rate: float = 64.0,
     bisect_steps: int = 2,
     tpot_bound_s: float = TPOT_BOUND_S,
