@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.4.0](https://github.com/gabrielkpo/hpc-inference-sizing/compare/v0.3.0...v0.4.0) (2026-11-21)
+
+
+### Features
+
+* **analysis:** margins, failing steps below capacity, provenance and per-question scores ([#39](https://github.com/gabrielkpo/hpc-inference-sizing/issues/39)) ([fa057a5](https://github.com/gabrielkpo/hpc-inference-sizing/commit/fa057a5b90385c788c9ec1f656b6d103d12772ed))
+
+
+### Bug Fixes
+
+* **bench:** default ladder start and targets of the frozen protocol ([#46](https://github.com/gabrielkpo/hpc-inference-sizing/issues/46)) ([915aee9](https://github.com/gabrielkpo/hpc-inference-sizing/commit/915aee9bf257de90b3b0a0a0665cf10f46a37c92))
+* **follow:** no text from the rented node in events ([#44](https://github.com/gabrielkpo/hpc-inference-sizing/issues/44)) ([de8e07c](https://github.com/gabrielkpo/hpc-inference-sizing/commit/de8e07c1f5c49454d9af2a58c045897ff435f1e0))
+* **sizing:** errors instead of a false Unreachable, and pair sizing from the tool ([#40](https://github.com/gabrielkpo/hpc-inference-sizing/issues/40)) ([1782169](https://github.com/gabrielkpo/hpc-inference-sizing/commit/1782169f7b954bd48ab06c4c59249da9e0cb651d))
+
+
+### Documentation
+
+* a Results section in the README, and docs that match what ran ([#42](https://github.com/gabrielkpo/hpc-inference-sizing/issues/42)) ([69c798f](https://github.com/gabrielkpo/hpc-inference-sizing/commit/69c798f41c361f83208e45d63e01eee5701d7a5d))
+* mark the project as done in the README ([#33](https://github.com/gabrielkpo/hpc-inference-sizing/issues/33)) ([76a5144](https://github.com/gabrielkpo/hpc-inference-sizing/commit/76a5144543c41f1a1bb4095ff3aa2e15a02d7b25))
+* **results:** state margins, non-monotone cells, the H5 interval and the budget overrun ([#41](https://github.com/gabrielkpo/hpc-inference-sizing/issues/41)) ([457c6fb](https://github.com/gabrielkpo/hpc-inference-sizing/commit/457c6fb26400afe69131859afcea482bdee40c60))
+
 ## [0.3.0](https://github.com/gabrielkpo/hpc-inference-sizing/compare/v0.2.0...v0.3.0) (2026-11-13)
 
 
