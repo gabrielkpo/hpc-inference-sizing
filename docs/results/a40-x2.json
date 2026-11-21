@@ -14,6 +14,9 @@
    "server_flags": "--data-parallel-size 2 --enable-expert-parallel",
    "cold_start_s": 147.2,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T02:30:08+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 183456,
    "steps": [
     {
@@ -161,26 +164,46 @@
     "1": {
      "capacity": 2.171875,
      "achieved": 2.0611,
+     "n_requests": 371,
+     "ttft_margin_s": 0.6684,
+     "tpot_margin_s": 0.0002,
      "next_fail": 2.1796875,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.1796875,
+     "monotone": true
     },
     "1.5": {
      "capacity": 2.171875,
      "achieved": 2.0611,
+     "n_requests": 371,
+     "ttft_margin_s": 1.1684,
+     "tpot_margin_s": 0.0002,
      "next_fail": 2.1796875,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.1796875,
+     "monotone": true
     },
     "2": {
      "capacity": 2.171875,
      "achieved": 2.0611,
+     "n_requests": 371,
+     "ttft_margin_s": 1.6684,
+     "tpot_margin_s": 0.0002,
      "next_fail": 2.1796875,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.1796875,
+     "monotone": true
     },
     "3": {
      "capacity": 2.171875,
      "achieved": 2.0611,
+     "n_requests": 371,
+     "ttft_margin_s": 2.6684,
+     "tpot_margin_s": 0.0002,
      "next_fail": 2.1796875,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.1796875,
+     "monotone": true
     }
    }
   },
@@ -191,6 +214,9 @@
    "server_flags": "--data-parallel-size 2 --enable-expert-parallel",
    "cold_start_s": 176.0,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T01:43:24+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 183456,
    "steps": [
     {
@@ -299,25 +325,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.4375,
      "achieved": 0.3833,
+     "n_requests": 69,
+     "ttft_margin_s": 0.0571,
+     "tpot_margin_s": 0.0216,
      "next_fail": 0.46875,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.3125,
+     "monotone": false
     },
     "2": {
      "capacity": 0.4375,
      "achieved": 0.3833,
+     "n_requests": 69,
+     "ttft_margin_s": 0.5571,
+     "tpot_margin_s": 0.0216,
      "next_fail": 0.46875,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.46875,
+     "monotone": true
     },
     "3": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 0.9656,
+     "tpot_margin_s": 0.014,
      "next_fail": 0.625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.46875,
+     "monotone": false
     }
    }
   },
@@ -328,6 +371,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel",
    "cold_start_s": 133.0,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-11T23:52:30+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 237280,
    "steps": [
     {
@@ -475,26 +521,46 @@
     "1": {
      "capacity": 2.4453125,
      "achieved": 2.3556,
+     "n_requests": 424,
+     "ttft_margin_s": 0.6937,
+     "tpot_margin_s": 0.0037,
      "next_fail": 2.453125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.453125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 2.4453125,
      "achieved": 2.3556,
+     "n_requests": 424,
+     "ttft_margin_s": 1.1937,
+     "tpot_margin_s": 0.0037,
      "next_fail": 2.453125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.453125,
+     "monotone": true
     },
     "2": {
      "capacity": 2.4453125,
      "achieved": 2.3556,
+     "n_requests": 424,
+     "ttft_margin_s": 1.6937,
+     "tpot_margin_s": 0.0037,
      "next_fail": 2.453125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.453125,
+     "monotone": true
     },
     "3": {
      "capacity": 2.4453125,
      "achieved": 2.3556,
+     "n_requests": 424,
+     "ttft_margin_s": 2.6937,
+     "tpot_margin_s": 0.0037,
      "next_fail": 2.453125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.453125,
+     "monotone": true
     }
    }
   },
@@ -505,6 +571,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel",
    "cold_start_s": 167.6,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-11T23:06:14+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 237280,
    "steps": [
     {
@@ -613,25 +682,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.1057,
+     "tpot_margin_s": 0.0349,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "2": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 0.0411,
+     "tpot_margin_s": 0.0208,
      "next_fail": 0.625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.625,
+     "monotone": true
     },
     "3": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 0.6358,
+     "tpot_margin_s": 0.0011,
      "next_fail": 0.8125,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.625,
+     "monotone": false
     }
    }
   },
@@ -642,6 +728,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-batched-tokens 16384",
    "cold_start_s": 200.6,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T05:54:32+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 161104,
    "steps": [
     {
@@ -750,25 +839,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.3151,
+     "tpot_margin_s": 0.039,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "2": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 0.1779,
+     "tpot_margin_s": 0.0106,
      "next_fail": 0.78125,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.78125,
+     "monotone": true
     },
     "3": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 1.1779,
+     "tpot_margin_s": 0.0106,
      "next_fail": 0.78125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.78125,
+     "monotone": true
     }
    }
   },
@@ -779,6 +885,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-batched-tokens 2048",
    "cold_start_s": 145.2,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T04:45:40+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 237280,
    "steps": [
     {
@@ -887,25 +996,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.105,
+     "tpot_margin_s": 0.0349,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "2": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 0.0361,
+     "tpot_margin_s": 0.0209,
      "next_fail": 0.625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.625,
+     "monotone": true
     },
     "3": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 0.6511,
+     "tpot_margin_s": 0.0011,
      "next_fail": 0.8125,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.625,
+     "monotone": false
     }
    }
   },
@@ -916,6 +1042,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-batched-tokens 8192",
    "cold_start_s": 176.0,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T05:19:54+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 211984,
    "steps": [
     {
@@ -1024,25 +1153,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.4375,
      "achieved": 0.5444,
+     "n_requests": 98,
+     "ttft_margin_s": 0.0035,
+     "tpot_margin_s": 0.0238,
      "next_fail": 0.5,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.5,
+     "monotone": true
     },
     "2": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 0.2127,
+     "tpot_margin_s": 0.0105,
      "next_fail": 0.78125,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.78125,
+     "monotone": true
     },
     "3": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 1.2127,
+     "tpot_margin_s": 0.0105,
      "next_fail": 0.78125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.78125,
+     "monotone": true
     }
    }
   },
@@ -1053,6 +1199,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-batched-tokens 8192",
    "cold_start_s": 141.1,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T06:55:24+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 210896,
    "steps": [
     {
@@ -1161,25 +1310,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.4375,
      "achieved": 0.5444,
+     "n_requests": 98,
+     "ttft_margin_s": 0.0104,
+     "tpot_margin_s": 0.0239,
      "next_fail": 0.5,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.5,
+     "monotone": true
     },
     "2": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 0.2048,
+     "tpot_margin_s": 0.0105,
      "next_fail": 0.78125,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.78125,
+     "monotone": true
     },
     "3": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 1.2048,
+     "tpot_margin_s": 0.0105,
      "next_fail": 0.78125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.78125,
+     "monotone": true
     }
    }
   },
@@ -1190,6 +1356,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --no-enable-prefix-caching",
    "cold_start_s": 133.0,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T06:21:44+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 237280,
    "steps": [
     {
@@ -1278,25 +1447,39 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "2": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.3437,
+     "tpot_margin_s": 0.028,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "3": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 0.5883,
+     "tpot_margin_s": 0.0079,
      "next_fail": 0.625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.625,
+     "monotone": true
     }
    }
   },
@@ -1307,6 +1490,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-seqs 128",
    "cold_start_s": 163.7,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T04:11:57+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 250480,
    "steps": [
     {
@@ -1415,25 +1601,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.1054,
+     "tpot_margin_s": 0.035,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "2": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 0.0398,
+     "tpot_margin_s": 0.0211,
      "next_fail": 0.625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.625,
+     "monotone": true
     },
     "3": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 0.642,
+     "tpot_margin_s": 0.0009,
      "next_fail": 0.8125,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.625,
+     "monotone": false
     }
    }
   },
@@ -1444,6 +1647,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-seqs 32",
    "cold_start_s": 153.4,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T03:04:04+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 268768,
    "steps": [
     {
@@ -1552,25 +1758,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.1085,
+     "tpot_margin_s": 0.0349,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "2": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 0.0333,
+     "tpot_margin_s": 0.0208,
      "next_fail": 0.625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.625,
+     "monotone": true
     },
     "3": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 0.6505,
+     "tpot_margin_s": 0.0011,
      "next_fail": 0.8125,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.625,
+     "monotone": false
     }
    }
   },
@@ -1581,6 +1804,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel --max-num-seqs 64",
    "cold_start_s": 153.5,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T03:37:55+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 262304,
    "steps": [
     {
@@ -1689,25 +1915,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.1035,
+     "tpot_margin_s": 0.0348,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "2": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 0.0271,
+     "tpot_margin_s": 0.0205,
      "next_fail": 0.625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.625,
+     "monotone": true
     },
     "3": {
      "capacity": 0.75,
      "achieved": 0.6889,
+     "n_requests": 124,
+     "ttft_margin_s": 0.6455,
+     "tpot_margin_s": 0.001,
      "next_fail": 0.8125,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.625,
+     "monotone": false
     }
    }
   },
@@ -1718,6 +1961,9 @@
    "server_flags": "--pipeline-parallel-size 2",
    "cold_start_s": 126.9,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T01:09:17+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 451440,
    "steps": [
     {
@@ -1855,26 +2101,46 @@
     "1": {
      "capacity": 1.5625,
      "achieved": 1.3944,
+     "n_requests": 251,
+     "ttft_margin_s": 0.6651,
+     "tpot_margin_s": 0.0007,
      "next_fail": 1.56640625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 1.56640625,
+     "monotone": true
     },
     "1.5": {
      "capacity": 1.5625,
      "achieved": 1.3944,
+     "n_requests": 251,
+     "ttft_margin_s": 1.1651,
+     "tpot_margin_s": 0.0007,
      "next_fail": 1.56640625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 1.56640625,
+     "monotone": true
     },
     "2": {
      "capacity": 1.5625,
      "achieved": 1.3944,
+     "n_requests": 251,
+     "ttft_margin_s": 1.6651,
+     "tpot_margin_s": 0.0007,
      "next_fail": 1.56640625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 1.56640625,
+     "monotone": true
     },
     "3": {
      "capacity": 1.5625,
      "achieved": 1.3944,
+     "n_requests": 251,
+     "ttft_margin_s": 2.6651,
+     "tpot_margin_s": 0.0007,
      "next_fail": 1.56640625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 1.56640625,
+     "monotone": true
     }
    }
   },
@@ -1885,6 +2151,9 @@
    "server_flags": "--pipeline-parallel-size 2",
    "cold_start_s": 141.2,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T00:26:17+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 451808,
    "steps": [
     {
@@ -1993,25 +2262,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.0591,
+     "tpot_margin_s": 0.0245,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "2": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 0.2112,
+     "tpot_margin_s": 0.0141,
      "next_fail": 0.53125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.53125,
+     "monotone": true
     },
     "3": {
      "capacity": 0.5,
      "achieved": 0.4667,
+     "n_requests": 84,
+     "ttft_margin_s": 1.2112,
+     "tpot_margin_s": 0.0141,
      "next_fail": 0.53125,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.53125,
+     "monotone": true
     }
    }
   },
@@ -2022,6 +2308,9 @@
    "server_flags": "--tensor-parallel-size 2 --enable-expert-parallel",
    "cold_start_s": 139.0,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T07:26:01+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 237280,
    "steps": [
     {
@@ -2194,6 +2483,9 @@
    "server_flags": "--tensor-parallel-size 2",
    "cold_start_s": 141.0,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-12T07:56:59+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 237280,
    "steps": [
     {
@@ -2300,7 +2592,7 @@
       false,
       true
      ],
-     "2.57812": [
+     "2.578125": [
       true,
       true,
       false
@@ -2317,7 +2609,7 @@
       false,
       true
      ],
-     "2.57812": [
+     "2.578125": [
       true,
       true,
       false
@@ -2334,7 +2626,7 @@
       false,
       true
      ],
-     "2.57812": [
+     "2.578125": [
       true,
       true,
       false
@@ -2351,7 +2643,7 @@
       false,
       true
      ],
-     "2.57812": [
+     "2.578125": [
       true,
       true,
       false
@@ -2366,6 +2658,9 @@
    "server_flags": "--tensor-parallel-size 2",
    "cold_start_s": 151.2,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-11T22:32:08+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 237280,
    "steps": [
     {
@@ -2513,26 +2808,46 @@
     "1": {
      "capacity": 2.578125,
      "achieved": 2.4944,
+     "n_requests": 449,
+     "ttft_margin_s": 0.6747,
+     "tpot_margin_s": 0.0005,
      "next_fail": 2.5859375,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.5859375,
+     "monotone": true
     },
     "1.5": {
      "capacity": 2.578125,
      "achieved": 2.4944,
+     "n_requests": 449,
+     "ttft_margin_s": 1.1747,
+     "tpot_margin_s": 0.0005,
      "next_fail": 2.5859375,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.5859375,
+     "monotone": true
     },
     "2": {
      "capacity": 2.578125,
      "achieved": 2.4944,
+     "n_requests": 449,
+     "ttft_margin_s": 1.6747,
+     "tpot_margin_s": 0.0005,
      "next_fail": 2.5859375,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.5859375,
+     "monotone": true
     },
     "3": {
      "capacity": 2.578125,
      "achieved": 2.4944,
+     "n_requests": 449,
+     "ttft_margin_s": 2.6747,
+     "tpot_margin_s": 0.0005,
      "next_fail": 2.5859375,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 2.5859375,
+     "monotone": true
     }
    }
   },
@@ -2543,6 +2858,9 @@
    "server_flags": "--tensor-parallel-size 2",
    "cold_start_s": 186.1,
    "git_commit": "618ab9b25e6991bfc88eef31c6cd9208fac4e26d",
+   "created_at": "2026-11-11T21:45:36+00:00",
+   "model": "small4",
+   "seed": 0,
    "kv_cache_tokens": 237280,
    "steps": [
     {
@@ -2651,25 +2969,42 @@
      "capacity": null,
      "achieved": null,
      "next_fail": null,
-     "broke_on": null
+     "broke_on": null,
+     "lowest_fail": 0.125,
+     "monotone": true
     },
     "1.5": {
      "capacity": 0.375,
      "achieved": 0.3278,
+     "n_requests": 59,
+     "ttft_margin_s": 0.048,
+     "tpot_margin_s": 0.0361,
      "next_fail": 0.4375,
-     "broke_on": "TTFT"
+     "broke_on": "TTFT",
+     "lowest_fail": 0.4375,
+     "monotone": true
     },
     "2": {
      "capacity": 0.53125,
      "achieved": 0.5667,
+     "n_requests": 102,
+     "ttft_margin_s": 0.2293,
+     "tpot_margin_s": 0.0104,
      "next_fail": 0.5625,
-     "broke_on": "TTFT+TPOT"
+     "broke_on": "TTFT+TPOT",
+     "lowest_fail": 0.5625,
+     "monotone": true
     },
     "3": {
      "capacity": 0.53125,
      "achieved": 0.5667,
+     "n_requests": 102,
+     "ttft_margin_s": 1.2293,
+     "tpot_margin_s": 0.0104,
      "next_fail": 0.5625,
-     "broke_on": "TPOT"
+     "broke_on": "TPOT",
+     "lowest_fail": 0.5625,
+     "monotone": true
     }
    }
   }
@@ -2725,5 +3060,207 @@
     }
    }
   }
- }
+ },
+ "sources": [
+  {
+   "file": "campaign-clock.json",
+   "bytes": 22,
+   "sha256": "64dd0d20ee5f8de03f466af254bc71ae6b911d28a4a207d0b66e3a5be9cacbde"
+  },
+  {
+   "file": "dp_ep-chat.json",
+   "bytes": 38404951,
+   "sha256": "f1d200936503026e2dd329fac2f2e3e04785cdb2ec15b454b847bea34dc7a174"
+  },
+  {
+   "file": "dp_ep-rag.json",
+   "bytes": 26279512,
+   "sha256": "b2d5555eb3f3044f6a46b06443fca31ecac28e9a39c1d9fbedcb561ee9fe888d"
+  },
+  {
+   "file": "ep-chat.json",
+   "bytes": 22452547,
+   "sha256": "a72fa5eed65c573c7ff42e24810a96368ae6d9cad6b20171dd9dfa3295bd4f87"
+  },
+  {
+   "file": "ep-rag.json",
+   "bytes": 15205466,
+   "sha256": "9eea95bc79219c7284d79e6a86b594a622e493258405f7bb370208e6a770a651"
+  },
+  {
+   "file": "ep_batch16384-rag.json",
+   "bytes": 15184810,
+   "sha256": "81291ce411241d71dde16985d4502f1fd5f8b5442e252331244c4a19e4a0af78"
+  },
+  {
+   "file": "ep_batch2048-rag.json",
+   "bytes": 15206043,
+   "sha256": "11e88e0b351c0791cfffa0ccf37c2d4c44b933dc6c3b3f7cb28923ff2b28fc9d"
+  },
+  {
+   "file": "ep_batch8192-rag.json",
+   "bytes": 15185612,
+   "sha256": "aa7fc71351b43d7f0b0b770d2d1b0a76579b6525c038c692b105e9351ad4d6ad"
+  },
+  {
+   "file": "ep_combo-rag.json",
+   "bytes": 15184170,
+   "sha256": "dae5cc5e314725155915130c3f5ffc7fa6571760716161ae4e6e945c19b1fd08"
+  },
+  {
+   "file": "ep_noprefix-rag.json",
+   "bytes": 12160817,
+   "sha256": "fa98dab599143844c8cae26df3c5c27c050ee8508831958bdedf6876d4791ae9"
+  },
+  {
+   "file": "ep_seqs128-rag.json",
+   "bytes": 15206332,
+   "sha256": "b17da3ece383afd764c0e2e8906c9a9d403ffb9fb5e5f9dbe5ecb68e6f8573ae"
+  },
+  {
+   "file": "ep_seqs32-rag.json",
+   "bytes": 15205234,
+   "sha256": "713175dfbb542582bd974fc5f76bda7815a0d7f550b30b36b39fc1c3d6bd0af0"
+  },
+  {
+   "file": "ep_seqs64-rag.json",
+   "bytes": 15205576,
+   "sha256": "c799b4346877e7578974a116fabc903dce6319f2a86f2d0277ace6df2aeb1f60"
+  },
+  {
+   "file": "plan-combo.json",
+   "bytes": 215,
+   "sha256": "c8616f2c5f4240f5774e7a00648eaf63a7e4ca487e7da6bfefbd22aac320dac5"
+  },
+  {
+   "file": "plan-levers.json",
+   "bytes": 249,
+   "sha256": "1f81172aad22a2e7d0a7447479f1b380845a5d92962e223faf8eaba975db7239"
+  },
+  {
+   "file": "plan-repeats.json",
+   "bytes": 218,
+   "sha256": "e8b2bc41d1b89514caa9d23267f0f0c1a3b3005fd5233dacdb1c6d171c935a58"
+  },
+  {
+   "file": "pp-chat.json",
+   "bytes": 20490326,
+   "sha256": "e69760234a37d6cc01f93e0b4d5571f46209c8caf24e81e1ce686247018b981c"
+  },
+  {
+   "file": "pp-rag.json",
+   "bytes": 15234167,
+   "sha256": "bbd84400c7ce0f244be128611c5a6795bcb7111a2c068d5f3feacc930be27a2c"
+  },
+  {
+   "file": "repeat_ep-rag.json",
+   "bytes": 13664618,
+   "sha256": "dd0e17afe28d238d2b42c13c1f75be3aa35d007048499e69a4032650c111611d"
+  },
+  {
+   "file": "repeat_tp-chat.json",
+   "bytes": 14693612,
+   "sha256": "4afcec3923151c2ad66ca06dbb67bc4cf7a3ad51c755dd67a68eb0116709a8b0"
+  },
+  {
+   "file": "tp-chat.json",
+   "bytes": 22473039,
+   "sha256": "8d76b64a9f4e6545adf5b7dd4f3d1d452e6f4456ac13473ccec0f0d2766ed183"
+  },
+  {
+   "file": "tp-rag.json",
+   "bytes": 15075542,
+   "sha256": "725ccc2a784dce0b5983d824306e24555e9716d40cf4b3eb3bc4a2d1827087df"
+  },
+  {
+   "file": "dp_ep-chat.server.log",
+   "bytes": 418444,
+   "sha256": "39f8cce73457438fc76d91520d109e5b4a48c7f749a918e20379e6dd573acd11"
+  },
+  {
+   "file": "dp_ep-rag.server.log",
+   "bytes": 147378,
+   "sha256": "7d9ca6de453f1139e08d68c647f2679faf855b99bfa538e4e24a5ce64a7a41cf"
+  },
+  {
+   "file": "ep-chat.server.log",
+   "bytes": 469523,
+   "sha256": "7b6822942888113c04bf7fc891c50fa34f6c55d7fce606f7942f984df0348022"
+  },
+  {
+   "file": "ep-rag.server.log",
+   "bytes": 180645,
+   "sha256": "38e01d4f9eb9d65910e0d32e91a9d3c33dc6f0f59a1695b1d45f24ee387af244"
+  },
+  {
+   "file": "ep_batch16384-rag.server.log",
+   "bytes": 187212,
+   "sha256": "43b36a07b2b2a5cb21ad9878407e2ff4d167869bbdcd855f5f38d4291ed8c7fe"
+  },
+  {
+   "file": "ep_batch2048-rag.server.log",
+   "bytes": 180520,
+   "sha256": "660a0d8f16971eeaca2fcab0aee775c1b84444442519f6c3ce9b134332acbf75"
+  },
+  {
+   "file": "ep_batch8192-rag.server.log",
+   "bytes": 186662,
+   "sha256": "fc31d129d108ebd9583006ed9fd6f53843bd31690c1ab9718580bb934d6f26bf"
+  },
+  {
+   "file": "ep_combo-rag.server.log",
+   "bytes": 186122,
+   "sha256": "d2eb975fe1d052a9c10cf78d8c40747b1d17d945874a8330945d1843f463cb0e"
+  },
+  {
+   "file": "ep_noprefix-rag.server.log",
+   "bytes": 144067,
+   "sha256": "07e9426631354745a5eea67a2f659af0fef8be88edd54154cea2e5fa2d7d20ca"
+  },
+  {
+   "file": "ep_seqs128-rag.server.log",
+   "bytes": 176986,
+   "sha256": "395219bd85140feb0db42f416b3eb73a2dc44df189eb365405da2ab836cf1835"
+  },
+  {
+   "file": "ep_seqs32-rag.server.log",
+   "bytes": 171165,
+   "sha256": "930955abc71e90033dc05f37d3c8b00eb5f9ef1ef4878dec490a119cd392a40e"
+  },
+  {
+   "file": "ep_seqs64-rag.server.log",
+   "bytes": 172611,
+   "sha256": "ca8552436381010f1bfacfe08c09a29d031e40884b55fffce1f24a29b6edd47a"
+  },
+  {
+   "file": "pp-chat.server.log",
+   "bytes": 321879,
+   "sha256": "d40504489123c6c46f5c4281a59e29248d07f1dde4bc4948ff966e6004fe090c"
+  },
+  {
+   "file": "pp-rag.server.log",
+   "bytes": 169509,
+   "sha256": "090afab5018d50f668948a3a051480a9f75e93218c5f564deed203349a3c96a9"
+  },
+  {
+   "file": "repeat_ep-rag.server.log",
+   "bytes": 168344,
+   "sha256": "5758e953f987b4f2b7b694f712279781f2c98735e7f7567bdf6a5a6e503f0808"
+  },
+  {
+   "file": "repeat_tp-chat.server.log",
+   "bytes": 404162,
+   "sha256": "7627c7533f8acedb487f1878829c40dc60b37e07589d9ffba33992cde0c98127"
+  },
+  {
+   "file": "tp-chat.server.log",
+   "bytes": 516453,
+   "sha256": "ffdccbc0425d56ebbc0deef4c86d1299a34893f2f307e18dc13aa486f7e6f13f"
+  },
+  {
+   "file": "tp-rag.server.log",
+   "bytes": 177133,
+   "sha256": "f6f76dddd55d19e9396690237f412bfa64811e42680b0809de555e8ee2afee46"
+  }
+ ]
 }
