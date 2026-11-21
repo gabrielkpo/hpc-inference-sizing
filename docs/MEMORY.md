@@ -26,7 +26,7 @@ flowchart LR
 | Weights by component | Mistral Small 4 NVFP4: 70.80 GB (routed experts 65.23, attention 2.02, embedding 1.07, output head 1.07, vision 0.86, shared expert 0.51, router 0.04). FP8: 120.92 GB | Safetensors headers of the Hugging Face checkpoints, read by [`scripts/measure_checkpoint.py`](../scripts/measure_checkpoint.py), stored in `src/hpc_inference_sizing/data/` |
 | KV cache per token | 640 bytes per layer, 36 layers: 23.0 KB for the whole model | MLA caches one latent of 256 + 64 values per token and layer, in bf16 (`params.json`) |
 | GPU memory | A40 and L40S 46,068 MiB, RTX A6000 49,140 MiB, H100 PCIe 81,559 MiB | nvidia-smi totals; A40 and A6000 from Vast.ai listings, L40S and H100 to confirm on the first run |
-| Memory vLLM may use | 90 % | vLLM default `gpu_memory_utilization` |
+| Memory vLLM may use | 90 % | `--gpu-memory-utilization 0.90`, pinned in the server command (vLLM 0.32's default is 0.92, see below) |
 | Runtime overhead | 2 GiB (2.15 GB) per GPU | **Assumption** (activations, CUDA graphs, CUDA context); vLLM measures it at start-up |
 | Request size | 6,400 tokens (6,100 in, 300 out) | RAG profile, protocol §3.1 |
 
@@ -79,9 +79,9 @@ split, then compared with the "unit cache" column; H6 passes if every configurat
 | `pp` | the figure for the unit, which is limited by the fullest stage; if vLLM logs one figure per stage, the smallest one |
 | `dp_ep` | the **sum** of the figures logged by each data-parallel engine (each GPU caches its own requests) |
 
-How vLLM reports pipeline and data-parallel caches is to be confirmed on the first run. The 2 GiB
-overhead is the least certain input: the measured overhead is recorded next to each result so that
-a miss can be traced to its cause.
+How vLLM reports pipeline and data-parallel caches was confirmed on the first run (one figure per
+data-parallel rank). The 2 GiB overhead is the least certain input; the run files record the KV
+cache vLLM reports, not the overhead itself, so a miss is traced through the cache.
 
 **First check against vLLM** (test session, 2026-11-11, [`TEST-SESSION.md`](TEST-SESSION.md)):
 weights within 0.5 % for every split; caches 12 to 17 % above the prediction for `tp`, `ep` and
@@ -91,6 +91,10 @@ logs one cache per data-parallel rank, as the reading rule above expects. The pr
 file are left as published. At the protocol freeze the server command pins
 `--gpu-memory-utilization 0.90` (protocol amendment A2), the value this model assumes.
 
-## Corrections
+## Outcome (H6, after the campaign)
 
-None yet.
+The pre-registered predictions above are left unchanged. Against the KV cache vLLM reported in the
+campaign ([`RESULTS.md`](RESULTS.md#memory-model-against-vllm-h6)): TP2 and EP2 within 0.2 %, PP2
+5.3 % below, DP2+EP 32.7 % below (183,456 against 272,632 tokens). H6 (all within 10 %) is
+refuted by DP2+EP alone: its two engines and expert-parallel buffers use about 1 GiB more per GPU
+than the fixed 2 GiB overhead allows. A per-split overhead would be the correction.

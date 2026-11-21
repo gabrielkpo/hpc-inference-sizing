@@ -1,13 +1,16 @@
 # Campaign
 
 A campaign runs every (serving unit, profile) pair of a matrix, one after the other, on one node.
-It is the path from the bench ([`BENCH.md`](BENCH.md)) to the result files, and it is the same on
-a laptop, on the local SLURM cluster and on the rented GPU node.
+It is the path from the bench ([`BENCH.md`](BENCH.md)) to the result files. On the rented GPU node
+the whole matrix ran as one chained process (`campaign run --chain`, [ADR 0003](adr/0003-campaign-runs-as-one-chained-process.md));
+the SLURM job array was used for the local dry run only ([ADR 0002](adr/0002-slurm-jobs-local-and-rented.md)).
 
 ```mermaid
 flowchart LR
-    M["Matrix (TOML)<br/>units = server flags,<br/>profiles, sweep settings"] --> A["SLURM job array<br/>one task per run, %1"]
-    A --> R["campaign run --only RUN"]
+    M["Matrix (TOML)<br/>units = server flags,<br/>profiles, sweep settings"] --> C["campaign run --chain<br/>rented node"]
+    M --> A["SLURM job array<br/>local dry run, %1"]
+    C --> R["one run"]
+    A --> R
     R --> S{"result file<br/>exists?"}
     S -->|yes| X["skip (resume)"]
     S -->|no| U["start server,<br/>wait /health"]
@@ -36,7 +39,7 @@ an empty command means the server is already running.
 uv run hpc-sizing campaign list   --matrix campaign/a40-x2.toml
 uv run hpc-sizing campaign status --matrix campaign/a40-x2.toml
 uv run hpc-sizing campaign run    --matrix campaign/a40-x2.toml \
-    --max-hours 11 --budget-usd 15 --price-per-hour 1.07 --meta gpu=2xA40 --meta host=vast-12345
+    --max-hours 11 --budget-usd 15 --price-per-hour 1.35 --meta gpu=2xA40
 ```
 
 - **Resume.** A run whose result file exists is skipped, so an interrupted campaign is restarted
@@ -96,12 +99,13 @@ A campaign day lasts hours, so it is followed without watching a terminal:
   it destroys the instance. A campaign that moves again clears the alert. `--alert-only` keeps
   the node whatever happens; `--no-destroy` turns every destroy off, the end of campaign
   included.
-- **Detached from the Claude app.** [`scripts/detached.sh`](../scripts/detached.sh) starts the
-  guard and the follow in their own session, with a log file, and keeps the Mac awake while they
-  run (plugged in, lid open), so a closed window or a crashed app does not stop them. The
-  backstop inside the instance still covers a laptop that dies.
-- **Notifications.** The Claude session reads the events file and sends each event to the owner's
-  phone; nothing leaves the laptop through the scripts themselves.
+- **Detached.** [`scripts/detached.sh`](../scripts/detached.sh) starts the guard and the follow
+  in their own session, with a log file, and keeps the Mac awake while they run (plugged in, lid
+  open), so a closed terminal or window does not stop them. The backstop inside the instance
+  still covers a laptop that dies.
+- **Notifications.** The events file can be relayed as notifications by any reader; nothing
+  leaves the laptop through the scripts themselves. Event text and the follow log contain text
+  from the rented node: treat them as untrusted data.
 
 ```bash
 scripts/detached.sh runs/follow.log uv run --env-file .env hpc-sizing campaign follow \
@@ -109,24 +113,22 @@ scripts/detached.sh runs/follow.log uv run --env-file .env hpc-sizing campaign f
 tail -f runs/follow.log
 ```
 
-## SLURM (ADR 0002)
+## SLURM (ADR 0002): local dry run
 
-The same job array runs on the local cluster and on the rented node.
+The job array ran on the local cluster only; on the rented node the campaign ran as one chained
+process (ADR 0003), because levers and repeats depend on earlier runs, which the array (base
+matrix only) cannot express.
 
 ```bash
 # Local cluster (laptop): controller + two nodes in Docker, the repository mounted at /work
 docker compose -f slurm/docker-compose.yml up -d --build
 docker compose -f slurm/docker-compose.yml exec slurmctld bash -c "cd /work && slurm/submit.sh campaign/slurm-dryrun.toml"
 docker compose -f slurm/docker-compose.yml exec slurmctld squeue
-
-# Rented node: single-node SLURM in the container, then the same submission
-bash slurm/single-node.sh
-slurm/submit.sh campaign/a40-x2.toml --max-hours 11 --budget-usd 15 --price-per-hour 1.07
 ```
 
 `slurm/submit.sh` submits one array task per run with the `%1` throttle (a node serves one model
-at a time). If SLURM does not come up on the rented node, the campaign runs directly with
-`hpc-sizing campaign run`: nothing is debugged on paid time.
+at a time). `slurm/single-node.sh` sets up a one-node cluster inside a container; it was written
+for the rented node and not used there.
 
 ## Dry runs done
 

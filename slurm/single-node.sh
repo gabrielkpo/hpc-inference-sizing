@@ -1,6 +1,7 @@
 #!/bin/bash
-# Single-node SLURM inside the rented container (ADR 0002): the same job array as on the local
-# cluster, one node that owns all the GPUs. Run as root once the repository is cloned:
+# Single-node SLURM inside a container (ADR 0002): the same job array as on the local cluster,
+# one node that owns all the GPUs. Written for the rented node but not used there: the campaign
+# ran as one chained process (ADR 0003). Run as root once the repository is cloned:
 #   bash slurm/single-node.sh && slurm/submit.sh campaign/a40-x2.toml
 # If SLURM does not come up, run the campaign directly instead (no debugging on paid time):
 #   uv run hpc-sizing campaign run --matrix campaign/a40-x2.toml

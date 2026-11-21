@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run a long command detached from this terminal and from the Claude app, so it survives a
+# Run a long command detached from the terminal or app that started it, so it survives a
 # closed window or a crashed app: its own session (no hang-up signal reaches it), output to a
 # log file, and on macOS the laptop kept awake while it runs (keep it plugged in, lid open).
 #   scripts/detached.sh LOG_FILE COMMAND [ARGS...]

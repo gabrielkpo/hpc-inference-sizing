@@ -479,7 +479,11 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--budget-usd", type=float, required=True, help="spend cap for the guard")
     p.add_argument("--image", default="vllm/vllm-openai:v0.32.0")
     p.add_argument("--disk", type=int, default=150, help="GB")
-    p.add_argument("--pass-hf-token", action="store_true", help="give HF_TOKEN to the instance")
+    p.add_argument(
+        "--pass-hf-token",
+        action="store_true",
+        help="give HF_TOKEN to the instance (the host can read it; use a read-only token)",
+    )
     p.add_argument("--yes", action="store_true", help="really rent (paid)")
     p.add_argument("--no-guard", action="store_true", help="do not watch it from here")
     p.add_argument(

@@ -8,11 +8,12 @@
 <!-- Commands or steps -->
 
 ## Reviews
-<!-- Summary of what /security-review and /code-review found, and what was fixed -->
+<!-- Summary of what the security review and the code review found, and what was fixed -->
 
 ## Checklist
 - [ ] Title follows Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`, `ci:`)
-- [ ] `/security-review` and `/code-review` ran on this branch; confirmed findings are fixed
+- [ ] A security review and a code review ran on this branch; confirmed findings are fixed
 - [ ] Tests added or updated
 - [ ] No API key, token or personal data in the diff
-- [ ] README updated if behaviour changed
+- [ ] README, repository description and diagrams are still true
+- [ ] No private text or real personal value in this PR body
