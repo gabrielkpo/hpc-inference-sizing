@@ -197,6 +197,12 @@ def test_sweep_ladder_then_bisection_per_target():
     assert len(calls) == len(set(calls))  # no rate measured twice
 
 
+def test_the_default_ladder_starts_where_the_protocol_does():
+    step, calls = fake_step_factory()
+    asyncio.run(sweep(step, [3.0], max_rate=0.5, bisect_steps=0))
+    assert calls[0] == 0.125  # amendment A3
+
+
 def test_sweep_reports_no_capacity_and_max_rate():
     step, _ = fake_step_factory()
     result = asyncio.run(sweep(step, [0.1, 3.0], start_rate=0.25, max_rate=2))

@@ -375,8 +375,8 @@ def main(argv: list[str] | None = None) -> None:
         if name == "step":
             p.add_argument("--rate", type=float, required=True, help="requests per second")
         else:
-            p.add_argument("--targets", type=float, nargs="+", default=[1.0, 2.0, 3.0])
-            p.add_argument("--start-rate", type=float, default=0.25)
+            p.add_argument("--targets", type=float, nargs="+", default=[1.0, 1.5, 2.0, 3.0])
+            p.add_argument("--start-rate", type=float, default=0.125)
             p.add_argument("--max-rate", type=float, default=64.0)
             p.add_argument("--bisect-steps", type=int, default=2)
             p.add_argument(

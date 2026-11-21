@@ -42,7 +42,7 @@ that cannot reach it, and the value used is written in the run file.
 | `workload.py` | RAG prompts of exactly 6,100 tokens (shared 1,000-token system prompt, 5 passages of 1,000 tokens assembled from consecutive PIAF contexts, a 100-token question), chat prompts of 500 tokens; lengths counted with Mistral's tokenizer (`mistral-common`, Small 4 `tekken.json`); request `i` is the same for a given seed |
 | `client.py` | One streaming request asks for exactly 300 tokens (`max_tokens` = `min_tokens`, end of sequence ignored); time to first token = first non-empty chunk; time per output token = (last chunk - first chunk) / (tokens - 1), tokens from the final `usage` chunk (or one per chunk when the server sends none) |
 | `stats.py` | p50 and p95 with linear interpolation; a step meets target T when TTFT p95 <= T, TPOT p95 <= 1/15 s and no request failed |
-| `sweep.py` | Ladder 0.25, 0.5, 1, 2 ... req/s until the loosest target breaks, then 2 bisection steps per target; a rate is never measured twice |
+| `sweep.py` | Ladder 0.125, 0.25, 0.5, 1, 2 ... req/s (protocol amendment A3) until the loosest target breaks, then 2 bisection steps per target; a rate is never measured twice |
 | `scrape.py` | `/metrics` read during each step, keeping only `vllm:` and `llamacpp:` series |
 | `runner.py` | Builds a step's prompts first, then runs the step with the scraper in parallel on one time origin, and writes the run file atomically (complete or absent); the host is recorded only when given with `--meta host=...` |
 
